@@ -9,7 +9,7 @@
     "dev:frontend": "pnpm --filter @quiz-forge/frontend dev",
     "build": "pnpm --filter @quiz-forge/shared build && pnpm --filter @quiz-forge/backend build && pnpm --filter @quiz-forge/frontend build",
     "test": "pnpm --recursive test",
-    "typecheck": "pnpm --recursive typecheck",
+    "typecheck": "pnpm --filter @quiz-forge/shared build && pnpm --recursive typecheck",
     "db:generate": "pnpm --filter @quiz-forge/backend db:generate",
     "db:migrate": "pnpm --filter @quiz-forge/backend db:migrate",
     "db:seed": "pnpm --filter @quiz-forge/backend exec tsx src/db/seed.ts"
