@@ -72,6 +72,47 @@ export const clientQuestionSchema = z.object({
   choices: z.array(clientChoiceSchema).length(4),
 });
 
+export const quizStatusEnum = z.enum(['draft', 'published']);
+export type QuizStatus = z.infer<typeof quizStatusEnum>;
+
+export const studioChoiceSchema = z.object({
+  choice_id: choiceIdEnum,
+  option_text: z.string().trim().min(1, 'Choice text cannot be empty'),
+});
+export type StudioChoice = z.infer<typeof studioChoiceSchema>;
+
+export const studioQuestionSchema = z
+  .object({
+    id: z.string().optional(),
+    questionText: z.string().trim().min(5, 'Question text must be at least 5 characters'),
+    choices: z.array(studioChoiceSchema).length(4, 'Each question must have exactly 4 choices'),
+    correctChoiceId: choiceIdEnum,
+    explanation: z.string().trim().min(5, 'Explanation must be at least 5 characters'),
+  })
+  .refine(
+    (q) => {
+      const choiceIds = new Set(q.choices.map((c) => c.choice_id));
+      return choiceIds.size === 4 && choiceIds.has('A') && choiceIds.has('B') && choiceIds.has('C') && choiceIds.has('D');
+    },
+    { message: 'Choices must contain unique IDs A, B, C, and D' }
+  )
+  .refine(
+    (q) => {
+      const uniqueTexts = new Set(q.choices.map((c) => c.option_text.toLowerCase()));
+      return uniqueTexts.size === 4;
+    },
+    { message: 'Option texts must be distinct' }
+  );
+export type StudioQuestion = z.infer<typeof studioQuestionSchema>;
+
+export const updateQuizStudioSchema = z.object({
+  topic: z.string().trim().min(2).max(255).optional(),
+  difficulty: difficultyEnum.optional(),
+  isPublic: z.boolean().optional(),
+  questions: z.array(studioQuestionSchema).min(1, 'Quiz must have at least 1 question'),
+});
+export type UpdateQuizStudioInput = z.infer<typeof updateQuizStudioSchema>;
+
 export const quizMetadataSchema = z.object({
   id: z.string().uuid(),
   userId: z.string().uuid(),
@@ -79,8 +120,26 @@ export const quizMetadataSchema = z.object({
   difficulty: difficultyEnum,
   questionCount: z.number().int(),
   aiModel: z.string(),
+  status: quizStatusEnum.default('published'),
+  isPublic: z.boolean().default(false),
+  shareCode: z.string().nullable().optional(),
   createdAt: z.string(),
 });
+
+export const quizStudioPayloadSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  topic: z.string(),
+  difficulty: difficultyEnum,
+  questionCount: z.number().int(),
+  aiModel: z.string(),
+  status: quizStatusEnum,
+  isPublic: z.boolean(),
+  shareCode: z.string().nullable(),
+  createdAt: z.string(),
+  questions: z.array(studioQuestionSchema),
+});
+export type QuizStudioPayload = z.infer<typeof quizStudioPayloadSchema>;
 
 export type GenerateQuizInput = z.infer<typeof generateQuizSchema>;
 export type RawChoice = z.infer<typeof rawChoiceSchema>;

@@ -59,6 +59,13 @@ export const apiClient = {
       body: body !== undefined ? JSON.stringify(body) : '{}',
     }),
 
+  put: <T>(url: string, body?: unknown, options?: RequestInit) =>
+    request<T>(url, {
+      ...options,
+      method: 'PUT',
+      body: body !== undefined ? JSON.stringify(body) : '{}',
+    }),
+
   patch: <T>(url: string, body?: unknown, options?: RequestInit) =>
     request<T>(url, {
       ...options,

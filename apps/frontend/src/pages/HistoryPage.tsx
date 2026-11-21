@@ -19,6 +19,7 @@ import {
   Brain,
   ExternalLink,
   Layers,
+  SlidersHorizontal,
 } from 'lucide-react';
 
 export function HistoryPage() {
@@ -320,6 +321,17 @@ export function HistoryPage() {
 
                     {/* Actions */}
                     <div className="flex items-center gap-2.5 pt-2 sm:pt-0 shrink-0">
+                      {!isCodeReview && (
+                        <Link
+                          to={`/studio/${item.quizId}`}
+                          className="px-3 py-2 rounded-xl text-xs font-semibold bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 transition flex items-center gap-1.5"
+                          title="Open Quiz Studio to review, edit questions, publish, or copy share link"
+                        >
+                          <SlidersHorizontal className="w-3.5 h-3.5" />
+                          <span>Studio</span>
+                        </Link>
+                      )}
+
                       <Link
                         to={
                           isCodeReview

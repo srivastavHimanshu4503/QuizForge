@@ -11,6 +11,8 @@ import { CodeQuizPlayerPage } from './pages/CodeQuizPlayerPage';
 import { CodeQuizResultsPage } from './pages/CodeQuizResultsPage';
 import { ClassroomsPage } from './pages/ClassroomsPage';
 import { StudentAssignmentsPage } from './pages/StudentAssignmentsPage';
+import { QuizStudioPage } from './pages/QuizStudioPage';
+import { SharedQuizLandingPage } from './pages/SharedQuizLandingPage';
 
 export function App() {
   return (
@@ -80,6 +82,22 @@ export function App() {
             element={
               <ProtectedRoute>
                 <HistoryPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/studio/:quizId"
+            element={
+              <ProtectedRoute>
+                <QuizStudioPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/quiz/shared/:shareCode"
+            element={
+              <ProtectedRoute>
+                <SharedQuizLandingPage />
               </ProtectedRoute>
             }
           />
