@@ -16,8 +16,9 @@ async function request<T>(
   url: string,
   options: RequestInit = {}
 ): Promise<T> {
+  const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
   const headers: HeadersInit = {
-    ...(options.body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+    ...(options.body !== undefined && !isFormData ? { 'Content-Type': 'application/json' } : {}),
     ...(options.headers || {}),
   };
 
@@ -67,4 +68,11 @@ export const apiClient = {
 
   delete: <T>(url: string, options?: RequestInit) =>
     request<T>(url, { ...options, method: 'DELETE' }),
+
+  postFormData: <T>(url: string, formData: FormData, options?: RequestInit) =>
+    request<T>(url, {
+      ...options,
+      method: 'POST',
+      body: formData,
+    }),
 };

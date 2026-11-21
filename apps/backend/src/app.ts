@@ -2,17 +2,20 @@ import Fastify, { FastifyInstance, FastifyError } from 'fastify';
 import cors from '@fastify/cors';
 import cookie from '@fastify/cookie';
 import helmet from '@fastify/helmet';
+import multipart from '@fastify/multipart';
 import rateLimit from '@fastify/rate-limit';
 import { env } from './config/env';
 import { sqlite } from './db/index';
 import { authPlugin } from './plugins/auth.plugin';
 import { authRoutes } from './routes/auth.routes';
 import { quizRoutes } from './routes/quiz.routes';
+import { pdfQuizRoutes } from './routes/pdf-quiz.routes';
 import { attemptRoutes } from './routes/attempt.routes';
 import { historyRoutes } from './routes/history.routes';
 import { llmRoutes } from './routes/llm.routes';
 import { codeQuizRoutes } from './routes/code-quiz.routes';
 import { classroomRoutes } from './routes/classroom.routes';
+import { jobRoutes } from './routes/job.routes';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({
@@ -43,6 +46,14 @@ export async function buildApp(): Promise<FastifyInstance> {
     secret: env.JWT_SECRET,
   });
 
+  // Multipart Parser (15 MB file cap)
+  await app.register(multipart, {
+    limits: {
+      fileSize: 15 * 1024 * 1024,
+      files: 1,
+    },
+  });
+
   // Gracefully handle empty JSON body without error
   app.addContentTypeParser('application/json', { parseAs: 'string' }, (_req, body: string, done) => {
     if (!body || body.trim() === '') {
@@ -67,11 +78,13 @@ export async function buildApp(): Promise<FastifyInstance> {
 
   // Quiz Engine Routes
   await app.register(quizRoutes, { prefix: '/api/quizzes' });
+  await app.register(pdfQuizRoutes, { prefix: '/api/quizzes' });
   await app.register(attemptRoutes, { prefix: '/api/attempts' });
   await app.register(historyRoutes, { prefix: '/api/history' });
   await app.register(llmRoutes, { prefix: '/api/llm' });
   await app.register(codeQuizRoutes, { prefix: '/api/code-quizzes' });
   await app.register(classroomRoutes, { prefix: '/api/classrooms' });
+  await app.register(jobRoutes, { prefix: '/api/jobs' });
 
   // Global Error Handler
   app.setErrorHandler((error: FastifyError | Error, request, reply) => {

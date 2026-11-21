@@ -4,6 +4,7 @@ export interface GenerateQuestionsParams {
   topic: string;
   questionCount: number;
   difficulty: QuizDifficulty;
+  context?: string;
 }
 
 export interface IAIQuestionGenerator {

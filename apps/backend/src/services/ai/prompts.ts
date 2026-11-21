@@ -16,15 +16,19 @@ function getDifficultyInstructions(difficulty: QuizDifficulty): string {
 }
 
 export function buildQuizPrompt(params: GenerateQuestionsParams): string {
-  const { topic, questionCount, difficulty } = params;
+  const { topic, questionCount, difficulty, context } = params;
   const difficultyGuide = getDifficultyInstructions(difficulty);
+
+  const contextSection = context
+    ? `\nSOURCE DOCUMENT EXCERPTS (Generate questions STRICTLY grounded in the following text. Do not hallucinate external facts or include information not supported by this text):\n"""\n${context}\n"""\n`
+    : '';
 
   return `You are a Senior Technical Educator and Assessment Specialist creating an authoritative multiple-choice quiz.
 
 Topic: "${topic}"
 Number of Questions: ${questionCount}
 ${difficultyGuide}
-
+${contextSection}
 CRITICAL ASSESSMENT RULES:
 1. Generate EXACTLY ${questionCount} distinct, high-quality multiple choice questions.
 2. Each question MUST have exactly four options labeled 'A', 'B', 'C', and 'D'.

@@ -54,6 +54,7 @@ export class AIService {
       topic: params.topic,
       questionCount: params.questionCount,
       difficulty: params.difficulty,
+      context: params.context,
     });
 
     // 3. Strict Runtime Schema Validation

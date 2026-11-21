@@ -20,6 +20,7 @@ export const generateQuizSchema = z.object({
     .default(5),
   difficulty: difficultyEnum.default('mixed'),
   provider: z.string().optional(),
+  context: z.string().optional(),
 });
 
 export const rawChoiceSchema = z.object({
