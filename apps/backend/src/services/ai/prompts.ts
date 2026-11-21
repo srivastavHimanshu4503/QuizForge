@@ -23,12 +23,17 @@ export function buildQuizPrompt(params: GenerateQuestionsParams): string {
     ? `\nSOURCE DOCUMENT EXCERPTS (Generate questions STRICTLY grounded in the following text. Do not hallucinate external facts or include information not supported by this text):\n"""\n${context}\n"""\n`
     : '';
 
+  const visionSection = params.image
+    ? `\nVISUAL CONTENT GROUNDING: An educational visual document (diagram, whiteboard, handwritten notes, or infographic) is attached. Analyze all visible text, labels, and diagram relationships. Generate questions strictly grounded in what is shown. Do not hallucinate external facts.\n`
+    : '';
+
   return `You are a Senior Technical Educator and Assessment Specialist creating an authoritative multiple-choice quiz.
 
 Topic: "${topic}"
 Number of Questions: ${questionCount}
 ${difficultyGuide}
 ${contextSection}
+${visionSection}
 CRITICAL ASSESSMENT RULES:
 1. Generate EXACTLY ${questionCount} distinct, high-quality multiple choice questions.
 2. Each question MUST have exactly four options labeled 'A', 'B', 'C', and 'D'.

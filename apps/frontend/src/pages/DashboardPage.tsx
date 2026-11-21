@@ -5,8 +5,9 @@ import { Navbar } from '../components/layout/Navbar';
 import { GenerateQuizModal } from '../components/quiz/GenerateQuizModal';
 import { PdfQuizModal } from '../components/quiz/PdfQuizModal';
 import { UrlQuizModal } from '../components/quiz/UrlQuizModal';
+import { ImageQuizModal } from '../components/quiz/ImageQuizModal';
 import { CodeQuizModal } from '../components/code-quiz/CodeQuizModal';
-import { Sparkles, ShieldCheck, Brain, History, ArrowRight, Code2, Cpu, GraduationCap, FileText, Globe } from 'lucide-react';
+import { Sparkles, ShieldCheck, Brain, History, ArrowRight, Code2, Cpu, GraduationCap, FileText, Globe, Image as ImageIcon } from 'lucide-react';
 
 interface ActiveDraft {
   attemptId: string;
@@ -27,6 +28,7 @@ export function DashboardPage() {
   const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
   const [isUrlModalOpen, setIsUrlModalOpen] = useState(false);
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [isCodeModalOpen, setIsCodeModalOpen] = useState(false);
   const [activeDraft, setActiveDraft] = useState<ActiveDraft | null>(null);
   const [activeCodeDraft, setActiveCodeDraft] = useState<ActiveCodeDraft | null>(null);
@@ -281,6 +283,42 @@ export function DashboardPage() {
             </div>
           </div>
 
+          {/* Card 4: Image to Quiz (Vision AI) */}
+          <div
+            onClick={() => setIsImageModalOpen(true)}
+            className="group bg-gradient-to-b from-slate-900 to-slate-900/90 border border-violet-500/30 hover:border-violet-400 rounded-3xl p-5 transition-all duration-200 cursor-pointer flex flex-col justify-between shadow-xl hover:shadow-violet-500/10 hover:-translate-y-0.5 relative overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 w-32 h-32 bg-violet-500/5 rounded-full blur-2xl pointer-events-none" />
+            <div>
+              <div className="w-11 h-11 rounded-2xl bg-violet-500/10 border border-violet-500/20 text-violet-400 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <ImageIcon className="w-5 h-5" />
+              </div>
+              <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-300 text-[10px] font-bold uppercase tracking-wider mb-2">
+                <Sparkles className="w-3 h-3" />
+                <span>Vision AI</span>
+              </div>
+              <h2 className="text-lg font-bold text-white mb-1.5 group-hover:text-violet-300 transition-colors">
+                Image to Quiz
+              </h2>
+              <p className="text-xs text-slate-400 mb-5 leading-relaxed">
+                Upload architecture diagrams, whiteboard notes, or slides. Multimodal AI extracts visual concepts into quizzes.
+              </p>
+            </div>
+            <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
+              <span className="text-[11px] text-violet-400 font-semibold flex items-center gap-1">
+                <Cpu className="w-3 h-3" />
+                Multimodal
+              </span>
+              <button
+                type="button"
+                className="inline-flex items-center gap-1 text-[11px] font-bold text-white bg-violet-600 group-hover:bg-violet-500 px-3 py-1.5 rounded-xl shadow-md transition"
+              >
+                <span>Upload</span>
+                <ArrowRight className="w-3 h-3" />
+              </button>
+            </div>
+          </div>
+
           {/* Card 4: Topic MCQ Quiz */}
           <div
             onClick={() => setIsGenerateModalOpen(true)}
@@ -403,6 +441,12 @@ export function DashboardPage() {
       <UrlQuizModal
         isOpen={isUrlModalOpen}
         onClose={() => setIsUrlModalOpen(false)}
+      />
+
+      {/* Image / Vision Document to Quiz Modal */}
+      <ImageQuizModal
+        isOpen={isImageModalOpen}
+        onClose={() => setIsImageModalOpen(false)}
       />
     </div>
   );

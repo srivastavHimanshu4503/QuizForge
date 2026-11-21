@@ -11,6 +11,7 @@ import { authRoutes } from './routes/auth.routes';
 import { quizRoutes } from './routes/quiz.routes';
 import { pdfQuizRoutes } from './routes/pdf-quiz.routes';
 import { urlQuizRoutes } from './routes/url-quiz.routes';
+import { imageQuizRoutes } from './routes/image-quiz.routes';
 import { attemptRoutes } from './routes/attempt.routes';
 import { historyRoutes } from './routes/history.routes';
 import { llmRoutes } from './routes/llm.routes';
@@ -81,6 +82,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(quizRoutes, { prefix: '/api/quizzes' });
   await app.register(pdfQuizRoutes, { prefix: '/api/quizzes' });
   await app.register(urlQuizRoutes, { prefix: '/api/quizzes' });
+  await app.register(imageQuizRoutes, { prefix: '/api/quizzes' });
   await app.register(attemptRoutes, { prefix: '/api/attempts' });
   await app.register(historyRoutes, { prefix: '/api/history' });
   await app.register(llmRoutes, { prefix: '/api/llm' });

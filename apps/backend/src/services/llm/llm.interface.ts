@@ -3,12 +3,18 @@ export interface ChatMessage {
   content: string;
 }
 
+export interface ImageAttachment {
+  base64: string;
+  mimeType: string;
+}
+
 export interface LLMCompletionOptions {
   model?: string;
   temperature?: number;
   maxTokens?: number;
   responseFormat?: { type: 'json_object' } | { type: 'text' };
   timeoutMs?: number;
+  image?: ImageAttachment;
 }
 
 export interface LLMCompletionResult {

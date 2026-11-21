@@ -21,6 +21,12 @@ export const generateQuizSchema = z.object({
   difficulty: difficultyEnum.default('mixed'),
   provider: z.string().optional(),
   context: z.string().optional(),
+  image: z
+    .object({
+      base64: z.string(),
+      mimeType: z.string(),
+    })
+    .optional(),
 });
 
 export const rawChoiceSchema = z.object({

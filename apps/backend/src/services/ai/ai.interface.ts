@@ -5,6 +5,10 @@ export interface GenerateQuestionsParams {
   questionCount: number;
   difficulty: QuizDifficulty;
   context?: string;
+  image?: {
+    base64: string;
+    mimeType: string;
+  };
 }
 
 export interface IAIQuestionGenerator {

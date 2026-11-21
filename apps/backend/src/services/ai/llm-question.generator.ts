@@ -51,6 +51,7 @@ Strict Rules:
         {
           responseFormat: { type: 'json_object' },
           temperature: 0.7,
+          image: params.image,
         }
       );
 

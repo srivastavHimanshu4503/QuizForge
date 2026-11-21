@@ -70,9 +70,30 @@ export class GeminiChatProvider implements ILLMProvider {
         config.systemInstruction = systemMsg.content;
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let contents: any;
+      if (options?.image) {
+        const textContent = nonSystemMsgs.length > 0 ? nonSystemMsgs.map((m) => m.content).join('\n\n') : prompt;
+        contents = [
+          {
+            parts: [
+              { text: textContent },
+              {
+                inlineData: {
+                  mimeType: options.image.mimeType,
+                  data: options.image.base64,
+                },
+              },
+            ],
+          },
+        ];
+      } else {
+        contents = nonSystemMsgs.length > 0 ? nonSystemMsgs.map((m) => m.content).join('\n\n') : prompt;
+      }
+
       const generatePromise = this.client.models.generateContent({
         model,
-        contents: nonSystemMsgs.length > 0 ? nonSystemMsgs.map((m) => m.content).join('\n\n') : prompt,
+        contents,
         config,
       });
 

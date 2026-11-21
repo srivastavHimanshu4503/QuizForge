@@ -43,6 +43,7 @@ export const jobStageEnum = z.enum([
   'validating_url',
   'fetching_content',
   'extracting_text',
+  'analyzing_image',
   'chunking',
   'synthesizing_questions',
   'completed',
@@ -80,3 +81,11 @@ export const generateUrlQuizOptionsSchema = z.object({
   provider: z.string().optional(),
 });
 export type GenerateUrlQuizOptions = z.infer<typeof generateUrlQuizOptionsSchema>;
+
+export const generateImageQuizOptionsSchema = z.object({
+  topic: z.string().trim().max(100).optional(),
+  questionCount: z.coerce.number().int().min(1).max(20).default(5),
+  difficulty: z.enum(['easy', 'medium', 'hard', 'mixed']).default('mixed'),
+  provider: z.string().optional(),
+});
+export type GenerateImageQuizOptions = z.infer<typeof generateImageQuizOptionsSchema>;
