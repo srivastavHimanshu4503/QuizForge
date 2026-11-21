@@ -40,6 +40,8 @@ export type JobStatus = z.infer<typeof jobStatusEnum>;
 export const jobStageEnum = z.enum([
   'queued',
   'validating_file',
+  'validating_url',
+  'fetching_content',
   'extracting_text',
   'chunking',
   'synthesizing_questions',
@@ -69,3 +71,12 @@ export const generatePdfQuizOptionsSchema = z.object({
   provider: z.string().optional(),
 });
 export type GeneratePdfQuizOptions = z.infer<typeof generatePdfQuizOptionsSchema>;
+
+export const generateUrlQuizOptionsSchema = z.object({
+  url: z.string().trim().url('Please provide a valid URL (e.g. https://example.com/article)'),
+  topic: z.string().trim().max(100).optional(),
+  questionCount: z.coerce.number().int().min(1).max(20).default(5),
+  difficulty: z.enum(['easy', 'medium', 'hard', 'mixed']).default('mixed'),
+  provider: z.string().optional(),
+});
+export type GenerateUrlQuizOptions = z.infer<typeof generateUrlQuizOptionsSchema>;

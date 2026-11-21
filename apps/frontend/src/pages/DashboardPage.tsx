@@ -4,8 +4,9 @@ import { useAuth } from '../context/AuthContext';
 import { Navbar } from '../components/layout/Navbar';
 import { GenerateQuizModal } from '../components/quiz/GenerateQuizModal';
 import { PdfQuizModal } from '../components/quiz/PdfQuizModal';
+import { UrlQuizModal } from '../components/quiz/UrlQuizModal';
 import { CodeQuizModal } from '../components/code-quiz/CodeQuizModal';
-import { Sparkles, ShieldCheck, Brain, History, ArrowRight, Code2, Cpu, GraduationCap, FileText } from 'lucide-react';
+import { Sparkles, ShieldCheck, Brain, History, ArrowRight, Code2, Cpu, GraduationCap, FileText, Globe } from 'lucide-react';
 
 interface ActiveDraft {
   attemptId: string;
@@ -25,6 +26,7 @@ export function DashboardPage() {
   const { user } = useAuth();
   const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
+  const [isUrlModalOpen, setIsUrlModalOpen] = useState(false);
   const [isCodeModalOpen, setIsCodeModalOpen] = useState(false);
   const [activeDraft, setActiveDraft] = useState<ActiveDraft | null>(null);
   const [activeCodeDraft, setActiveCodeDraft] = useState<ActiveCodeDraft | null>(null);
@@ -169,40 +171,40 @@ export function DashboardPage() {
           </div>
         )}
 
-        {/* 5-Card Interactive Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5">
+        {/* 6-Card Interactive Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
           {/* Card 1: GitHub Code Review Quiz (Highlighted) */}
           <div
             onClick={() => setIsCodeModalOpen(true)}
-            className="group bg-gradient-to-b from-slate-900 to-slate-900/90 border border-amber-500/30 hover:border-amber-400 rounded-3xl p-6 sm:p-7 transition-all duration-200 cursor-pointer flex flex-col justify-between shadow-xl hover:shadow-amber-500/10 hover:-translate-y-0.5 relative overflow-hidden"
+            className="group bg-gradient-to-b from-slate-900 to-slate-900/90 border border-amber-500/30 hover:border-amber-400 rounded-3xl p-5 transition-all duration-200 cursor-pointer flex flex-col justify-between shadow-xl hover:shadow-amber-500/10 hover:-translate-y-0.5 relative overflow-hidden"
           >
             <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-2xl pointer-events-none" />
             <div>
-              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <Code2 className="w-6 h-6" />
+              <div className="w-11 h-11 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <Code2 className="w-5 h-5" />
               </div>
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 text-[11px] font-bold uppercase tracking-wider mb-2">
+              <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 text-[10px] font-bold uppercase tracking-wider mb-2">
                 <Sparkles className="w-3 h-3" />
-                <span>New Mode</span>
+                <span>Code Review</span>
               </div>
-              <h2 className="text-xl font-bold text-white mb-2 group-hover:text-amber-300 transition-colors">
+              <h2 className="text-lg font-bold text-white mb-1.5 group-hover:text-amber-300 transition-colors">
                 GitHub Review
               </h2>
-              <p className="text-xs text-slate-400 mb-6 leading-relaxed">
-                Paste any public GitHub repository. Questions test whether you truly understand every line, comment, and design decision with open-ended LLM grading.
+              <p className="text-xs text-slate-400 mb-5 leading-relaxed">
+                Analyze public GitHub repositories. Tests line-by-line understanding with open-ended LLM evaluation.
               </p>
             </div>
-            <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
-              <span className="text-xs text-amber-400 font-semibold flex items-center gap-1.5">
-                <Cpu className="w-3.5 h-3.5" />
-                Groq • NVIDIA
+            <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
+              <span className="text-[11px] text-amber-400 font-semibold flex items-center gap-1">
+                <Cpu className="w-3 h-3" />
+                Multi-LLM
               </span>
               <button
                 type="button"
-                className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-950 bg-amber-500 group-hover:bg-amber-400 px-3.5 py-2 rounded-xl shadow-md shadow-amber-500/20 transition"
+                className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-950 bg-amber-500 group-hover:bg-amber-400 px-3 py-1.5 rounded-xl shadow-md transition"
               >
-                <span>Review Repo</span>
-                <ArrowRight className="w-3.5 h-3.5" />
+                <span>Review</span>
+                <ArrowRight className="w-3 h-3" />
               </button>
             </div>
           </div>
@@ -210,40 +212,76 @@ export function DashboardPage() {
           {/* Card 2: PDF Document to Quiz */}
           <div
             onClick={() => setIsPdfModalOpen(true)}
-            className="group bg-gradient-to-b from-slate-900 to-slate-900/90 border border-rose-500/30 hover:border-rose-400 rounded-3xl p-6 sm:p-7 transition-all duration-200 cursor-pointer flex flex-col justify-between shadow-xl hover:shadow-rose-500/10 hover:-translate-y-0.5 relative overflow-hidden"
+            className="group bg-gradient-to-b from-slate-900 to-slate-900/90 border border-rose-500/30 hover:border-rose-400 rounded-3xl p-5 transition-all duration-200 cursor-pointer flex flex-col justify-between shadow-xl hover:shadow-rose-500/10 hover:-translate-y-0.5 relative overflow-hidden"
           >
             <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/5 rounded-full blur-2xl pointer-events-none" />
             <div>
-              <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <FileText className="w-6 h-6" />
+              <div className="w-11 h-11 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <FileText className="w-5 h-5" />
               </div>
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-300 text-[11px] font-bold uppercase tracking-wider mb-2">
+              <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-300 text-[10px] font-bold uppercase tracking-wider mb-2">
                 <Sparkles className="w-3 h-3" />
                 <span>PDF Ingest</span>
               </div>
-              <h2 className="text-xl font-bold text-white mb-2 group-hover:text-rose-300 transition-colors">
+              <h2 className="text-lg font-bold text-white mb-1.5 group-hover:text-rose-300 transition-colors">
                 PDF to Quiz
               </h2>
-              <p className="text-xs text-slate-400 mb-6 leading-relaxed">
-                Upload lecture slides, chapters, notes, or research papers. Extracts clean text chunks and creates grounded assessments with async job tracking.
+              <p className="text-xs text-slate-400 mb-5 leading-relaxed">
+                Upload notes, textbook chapters, or slides (up to 15 MB). Extracts text with live async progress.
               </p>
             </div>
-            <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
-              <span className="text-xs text-rose-400 font-semibold flex items-center gap-1.5">
-                <Cpu className="w-3.5 h-3.5" />
-                Async Ingestion
+            <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
+              <span className="text-[11px] text-rose-400 font-semibold flex items-center gap-1">
+                <Cpu className="w-3 h-3" />
+                Async Ingest
               </span>
               <button
                 type="button"
-                className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-rose-600 group-hover:bg-rose-500 px-3.5 py-2 rounded-xl shadow-md shadow-rose-600/20 transition"
+                className="inline-flex items-center gap-1 text-[11px] font-bold text-white bg-rose-600 group-hover:bg-rose-500 px-3 py-1.5 rounded-xl shadow-md transition"
               >
-                <span>Upload PDF</span>
-                <ArrowRight className="w-3.5 h-3.5" />
+                <span>Upload</span>
+                <ArrowRight className="w-3 h-3" />
               </button>
             </div>
           </div>
 
-          {/* Card 2: MCQ Quiz Generation */}
+          {/* Card 3: URL Web Page to Quiz */}
+          <div
+            onClick={() => setIsUrlModalOpen(true)}
+            className="group bg-gradient-to-b from-slate-900 to-slate-900/90 border border-teal-500/30 hover:border-teal-400 rounded-3xl p-5 transition-all duration-200 cursor-pointer flex flex-col justify-between shadow-xl hover:shadow-teal-500/10 hover:-translate-y-0.5 relative overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/5 rounded-full blur-2xl pointer-events-none" />
+            <div>
+              <div className="w-11 h-11 rounded-2xl bg-teal-500/10 border border-teal-500/20 text-teal-400 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <Globe className="w-5 h-5" />
+              </div>
+              <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-300 text-[10px] font-bold uppercase tracking-wider mb-2">
+                <Sparkles className="w-3 h-3" />
+                <span>URL Ingest</span>
+              </div>
+              <h2 className="text-lg font-bold text-white mb-1.5 group-hover:text-teal-300 transition-colors">
+                URL to Quiz
+              </h2>
+              <p className="text-xs text-slate-400 mb-5 leading-relaxed">
+                Provide any article or documentation URL. SSRF-defended with automatic article text extraction.
+              </p>
+            </div>
+            <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
+              <span className="text-[11px] text-teal-400 font-semibold flex items-center gap-1">
+                <ShieldCheck className="w-3 h-3" />
+                SSRF-Safe
+              </span>
+              <button
+                type="button"
+                className="inline-flex items-center gap-1 text-[11px] font-bold text-white bg-teal-600 group-hover:bg-teal-500 px-3 py-1.5 rounded-xl shadow-md transition"
+              >
+                <span>Add URL</span>
+                <ArrowRight className="w-3 h-3" />
+              </button>
+            </div>
+          </div>
+
+          {/* Card 4: Topic MCQ Quiz */}
           <div
             onClick={() => setIsGenerateModalOpen(true)}
             className="group bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-7 hover:border-indigo-500/60 transition-all duration-200 cursor-pointer flex flex-col justify-between shadow-xl hover:shadow-indigo-500/5 hover:-translate-y-0.5"
@@ -359,6 +397,12 @@ export function DashboardPage() {
       <PdfQuizModal
         isOpen={isPdfModalOpen}
         onClose={() => setIsPdfModalOpen(false)}
+      />
+
+      {/* URL / Web Page to Quiz Modal */}
+      <UrlQuizModal
+        isOpen={isUrlModalOpen}
+        onClose={() => setIsUrlModalOpen(false)}
       />
     </div>
   );
