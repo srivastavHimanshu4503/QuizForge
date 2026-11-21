@@ -25,8 +25,11 @@ COPY apps/backend/ ./apps/backend/
 # Build shared package and backend application
 RUN pnpm --filter @quiz-forge/shared build && pnpm --filter @quiz-forge/backend build
 
-# Ensure migrations are bundled into dist
-RUN node -e "import('node:fs').then(f => f.cpSync('apps/backend/src/db/migrations', 'apps/backend/dist/db/migrations', { recursive: true }))"
+# Deploy standalone production bundle with all dependencies to /app/deployed
+RUN pnpm --filter @quiz-forge/backend deploy --legacy /app/deployed
+
+# Ensure migrations are bundled into /app/deployed/dist/db/migrations
+RUN node -e "import('node:fs').then(f => f.cpSync('apps/backend/src/db/migrations', '/app/deployed/dist/db/migrations', { recursive: true }))"
 
 # Stage 2: Production runtime stage
 FROM node:22-slim AS runner
@@ -45,12 +48,8 @@ ENV DATABASE_URL=/app/data/quizforge.db
 # Create volume mount directory for SQLite persistent database
 RUN mkdir -p /app/data && chown -R node:node /app
 
-# Copy built application and production dependencies from builder
-COPY --from=builder --chown=node:node /app/apps/backend/dist ./dist
-COPY --from=builder --chown=node:node /app/apps/backend/package.json ./package.json
-COPY --from=builder --chown=node:node /app/packages/shared/dist ./node_modules/@quiz-forge/shared/dist
-COPY --from=builder --chown=node:node /app/packages/shared/package.json ./node_modules/@quiz-forge/shared/package.json
-COPY --from=builder --chown=node:node /app/node_modules ./node_modules
+# Copy deployed standalone application from builder
+COPY --from=builder --chown=node:node /app/deployed ./
 
 USER node
 
