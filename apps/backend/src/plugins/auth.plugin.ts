@@ -17,6 +17,7 @@ export interface AuthenticatedUser {
   id: string;
   email: string;
   displayName: string;
+  role: 'student' | 'teacher' | 'admin';
 }
 
 declare module 'fastify' {
@@ -25,6 +26,9 @@ declare module 'fastify' {
   }
   interface FastifyInstance {
     authenticate: (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
+    requireRole: (
+      allowedRoles: ('student' | 'teacher' | 'admin')[]
+    ) => (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
   }
 }
 
@@ -72,6 +76,36 @@ const authPluginCallback: FastifyPluginAsync = async (app: FastifyInstance) => {
         id: payload.sub,
         email: payload.email,
         displayName: payload.displayName,
+        role: payload.role,
+      };
+    }
+  );
+
+  app.decorate(
+    'requireRole',
+    (allowedRoles: ('student' | 'teacher' | 'admin')[]) => {
+      return async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
+        if (!request.user) {
+          reply.status(401).send({
+            success: false,
+            error: {
+              code: 'UNAUTHORIZED',
+              message: 'Authentication required. Please log in.',
+            },
+          });
+          return;
+        }
+
+        if (!allowedRoles.includes(request.user.role)) {
+          reply.status(403).send({
+            success: false,
+            error: {
+              code: 'FORBIDDEN',
+              message: `Access denied. Requires one of roles: ${allowedRoles.join(', ')}.`,
+            },
+          });
+          return;
+        }
       };
     }
   );

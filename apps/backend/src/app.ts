@@ -12,6 +12,7 @@ import { attemptRoutes } from './routes/attempt.routes';
 import { historyRoutes } from './routes/history.routes';
 import { llmRoutes } from './routes/llm.routes';
 import { codeQuizRoutes } from './routes/code-quiz.routes';
+import { classroomRoutes } from './routes/classroom.routes';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({
@@ -70,6 +71,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(historyRoutes, { prefix: '/api/history' });
   await app.register(llmRoutes, { prefix: '/api/llm' });
   await app.register(codeQuizRoutes, { prefix: '/api/code-quizzes' });
+  await app.register(classroomRoutes, { prefix: '/api/classrooms' });
 
   // Global Error Handler
   app.setErrorHandler((error: FastifyError | Error, request, reply) => {

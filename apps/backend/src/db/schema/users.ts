@@ -9,6 +9,9 @@ export const users = sqliteTable(
     email: text('email').notNull(),
     passwordHash: text('password_hash').notNull(),
     displayName: text('display_name').notNull(),
+    role: text('role', { enum: ['student', 'teacher', 'admin'] })
+      .notNull()
+      .default('student'),
     createdAt: text('created_at')
       .notNull()
       .$defaultFn(() => new Date().toISOString()),

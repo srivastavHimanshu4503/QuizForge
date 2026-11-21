@@ -9,6 +9,8 @@ import { QuizResultsPage } from './pages/QuizResultsPage';
 import { HistoryPage } from './pages/HistoryPage';
 import { CodeQuizPlayerPage } from './pages/CodeQuizPlayerPage';
 import { CodeQuizResultsPage } from './pages/CodeQuizResultsPage';
+import { ClassroomsPage } from './pages/ClassroomsPage';
+import { StudentAssignmentsPage } from './pages/StudentAssignmentsPage';
 
 export function App() {
   return (
@@ -22,6 +24,22 @@ export function App() {
             element={
               <ProtectedRoute>
                 <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/classrooms"
+            element={
+              <ProtectedRoute>
+                <ClassroomsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/assignments"
+            element={
+              <ProtectedRoute>
+                <StudentAssignmentsPage />
               </ProtectedRoute>
             }
           />

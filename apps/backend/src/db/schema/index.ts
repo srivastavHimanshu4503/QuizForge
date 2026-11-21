@@ -8,4 +8,7 @@ export * from './code-quizzes';
 export * from './code-questions';
 export * from './code-attempts';
 export * from './code-answers';
+export * from './classrooms';
+export * from './classroom-members';
+export * from './quiz-assignments';
 export * from './relations';

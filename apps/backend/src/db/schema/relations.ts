@@ -9,12 +9,48 @@ import { codeQuizzes } from './code-quizzes';
 import { codeQuestions } from './code-questions';
 import { codeAttempts } from './code-attempts';
 import { codeAnswers } from './code-answers';
+import { classrooms } from './classrooms';
+import { classroomMembers } from './classroom-members';
+import { quizAssignments } from './quiz-assignments';
 
 export const usersRelations = relations(users, ({ many }) => ({
   quizzes: many(quizzes),
   attempts: many(quizAttempts),
   codeQuizzes: many(codeQuizzes),
   codeAttempts: many(codeAttempts),
+  taughtClassrooms: many(classrooms),
+  enrollments: many(classroomMembers),
+}));
+
+export const classroomsRelations = relations(classrooms, ({ one, many }) => ({
+  teacher: one(users, {
+    fields: [classrooms.teacherId],
+    references: [users.id],
+  }),
+  members: many(classroomMembers),
+  assignments: many(quizAssignments),
+}));
+
+export const classroomMembersRelations = relations(classroomMembers, ({ one }) => ({
+  classroom: one(classrooms, {
+    fields: [classroomMembers.classroomId],
+    references: [classrooms.id],
+  }),
+  student: one(users, {
+    fields: [classroomMembers.studentId],
+    references: [users.id],
+  }),
+}));
+
+export const quizAssignmentsRelations = relations(quizAssignments, ({ one }) => ({
+  classroom: one(classrooms, {
+    fields: [quizAssignments.classroomId],
+    references: [classrooms.id],
+  }),
+  teacher: one(users, {
+    fields: [quizAssignments.teacherId],
+    references: [users.id],
+  }),
 }));
 
 export const codeQuizzesRelations = relations(codeQuizzes, ({ one, many }) => ({

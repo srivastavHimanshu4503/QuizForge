@@ -1,5 +1,8 @@
 import { z } from 'zod';
 
+export const userRoleEnum = z.enum(['student', 'teacher', 'admin']);
+export type UserRole = z.infer<typeof userRoleEnum>;
+
 export const registerSchema = z.object({
   email: z
     .string()
@@ -16,6 +19,7 @@ export const registerSchema = z.object({
     .trim()
     .min(2, 'Display name must be at least 2 characters')
     .max(100, 'Display name cannot exceed 100 characters'),
+  role: userRoleEnum.default('student'),
 });
 
 export const loginSchema = z.object({
@@ -38,6 +42,7 @@ export const userProfileSchema = z.object({
   id: z.string().uuid(),
   email: z.string().email(),
   displayName: z.string(),
+  role: userRoleEnum.default('student'),
   createdAt: z.string(),
 });
 

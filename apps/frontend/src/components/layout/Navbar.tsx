@@ -28,6 +28,20 @@ export function Navbar() {
                   Dashboard
                 </Link>
                 <Link
+                  to="/classrooms"
+                  className="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition"
+                >
+                  Classrooms
+                </Link>
+                {user.role === 'student' && (
+                  <Link
+                    to="/assignments"
+                    className="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition"
+                  >
+                    Assignments
+                  </Link>
+                )}
+                <Link
                   to="/history"
                   className="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition"
                 >
@@ -44,10 +58,23 @@ export function Navbar() {
                   <User className="w-3.5 h-3.5" />
                 </div>
                 <div className="text-left">
-                  <p className="text-xs font-semibold text-slate-200 leading-none">
-                    {user.displayName}
-                  </p>
-                  <p className="text-[10px] text-slate-400 leading-tight">
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-xs font-semibold text-slate-200 leading-none">
+                      {user.displayName}
+                    </p>
+                    <span
+                      className={`text-[9px] font-bold px-1.5 py-0.2 rounded uppercase ${
+                        user.role === 'teacher'
+                          ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+                          : user.role === 'admin'
+                          ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                          : 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
+                      }`}
+                    >
+                      {user.role}
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-slate-400 leading-tight mt-0.5">
                     {user.email}
                   </p>
                 </div>

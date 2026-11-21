@@ -8,6 +8,7 @@ export function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [role, setRole] = useState<'student' | 'teacher'>('student');
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -40,6 +41,7 @@ export function RegisterPage() {
         displayName: displayName.trim(),
         email: email.trim(),
         password,
+        role,
       });
       navigate('/', { replace: true });
     } catch {
@@ -75,6 +77,36 @@ export function RegisterPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">
+                I am registering as
+              </label>
+              <div className="grid grid-cols-2 gap-2 p-1 bg-slate-950/80 rounded-xl border border-slate-700/80">
+                <button
+                  type="button"
+                  onClick={() => setRole('student')}
+                  className={`py-2 text-xs font-semibold rounded-lg transition ${
+                    role === 'student'
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  Student
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRole('teacher')}
+                  className={`py-2 text-xs font-semibold rounded-lg transition ${
+                    role === 'teacher'
+                      ? 'bg-purple-600 text-white shadow-sm'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  Teacher / Instructor
+                </button>
+              </div>
+            </div>
+
             <div>
               <label
                 htmlFor="displayName"

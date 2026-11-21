@@ -31,10 +31,12 @@ export const quizAttempts = sqliteTable(
       .notNull()
       .$defaultFn(() => new Date().toISOString()),
     completedAt: text('completed_at'),
+    assignmentId: text('assignment_id'),
   },
   (table) => [
-    uniqueIndex('attempts_quiz_id_attempt_number_idx').on(table.quizId, table.attemptNumber),
+    uniqueIndex('attempts_quiz_user_attempt_number_idx').on(table.quizId, table.userId, table.attemptNumber),
     index('attempts_user_id_completed_at_idx').on(table.userId, table.completedAt),
+    index('attempts_assignment_id_idx').on(table.assignmentId),
   ]
 );
 

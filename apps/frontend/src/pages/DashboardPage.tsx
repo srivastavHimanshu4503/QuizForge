@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { Navbar } from '../components/layout/Navbar';
 import { GenerateQuizModal } from '../components/quiz/GenerateQuizModal';
 import { CodeQuizModal } from '../components/code-quiz/CodeQuizModal';
-import { Sparkles, ShieldCheck, Brain, History, ArrowRight, Code2, Cpu } from 'lucide-react';
+import { Sparkles, ShieldCheck, Brain, History, ArrowRight, Code2, Cpu, GraduationCap } from 'lucide-react';
 
 interface ActiveDraft {
   attemptId: string;
@@ -167,8 +167,8 @@ export function DashboardPage() {
           </div>
         )}
 
-        {/* 3-Card Interactive Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* 4-Card Interactive Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Card 1: GitHub Code Review Quiz (Highlighted) */}
           <div
             onClick={() => setIsCodeModalOpen(true)}
@@ -236,7 +236,36 @@ export function DashboardPage() {
             </div>
           </div>
 
-          {/* Card 3: Past Quizzes & History */}
+          {/* Card 3: Classrooms & Assigned Tasks */}
+          <Link
+            to={user?.role === 'teacher' ? '/classrooms' : '/assignments'}
+            className="group bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-7 hover:border-purple-500/60 transition-all duration-200 cursor-pointer flex flex-col justify-between shadow-xl hover:shadow-purple-500/5 hover:-translate-y-0.5"
+          >
+            <div>
+              <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <GraduationCap className="w-6 h-6" />
+              </div>
+              <h2 className="text-xl font-bold text-white mb-2 group-hover:text-purple-300 transition-colors">
+                {user?.role === 'teacher' ? 'Classrooms Studio' : 'Assigned Quizzes'}
+              </h2>
+              <p className="text-xs text-slate-400 mb-6 leading-relaxed">
+                {user?.role === 'teacher'
+                  ? 'Create student cohorts, generate join codes, assign quizzes with deadlines, and view gradebook analytics.'
+                  : 'View authorized tasks assigned by instructors, attempt quizzes before due dates, and track your best scores.'}
+              </p>
+            </div>
+            <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
+              <span className="text-xs text-purple-400 font-semibold">
+                {user?.role === 'teacher' ? 'Manage Classrooms' : 'View Tasks'}
+              </span>
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-slate-800 group-hover:bg-purple-600 px-3.5 py-2 rounded-xl transition">
+                <span>Open</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </div>
+            </div>
+          </Link>
+
+          {/* Card 4: Past Quizzes & History */}
           <Link
             to="/history"
             className="group bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-7 hover:border-cyan-500/60 transition-all duration-200 cursor-pointer flex flex-col justify-between shadow-xl hover:shadow-cyan-500/5 hover:-translate-y-0.5"

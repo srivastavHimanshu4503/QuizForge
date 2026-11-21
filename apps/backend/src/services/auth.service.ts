@@ -39,6 +39,7 @@ export class AuthService {
     }
 
     const passwordHash = await hashPassword(input.password);
+    const userRole = input.role || 'student';
 
     const [newUser] = database
       .insert(users)
@@ -46,6 +47,7 @@ export class AuthService {
         email: normalizedEmail,
         passwordHash,
         displayName: input.displayName.trim(),
+        role: userRole,
       })
       .returning()
       .all();
@@ -58,12 +60,14 @@ export class AuthService {
       sub: newUser.id,
       email: newUser.email,
       displayName: newUser.displayName,
+      role: newUser.role,
     });
 
     const userProfile: UserProfile = {
       id: newUser.id,
       email: newUser.email,
       displayName: newUser.displayName,
+      role: newUser.role,
       createdAt: newUser.createdAt,
     };
 
@@ -95,12 +99,14 @@ export class AuthService {
       sub: user.id,
       email: user.email,
       displayName: user.displayName,
+      role: user.role,
     });
 
     const userProfile: UserProfile = {
       id: user.id,
       email: user.email,
       displayName: user.displayName,
+      role: user.role,
       createdAt: user.createdAt,
     };
 
@@ -122,6 +128,7 @@ export class AuthService {
       id: user.id,
       email: user.email,
       displayName: user.displayName,
+      role: user.role,
       createdAt: user.createdAt,
     };
   }
