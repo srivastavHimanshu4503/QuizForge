@@ -1,6 +1,7 @@
 import { buildApp } from './app';
 import { env } from './config/env';
 import { runMigrations } from './db/migrate';
+import { sqlite } from './db/index';
 
 async function start() {
   try {
@@ -19,7 +20,13 @@ async function start() {
 
     const shutdown = async (signal: string) => {
       console.log(`\nReceived ${signal}. Shutting down gracefully...`);
-      await app.close();
+      try {
+        await app.close();
+        sqlite.close();
+        console.log('Server and database connections successfully closed.');
+      } catch (closeErr) {
+        console.error('Error during shutdown:', closeErr);
+      }
       process.exit(0);
     };
 
