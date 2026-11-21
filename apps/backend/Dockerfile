@@ -11,7 +11,7 @@ WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
 # Copy root workspace and package files for efficient layer caching
-COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml tsconfig.base.json ./
 COPY packages/shared/package.json ./packages/shared/
 COPY apps/backend/package.json ./apps/backend/
 
@@ -27,9 +27,6 @@ RUN pnpm --filter @quiz-forge/shared build && pnpm --filter @quiz-forge/backend 
 
 # Ensure migrations are bundled into dist
 RUN node -e "import('node:fs').then(f => f.cpSync('apps/backend/src/db/migrations', 'apps/backend/dist/db/migrations', { recursive: true }))"
-
-# Prune dev dependencies for lean production deployment
-RUN pnpm --filter @quiz-forge/backend deploy --prod /app/pruned
 
 # Stage 2: Production runtime stage
 FROM node:22-slim AS runner
