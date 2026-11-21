@@ -87,6 +87,38 @@ export function LoginPage() {
         </div>
 
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl">
+          {/* Quick Demo Credentials */}
+          <div className="mb-6 p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 text-xs text-slate-300">
+            <div className="font-semibold text-slate-200 mb-2 flex items-center justify-between">
+              <span>Demo Accounts (Click to Fill)</span>
+              <span className="text-[10px] text-cyan-400 font-mono">Pass: QuizForge2026!</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail('teacher@quizforge.dev');
+                  setPassword('QuizForge2026!');
+                  setFormError(null);
+                }}
+                className="px-2.5 py-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 text-center font-medium transition"
+              >
+                Teacher (Instructor)
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail('student@quizforge.dev');
+                  setPassword('QuizForge2026!');
+                  setFormError(null);
+                }}
+                className="px-2.5 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-center font-medium transition"
+              >
+                Student (Learner)
+              </button>
+            </div>
+          </div>
+
           {displayError && (
             <div className="mb-6 p-4 rounded-xl bg-rose-950/40 border border-rose-800/60 flex items-start gap-3 text-rose-300 text-sm">
               <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />

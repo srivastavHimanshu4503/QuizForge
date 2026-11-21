@@ -1,12 +1,14 @@
 import { buildApp } from './app';
 import { env } from './config/env';
 import { runMigrations } from './db/migrate';
+import { seedDemoUsers } from './db/seed';
 import { sqlite } from './db/index';
 
 async function start() {
   try {
     // Run DB migrations automatically on startup
     runMigrations();
+    await seedDemoUsers();
 
     const app = await buildApp();
 

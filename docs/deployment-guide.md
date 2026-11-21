@@ -28,6 +28,11 @@ The application will be accessible at:
 - **Web Interface:** `http://localhost` (or your domain/IP)
 - **API Health Check:** `http://localhost/api/health`
 
+### Default Demo Accounts
+For immediate login and testing out-of-the-box:
+- **Teacher Account:** `teacher@quizforge.dev` / `QuizForge2026!` (Role: `teacher`)
+- **Student Account:** `student@quizforge.dev` / `QuizForge2026!` (Role: `student`)
+
 ---
 
 ## 2. Architecture Overview

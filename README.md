@@ -117,7 +117,21 @@ quiz-forge/
 
 ---
 
-## 4. Quick Start & Local Development
+## 4. Default Demo Accounts
+
+QuizForge comes pre-configured with two role-specific demo accounts for instant evaluation and testing:
+
+| Role | Email | Password | Display Name | Permissions & Features |
+| :--- | :--- | :--- | :--- | :--- |
+| **Teacher (Instructor)** | `teacher@quizforge.dev` | `QuizForge2026!` | Prof. Alan Turing | Create & manage classrooms, issue quiz assignments with deadlines, access Quiz Review Studio (`/studio/:quizId`), publish & share quizzes. |
+| **Student (Learner)** | `student@quizforge.dev` | `QuizForge2026!` | Ada Lovelace | Join classrooms with 6-character codes, attempt assigned quizzes, review historical scores, retake past assessments with zero AI costs. |
+
+> [!TIP]
+> On the Web Login Page (`/login`), you can click the **Teacher** or **Student** button to instantly auto-fill credentials, then solve the quick security challenge to sign in. Custom accounts can also be created anytime via the `/register` page.
+
+---
+
+## 5. Quick Start & Local Development
 
 ### Prerequisites
 - **Node.js 22+**
