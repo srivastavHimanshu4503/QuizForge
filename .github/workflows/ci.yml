@@ -35,6 +35,9 @@ jobs:
       - name: Monorepo Typecheck
         run: pnpm typecheck
 
+      - name: Run Database Migrations
+        run: pnpm db:migrate
+
       - name: Automated Test Suite (132 Tests)
         run: pnpm test
 
