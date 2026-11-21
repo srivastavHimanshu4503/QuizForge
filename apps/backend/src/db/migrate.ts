@@ -38,8 +38,15 @@ export function runMigrations(database = db, migrationsFolder?: string) {
   console.log('[Migrations] All migrations successfully applied.');
 }
 
-// Allow direct execution
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+// Allow direct execution only when explicitly invoked as a migration script
+const isDirectExecution = () => {
+  if (!process.argv[1]) return false;
+  const executedFile = path.resolve(process.argv[1]);
+  const base = path.basename(executedFile);
+  return base.startsWith('migrate');
+};
+
+if (isDirectExecution()) {
   try {
     runMigrations();
     process.exit(0);
