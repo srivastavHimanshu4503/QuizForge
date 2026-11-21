@@ -109,3 +109,4 @@ export class LLMProviderRegistry {
 }
 
 export const llmRegistry = new LLMProviderRegistry();
+export const providerRegistry = llmRegistry;

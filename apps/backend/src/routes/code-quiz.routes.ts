@@ -74,7 +74,6 @@ export const codeQuizRoutes: FastifyPluginAsync = async (app: FastifyInstance) =
   };
 
   app.post<{ Params: { quizId: string } }>('/:quizId/restart', handleRestart);
-  app.post<{ Params: { quizId: string } }>('/quizzes/:quizId/restart', handleRestart);
 
   // GET /api/code-quizzes/attempts/:attemptId
   app.get<{ Params: { attemptId: string } }>('/attempts/:attemptId', async (request, reply) => {

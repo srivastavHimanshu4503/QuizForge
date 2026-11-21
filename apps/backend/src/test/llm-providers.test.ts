@@ -4,6 +4,9 @@ import { NvidiaProvider } from '../services/llm/nvidia.provider';
 import { GeminiChatProvider } from '../services/llm/gemini-chat.provider';
 import { LLMProviderRegistry } from '../services/llm/provider-registry';
 import { LLMProviderError } from '../services/llm/llm.interface';
+import { MockLLMProvider } from '../services/llm/mock-llm.provider';
+import { LLMQuestionGenerator } from '../services/ai/llm-question.generator';
+import { AIProviderError } from '../services/ai/ai.interface';
 
 describe('LLM Providers & Registry', () => {
   const originalFetch = globalThis.fetch;
@@ -178,6 +181,114 @@ describe('LLM Providers & Registry', () => {
       expect(list.some((p) => p.id === 'groq')).toBe(true);
       expect(list.some((p) => p.id === 'nvidia')).toBe(true);
       expect(list.some((p) => p.id === 'gemini')).toBe(true);
+    });
+  });
+
+  describe('LLMQuestionGenerator (Unified AI Layer)', () => {
+    it('generates valid MCQ questions from ILLMProvider and strips markdown fences', async () => {
+      const mockLLM = new MockLLMProvider('mock-mcq');
+      const sampleJSON = JSON.stringify({
+        questions: [
+          {
+            question_id: 'q_gen_1',
+            question: 'What is the primary role of a reverse proxy like NGINX?',
+            choices: [
+              { choice_id: 'A', option_text: 'Load balancing and SSL termination' },
+              { choice_id: 'B', option_text: 'Direct hard-drive formatting' },
+              { choice_id: 'C', option_text: 'Executing GPU shader code' },
+              { choice_id: 'D', option_text: 'Recompiling kernel binaries' },
+            ],
+            correct_answer_id: 'A',
+            explanation: 'Reverse proxies act as intermediaries to handle TLS, caching, and traffic distribution.',
+          },
+        ],
+      });
+
+      // Wrap in markdown code fence to test fence stripper
+      mockLLM.setMockResponse(`\`\`\`json\n${sampleJSON}\n\`\`\``);
+
+      const generator = new LLMQuestionGenerator(mockLLM);
+      const questions = await generator.generateQuestions({
+        topic: 'Reverse Proxies',
+        questionCount: 1,
+        difficulty: 'medium',
+      });
+
+      expect(questions).toHaveLength(1);
+      expect(questions[0]?.question_id).toBe('q_gen_1');
+      expect(questions[0]?.choices).toHaveLength(4);
+      expect(questions[0]?.correct_answer_id).toBe('A');
+    });
+
+    it('maps LLMProviderError rate limits to AIProviderError (429)', async () => {
+      const failingLLM = {
+        name: 'failing-mock',
+        defaultModel: 'model-fail',
+        isAvailable: true,
+        async chatCompletion(): Promise<never> {
+          throw new LLMProviderError('Groq rate limit exceeded', 'failing-mock', 'RATE_LIMIT', 429);
+        },
+      };
+
+      const generator = new LLMQuestionGenerator(failingLLM);
+      await expect(
+        generator.generateQuestions({
+          topic: 'Failure Test',
+          questionCount: 1,
+          difficulty: 'easy',
+        })
+      ).rejects.toThrow(AIProviderError);
+
+      try {
+        await generator.generateQuestions({
+          topic: 'Failure Test',
+          questionCount: 1,
+          difficulty: 'easy',
+        });
+      } catch (err: unknown) {
+        expect(err).toBeInstanceOf(AIProviderError);
+        expect((err as AIProviderError).code).toBe('AI_RATE_LIMIT');
+        expect((err as AIProviderError).statusCode).toBe(429);
+      }
+    });
+
+    it('maps LLMProviderError timeouts to AIProviderError (504)', async () => {
+      const timeoutLLM = {
+        name: 'timeout-mock',
+        defaultModel: 'model-timeout',
+        isAvailable: true,
+        async chatCompletion(): Promise<never> {
+          throw new LLMProviderError('Request timed out after 45000ms', 'timeout-mock', 'TIMEOUT', 504);
+        },
+      };
+
+      const generator = new LLMQuestionGenerator(timeoutLLM);
+      try {
+        await generator.generateQuestions({
+          topic: 'Timeout Test',
+          questionCount: 1,
+          difficulty: 'hard',
+        });
+        expect.fail('Should have thrown');
+      } catch (err: unknown) {
+        expect(err).toBeInstanceOf(AIProviderError);
+        expect((err as AIProviderError).code).toBe('AI_TIMEOUT');
+        expect((err as AIProviderError).statusCode).toBe(504);
+      }
+    });
+
+    it('throws AI_INVALID_RESPONSE if LLM returns malformed JSON', async () => {
+      const malformedLLM = new MockLLMProvider('malformed-mock');
+      malformedLLM.setMockResponse('This is not JSON at all');
+
+      const generator = new LLMQuestionGenerator(malformedLLM);
+      await expect(
+        generator.generateQuestions({
+          topic: 'JSON Failure',
+          questionCount: 1,
+          difficulty: 'easy',
+        })
+      ).rejects.toThrow(/Failed to parse JSON response/i);
     });
   });
 });

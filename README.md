@@ -1,6 +1,6 @@
-# QuizForge — AI-Powered MCQ Quiz Platform
+# QuizForge — AI-Powered Quiz & Assessment Platform
 
-**QuizForge** is an enterprise-grade full-stack multiple-choice quiz platform powered by Google Gemini 2.5 Flash. It enables authenticated users to dynamically generate custom quizzes on any topic, attempt them through an interactive single-question interface with real-time autosaving, examine authoritative answer explanations, and retake quizzes in a freshly shuffled order with zero AI API costs.
+**QuizForge** is an enterprise-grade, multi-source knowledge assessment platform powered by an interchangeable multi-LLM engine (Groq, NVIDIA NIM, Google Gemini). It enables authenticated users to generate quizzes across topics, perform adversarial code-review assessments on public GitHub repositories, attempt quizzes through an interactive single-question interface with real-time autosaving, examine pedagogical explanations, and retake quizzes in a freshly shuffled order with zero AI API costs.
 
 ---
 
@@ -22,31 +22,29 @@ quiz-forge/
 | **Frontend SPA** | **React 19 + Vite 6** | Ultra-responsive client-side SPA with instant Hot Module Replacement (HMR). |
 | **Styling** | **Tailwind CSS 3** | Modern dark-mode interface with accessible components. |
 | **Database & ORM** | **SQLite (better-sqlite3) + Drizzle ORM** | High-performance WAL mode with foreign-key enforcement and migration pipeline. |
-| **AI Integration** | **Google Gen AI SDK (`@google/genai`)** | Server-side Gemini 2.5 Flash with structured JSON `responseSchema` and retries. |
+| **AI Integration** | **Multi-Provider Engine** | Groq (Llama 3.3 70B), NVIDIA NIM, Google Gemini (2.5 Flash), and deterministic mock fallback. |
 | **Authentication** | **JWT via `jose` + `bcryptjs`** | Stateless sessions stored in `HttpOnly`, `SameSite=Strict`, `Secure` cookies. |
-| **Testing** | **Vitest 3** | Fast automated unit, integration, and end-to-end test suites. |
+| **Testing** | **Vitest 3** | Fast automated unit, integration, security, and end-to-end test suites (77+ tests). |
 
 ---
 
-## 2. Core Functional Requirements & Lifecycle
+## 2. Core Capabilities
 
-QuizForge strictly implements all 10 core product requirements:
-
-1. **Authentication:** User registration, password hashing (12 salt rounds), login, and session restoration.
-2. **AI Generation:** Server-side Gemini 2.5 Flash integration via an adapter pattern (`IAIQuestionGenerator`). The Gemini API key is never exposed to the frontend.
-3. **Difficulty Tiers:** Support for `Easy`, `Medium`, `Hard`, and `Mixed` assessment levels with difficulty-tailored system prompts.
-4. **Data Contract & Two-Tier Validation:** AI outputs are validated by Gemini structured schemas and verified by Zod runtime domain rules (enforcing exactly 4 unique choices `A`, `B`, `C`, `D`, unique distractors, and no duplicate questions).
-5. **Interactive Single-Question Player:** Displays one question at a time with option selection, progress bar, and autosave feedback.
-6. **Navigation & Answer Persistence:** Previous and Next buttons with answer preservation across page transitions.
-7. **Question Navigation Palette:** Interactive palette visually distinguishing Answered (emerald badge), Unanswered (slate badge), and Current Active (indigo ring) questions with jump-to-question navigation.
-8. **Anti-Cheat Security:** Correct choice IDs and explanations remain strictly server-side until the attempt is submitted.
-9. **Server-Side Scoring:** Scores and accuracy percentages are calculated on the server. Never trusts client-reported scores.
-10. **Three Distinct Lifecycle Operations:**
-    - **Restart Quiz:** Reuses existing database questions, creates a new attempt, shuffles presentation order via Fisher-Yates, and resets answers with **zero Gemini API calls**.
-    - **Next Quiz:** Generates fresh questions via Google Gemini as a separate quiz entity.
-    - **History:** Paginated record of user's past completed attempts with score reviews and retake triggers.
-
----
+1. **Multi-Source Assessments:**
+   - **Topic MCQ:** Conceptual and factual multiple-choice assessments generated from user prompts and difficulty levels.
+   - **GitHub Code Review:** Adversarial code comprehension assessments analyzing public repositories with tiered file priority and comment intent detection.
+2. **Universal Multi-LLM Provider Engine:**
+   - Interchangeable provider registry supporting **Groq**, **NVIDIA NIM**, **Google Gemini**, and local **Mock**.
+   - Automatic fallback and structured Zod output validation.
+3. **Interactive Player & Anti-Cheat:**
+   - Displays questions with interactive palette, progress indicators, and optimistic autosave.
+   - Correct answers and pedagogical explanations are strictly withheld server-side until final submission.
+4. **Scoring & Qualitative Evaluation:**
+   - Server-side scoring for MCQs; 0–10 rubric-based semantic evaluation with feedback for open-ended code review answers.
+5. **Zero-AI Retakes:**
+   - Quizzes can be restarted with shuffled question orders preserving original questions without additional AI API costs.
+6. **Unified Quiz History:**
+   - Single unified timeline across all assessment types (MCQ and Code Review) with filterable views.
 
 ## 3. Database Schema
 
@@ -131,7 +129,7 @@ A normalized relational schema managed with Drizzle ORM and SQLite (WAL mode):
 
 ## 6. Testing & Quality Assurance
 
-Run the comprehensive automated test suite (45 automated tests covering database integrity, WAL mode, foreign keys, authentication, AI schemas, quiz engine, anti-tampering, security headers, and the complete 10-step lifecycle):
+Run the comprehensive automated test suite (77+ automated tests across 10 test suites covering database integrity, WAL mode, foreign keys, authentication, AI schemas, quiz engine, anti-tampering, security headers, GitHub code ingestion, multi-LLM providers, and the complete quiz lifecycle):
 
 ```bash
 # Run all automated tests

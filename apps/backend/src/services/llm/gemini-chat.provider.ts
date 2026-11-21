@@ -59,6 +59,7 @@ export class GeminiChatProvider implements ILLMProvider {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const config: any = {
         temperature: options?.temperature ?? 0.3,
+        abortSignal: controller.signal,
       };
 
       if (options?.responseFormat?.type === 'json_object') {
@@ -69,11 +70,26 @@ export class GeminiChatProvider implements ILLMProvider {
         config.systemInstruction = systemMsg.content;
       }
 
-      const response = await this.client.models.generateContent({
+      const generatePromise = this.client.models.generateContent({
         model,
         contents: nonSystemMsgs.length > 0 ? nonSystemMsgs.map((m) => m.content).join('\n\n') : prompt,
         config,
       });
+
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        controller.signal.addEventListener('abort', () => {
+          reject(
+            new LLMProviderError(
+              `Gemini request timed out after ${timeoutMs}ms.`,
+              this.name,
+              'TIMEOUT',
+              504
+            )
+          );
+        });
+      });
+
+      const response = await Promise.race([generatePromise, timeoutPromise]);
 
       const content = response.text;
       if (typeof content !== 'string' || content.trim().length === 0) {

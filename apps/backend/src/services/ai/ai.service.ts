@@ -6,8 +6,9 @@ import {
 } from '@quiz-forge/shared';
 import { env } from '../../config/env';
 import { IAIQuestionGenerator, AIProviderError } from './ai.interface';
-import { GeminiQuestionGenerator } from './gemini.provider';
 import { MockQuestionGenerator } from './mock.provider';
+import { LLMQuestionGenerator } from './llm-question.generator';
+import { providerRegistry } from '../llm/provider-registry';
 
 export class AIService {
   private provider: IAIQuestionGenerator;
@@ -15,15 +16,13 @@ export class AIService {
   constructor(customProvider?: IAIQuestionGenerator) {
     if (customProvider) {
       this.provider = customProvider;
-    } else if (
-      env.NODE_ENV === 'test' ||
-      !env.GEMINI_API_KEY ||
-      env.GEMINI_API_KEY === 'dev_gemini_key'
-    ) {
-      // In tests or when key is dummy/missing, default to Mock provider
+    } else if (env.NODE_ENV === 'test') {
+      // In tests, default to Mock provider
       this.provider = new MockQuestionGenerator();
     } else {
-      this.provider = new GeminiQuestionGenerator();
+      // Production / runtime: use unified LLM provider registry default
+      const defaultLLM = providerRegistry.getDefaultProvider();
+      this.provider = new LLMQuestionGenerator(defaultLLM);
     }
   }
 
@@ -35,12 +34,23 @@ export class AIService {
     return this.provider;
   }
 
-  async generateQuizQuestions(input: GenerateQuizInput): Promise<GeneratedQuestion[]> {
+  async generateQuizQuestions(
+    input: GenerateQuizInput,
+    preferredProvider?: string
+  ): Promise<GeneratedQuestion[]> {
     // 1. Validate generation parameters
     const params = generateQuizSchema.parse(input);
 
-    // 2. Delegate to AI Provider
-    const rawQuestions = await this.provider.generateQuestions({
+    // 2. Select provider: either explicitly requested, or current provider
+    let activeGenerator = this.provider;
+    const requestedProvider = preferredProvider || input.provider;
+    if (requestedProvider && requestedProvider.trim().length > 0) {
+      const llm = providerRegistry.get(requestedProvider);
+      activeGenerator = new LLMQuestionGenerator(llm);
+    }
+
+    // 3. Delegate to AI Provider
+    const rawQuestions = await activeGenerator.generateQuestions({
       topic: params.topic,
       questionCount: params.questionCount,
       difficulty: params.difficulty,

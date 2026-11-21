@@ -28,8 +28,8 @@ export class QuizService {
     totalQuestions: number;
     status: 'in_progress';
   }> {
-    // 1. Generate questions via AI Provider
-    const generatedQuestions = await aiService.generateQuizQuestions(input);
+    // 1. Generate questions via AI Provider (supporting multi-provider selection)
+    const generatedQuestions = await aiService.generateQuizQuestions(input, input.provider);
 
     const quizId = crypto.randomUUID();
     const attemptId = crypto.randomUUID();
@@ -45,7 +45,7 @@ export class QuizService {
           topic: input.topic.trim(),
           difficulty: input.difficulty,
           questionCount: generatedQuestions.length,
-          aiModel: env.GEMINI_MODEL,
+          aiModel: input.provider || env.GEMINI_MODEL,
         })
         .run();
 

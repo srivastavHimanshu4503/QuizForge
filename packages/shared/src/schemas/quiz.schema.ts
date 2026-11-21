@@ -19,6 +19,7 @@ export const generateQuizSchema = z.object({
     .max(30, 'Maximum question count is 30')
     .default(5),
   difficulty: difficultyEnum.default('mixed'),
+  provider: z.string().optional(),
 });
 
 export const rawChoiceSchema = z.object({
