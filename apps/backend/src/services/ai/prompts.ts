@@ -36,7 +36,7 @@ ${contextSection}
 ${visionSection}
 CRITICAL ASSESSMENT RULES:
 1. Generate EXACTLY ${questionCount} distinct, high-quality multiple choice questions.
-2. Each question MUST have exactly four options labeled 'A', 'B', 'C', and 'D'.
+2. Each question MUST have exactly four options labeled 'A', 'B', 'C', and 'D' using the format: {"choice_id": "A", "option_text": "..."}.
 3. EXACTLY ONE choice is correct. The remaining three choices must be plausible, realistic distractors that demonstrate common misconceptions.
 4. DO NOT use "All of the above", "None of the above", or "Both A and B" options.
 5. All 4 option texts for each question must be completely distinct from one another.

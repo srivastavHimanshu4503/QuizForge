@@ -15,7 +15,7 @@ export class GroqProvider implements ILLMProvider {
 
   constructor(options?: { apiKey?: string; defaultModel?: string }) {
     this.apiKey = options?.apiKey !== undefined ? options.apiKey : env.GROQ_API_KEY;
-    this.defaultModel = options?.defaultModel || env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+    this.defaultModel = options?.defaultModel || env.GROQ_MODEL || 'openai/gpt-oss-120b';
   }
 
   get isAvailable(): boolean {

@@ -189,4 +189,57 @@ describe('AI Question Generator & Validation Subsystem', () => {
     expect(hardPrompt).toContain('Target Level: HARD');
     expect(hardPrompt).toContain('edge cases');
   });
+
+  it('resiliently normalizes LLM string choices, alternative key names, and reasoning fields', () => {
+    // Simulates raw LLM output with string choices, correct_answer instead of correct_answer_id, and reason instead of explanation
+    const rawLLMOutput = {
+      questions: [
+        {
+          id: 'gen_q1',
+          question_text: 'What is the main benefit of Write-Ahead Logging (WAL) in databases?',
+          choices: [
+            'Immediate in-place writes to disk tables',
+            'B: Atomic durability and append-only write performance',
+            'Automatic multi-region replication',
+            'Eliminating all indexing requirements',
+          ],
+          correct_answer: 'B',
+          reason: 'WAL guarantees durability by appending changes sequentially before flushing table pages.',
+        },
+        {
+          id: 'gen_q2',
+          prompt: 'Which protocol is commonly used for distributed consensus in etcd and Consul?',
+          options: {
+            A: 'Paxos',
+            B: 'Raft',
+            C: 'Two-Phase Commit',
+            D: 'Gossip',
+          },
+          correctAnswer: 'B',
+          rationale: 'Raft is specifically designed for understandable distributed consensus in modern systems.',
+        },
+      ],
+    };
+
+    const result = generatedQuizResponseSchema.safeParse(rawLLMOutput);
+    expect(result.success).toBe(true);
+
+    if (result.success) {
+      const q1 = result.data.questions[0]!;
+      expect(q1.question_id).toBe('gen_q1');
+      expect(q1.correct_answer_id).toBe('B');
+      expect(q1.choices).toHaveLength(4);
+      expect(q1.choices[0]!.choice_id).toBe('A');
+      expect(q1.choices[1]!.choice_id).toBe('B');
+      expect(q1.choices[1]!.option_text).toBe('Atomic durability and append-only write performance');
+      expect(q1.explanation).toContain('WAL guarantees durability');
+
+      const q2 = result.data.questions[1]!;
+      expect(q2.question_id).toBe('gen_q2');
+      expect(q2.correct_answer_id).toBe('B');
+      expect(q2.choices).toHaveLength(4);
+      expect(q2.choices[0]!.option_text).toBe('Paxos');
+      expect(q2.choices[1]!.option_text).toBe('Raft');
+    }
+  });
 });

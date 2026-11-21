@@ -31,6 +31,7 @@ export function GenerateQuizModal({ isOpen, onClose }: GenerateQuizModalProps) {
   const [topic, setTopic] = useState('');
   const [questionCount, setQuestionCount] = useState<number>(5);
   const [difficulty, setDifficulty] = useState<QuizDifficulty>('mixed');
+  const [provider, setProvider] = useState<string>('groq');
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -58,6 +59,7 @@ export function GenerateQuizModal({ isOpen, onClose }: GenerateQuizModalProps) {
         topic: topic.trim(),
         questionCount,
         difficulty,
+        provider,
       });
 
       // Save initial attempt info to localStorage so it is resilient across reloads
@@ -214,6 +216,78 @@ export function GenerateQuizModal({ isOpen, onClose }: GenerateQuizModalProps) {
             </div>
           </div>
 
+          {/* AI Model Provider */}
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2 flex items-center justify-between">
+              <span>AI Engine / Model</span>
+              <span className="text-[10px] text-cyan-400 font-mono">Multi-LLM Registry</span>
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <button
+                type="button"
+                disabled={isGenerating}
+                onClick={() => setProvider('groq')}
+                className={`p-2.5 rounded-xl text-left border transition ${
+                  provider === 'groq'
+                    ? 'bg-amber-500/15 border-amber-500 ring-1 ring-amber-500'
+                    : 'bg-slate-950 border-slate-800 hover:border-slate-700'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className={`text-xs font-bold ${provider === 'groq' ? 'text-amber-400' : 'text-white'}`}>
+                    Groq
+                  </span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono">
+                    Fastest
+                  </span>
+                </div>
+                <p className="text-[10px] text-slate-400 mt-0.5">GPT-OSS-120B</p>
+              </button>
+
+              <button
+                type="button"
+                disabled={isGenerating}
+                onClick={() => setProvider('gemini')}
+                className={`p-2.5 rounded-xl text-left border transition ${
+                  provider === 'gemini'
+                    ? 'bg-indigo-600/15 border-indigo-500 ring-1 ring-indigo-500'
+                    : 'bg-slate-950 border-slate-800 hover:border-slate-700'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className={`text-xs font-bold ${provider === 'gemini' ? 'text-indigo-400' : 'text-white'}`}>
+                    Gemini
+                  </span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-mono">
+                    Multimodal
+                  </span>
+                </div>
+                <p className="text-[10px] text-slate-400 mt-0.5">2.5 Flash</p>
+              </button>
+
+              <button
+                type="button"
+                disabled={isGenerating}
+                onClick={() => setProvider('nvidia')}
+                className={`p-2.5 rounded-xl text-left border transition ${
+                  provider === 'nvidia'
+                    ? 'bg-emerald-500/15 border-emerald-500 ring-1 ring-emerald-500'
+                    : 'bg-slate-950 border-slate-800 hover:border-slate-700'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className={`text-xs font-bold ${provider === 'nvidia' ? 'text-emerald-400' : 'text-white'}`}>
+                    NVIDIA NIM
+                  </span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono">
+                    Cloud
+                  </span>
+                </div>
+                <p className="text-[10px] text-slate-400 mt-0.5">Llama 3.3 70B</p>
+              </button>
+            </div>
+          </div>
+
           {/* Submit Action */}
           <div className="pt-2">
             <button
@@ -224,7 +298,7 @@ export function GenerateQuizModal({ isOpen, onClose }: GenerateQuizModalProps) {
               {isGenerating ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Generating Questions with Gemini...</span>
+                  <span>Generating Questions with {provider === 'groq' ? 'Groq (GPT-OSS-120B)' : provider === 'gemini' ? 'Gemini 2.5 Flash' : 'AI'}...</span>
                 </>
               ) : (
                 <>

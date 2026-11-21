@@ -52,8 +52,8 @@ export class LLMProviderRegistry {
   getAvailableProviders(): ProviderInfo[] {
     const displayMeta: Record<string, { displayName: string; description: string }> = {
       groq: {
-        displayName: 'Groq (Llama 3.3 70B)',
-        description: 'Ultra-fast LPU inference optimized for low-latency reasoning.',
+        displayName: 'Groq (GPT-OSS-120B)',
+        description: 'Ultra-fast LPU inference powered by GPT-OSS-120B.',
       },
       nvidia: {
         displayName: 'NVIDIA NIM (Llama 3.3 70B)',

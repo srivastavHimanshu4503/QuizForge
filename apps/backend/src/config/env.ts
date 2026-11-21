@@ -28,7 +28,7 @@ const envSchema = z.object({
   GEMINI_API_KEY: z.string().default('dev_gemini_key'),
   GEMINI_MODEL: z.string().default('gemini-2.5-flash'),
   GROQ_API_KEY: z.string().optional(),
-  GROQ_MODEL: z.string().default('llama-3.3-70b-versatile'),
+  GROQ_MODEL: z.string().default('openai/gpt-oss-120b'),
   NVIDIA_API_KEY: z.string().optional(),
   NVIDIA_MODEL: z.string().default('meta/llama-3.3-70b-instruct'),
   GITHUB_TOKEN: z.string().optional(),
