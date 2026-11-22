@@ -18,11 +18,12 @@ import {
   Play,
   ChevronRight,
   BookOpen,
+  Swords,
 } from 'lucide-react';
 
 interface AppLayoutProps {
   children: ReactNode;
-  activeNav?: 'dashboard' | 'code-review' | 'mcq' | 'history' | 'classrooms' | 'assignments';
+  activeNav?: 'dashboard' | 'code-review' | 'mcq' | 'history' | 'classrooms' | 'assignments' | 'arena';
 }
 
 export function AppLayout({ children, activeNav }: AppLayoutProps) {
@@ -41,6 +42,7 @@ export function AppLayout({ children, activeNav }: AppLayoutProps) {
   const isHistory = activeNav === 'history' || currentPath === '/history';
   const isClassrooms = activeNav === 'classrooms' || currentPath === '/classrooms';
   const isAssignments = activeNav === 'assignments' || currentPath === '/assignments';
+  const isArena = activeNav === 'arena' || currentPath.startsWith('/arena');
 
   const userInitials = user?.displayName
     ? user.displayName
@@ -131,6 +133,23 @@ export function AppLayout({ children, activeNav }: AppLayoutProps) {
             >
               <GraduationCap className={`w-4 h-4 ${isClassrooms ? 'text-white' : 'text-[#696F79] dark:text-slate-400'}`} />
               <span>Classrooms</span>
+            </Link>
+
+            <Link
+              to="/arena"
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+                isArena
+                  ? 'bg-[#1935CA] text-white shadow-[0_8px_20px_rgba(25,53,202,0.22)]'
+                  : 'text-[#696F79] dark:text-slate-400 hover:text-[#1935CA] dark:hover:text-[#38BDF8] hover:bg-[#F8F9FC] dark:hover:bg-slate-800/60'
+              }`}
+            >
+              <Swords className={`w-4 h-4 ${isArena ? 'text-white' : 'text-[#696F79] dark:text-slate-400'}`} />
+              <span className="flex items-center gap-1.5">
+                <span>Live Arena</span>
+                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 font-extrabold uppercase tracking-wider">
+                  Live
+                </span>
+              </span>
             </Link>
 
             {user?.role === 'student' && (
@@ -294,6 +313,18 @@ export function AppLayout({ children, activeNav }: AppLayoutProps) {
                 >
                   <GraduationCap className="w-4 h-4" />
                   <span>Classrooms</span>
+                </Link>
+                <Link
+                  to="/arena"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition ${
+                    isArena
+                      ? 'bg-[#1935CA] text-white shadow-sm'
+                      : 'text-[#696F79] dark:text-slate-400 hover:text-[#1935CA] dark:hover:text-[#38BDF8] hover:bg-[#F8F9FC] dark:hover:bg-slate-800/60'
+                  }`}
+                >
+                  <Swords className="w-4 h-4" />
+                  <span>Live Arena</span>
                 </Link>
                 {user?.role === 'student' && (
                   <Link

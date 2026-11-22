@@ -43,6 +43,13 @@
       "when": 1795362464594,
       "tag": "0005_damp_genesis",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1795363470394,
+      "tag": "0006_lean_bullseye",
+      "breakpoints": true
     }
   ]
 }

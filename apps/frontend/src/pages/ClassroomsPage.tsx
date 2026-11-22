@@ -39,8 +39,9 @@ import {
   TrendingUp,
   Search,
   Clock,
+  Swords,
 } from 'lucide-react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { GenerateQuizModal } from '../components/quiz/GenerateQuizModal';
 import { PdfQuizModal } from '../components/quiz/PdfQuizModal';
 import { UrlQuizModal } from '../components/quiz/UrlQuizModal';
@@ -49,6 +50,7 @@ import { CodeQuizModal } from '../components/code-quiz/CodeQuizModal';
 
 export function ClassroomsPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const isTeacher = user?.role === 'teacher' || user?.role === 'admin';
 
@@ -813,6 +815,26 @@ export function ClassroomsPage() {
                                   >
                                     <Award className="w-3.5 h-3.5" />
                                     <span>Gradebook</span>
+                                  </button>
+
+                                  {/* Host Live Arena */}
+                                  <button
+                                    onClick={async () => {
+                                      try {
+                                        const res = await apiClient.post<{ pin: string }>('/api/arena/sessions', {
+                                          quizId: a.quizId,
+                                          timePerQuestionSeconds: 30,
+                                        });
+                                        navigate(`/arena/host/${res.pin}`);
+                                      } catch (err: any) {
+                                        alert(err.message || 'Failed to launch live arena.');
+                                      }
+                                    }}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 bg-[#F8F9FC] dark:bg-slate-800 rounded-xl border border-rose-200/80 dark:border-rose-900 transition"
+                                    title="Launch real-time Kahoot-style battle for this quiz"
+                                  >
+                                    <Swords className="w-3.5 h-3.5" />
+                                    <span>Live Arena</span>
                                   </button>
 
                                   {/* Delete Assignment */}

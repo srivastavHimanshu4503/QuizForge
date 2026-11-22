@@ -12,4 +12,5 @@ export * from './classrooms';
 export * from './classroom-members';
 export * from './quiz-assignments';
 export * from './certificates';
+export * from './arena';
 export * from './relations';

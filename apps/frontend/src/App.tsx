@@ -15,6 +15,9 @@ import { StudentAssignmentsPage } from './pages/StudentAssignmentsPage';
 import { QuizStudioPage } from './pages/QuizStudioPage';
 import { SharedQuizLandingPage } from './pages/SharedQuizLandingPage';
 import { VerifyCertificatePage } from './pages/VerifyCertificatePage';
+import { ArenaJoinPage } from './pages/ArenaJoinPage';
+import { ArenaPlayerPage } from './pages/ArenaPlayerPage';
+import { ArenaHostPage } from './pages/ArenaHostPage';
 
 export function App() {
   return (
@@ -26,6 +29,17 @@ export function App() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/verify/:code?" element={<VerifyCertificatePage />} />
           <Route path="/verify" element={<VerifyCertificatePage />} />
+          <Route path="/arena" element={<ArenaJoinPage />} />
+          <Route path="/arena/join" element={<ArenaJoinPage />} />
+          <Route path="/arena/play/:pin" element={<ArenaPlayerPage />} />
+          <Route
+            path="/arena/host/:pin"
+            element={
+              <ProtectedRoute>
+                <ArenaHostPage />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/"
             element={

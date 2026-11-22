@@ -4,6 +4,7 @@ import cookie from '@fastify/cookie';
 import helmet from '@fastify/helmet';
 import multipart from '@fastify/multipart';
 import rateLimit from '@fastify/rate-limit';
+import websocket from '@fastify/websocket';
 import { env } from './config/env';
 import { sqlite } from './db/index';
 import { authPlugin } from './plugins/auth.plugin';
@@ -19,6 +20,7 @@ import { codeQuizRoutes } from './routes/code-quiz.routes';
 import { classroomRoutes } from './routes/classroom.routes';
 import { jobRoutes } from './routes/job.routes';
 import { certificateRoutes } from './routes/certificate.routes';
+import { arenaRoutes } from './routes/arena.routes';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({
@@ -57,6 +59,9 @@ export async function buildApp(): Promise<FastifyInstance> {
     },
   });
 
+  // WebSocket Plugin
+  await app.register(websocket);
+
   // Gracefully handle empty JSON body without error
   app.addContentTypeParser('application/json', { parseAs: 'string' }, (_req, body: string, done) => {
     if (!body || body.trim() === '') {
@@ -91,6 +96,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(classroomRoutes, { prefix: '/api/classrooms' });
   await app.register(jobRoutes, { prefix: '/api/jobs' });
   await app.register(certificateRoutes, { prefix: '/api/certificates' });
+  await app.register(arenaRoutes, { prefix: '/api/arena' });
 
   // Global Error Handler
   app.setErrorHandler((error: FastifyError | Error, request, reply) => {

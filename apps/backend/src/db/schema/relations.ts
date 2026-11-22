@@ -13,6 +13,7 @@ import { classrooms } from './classrooms';
 import { classroomMembers } from './classroom-members';
 import { quizAssignments } from './quiz-assignments';
 import { certificates } from './certificates';
+import { arenaSessions, arenaParticipants, arenaAnswers } from './arena';
 
 export const usersRelations = relations(users, ({ many }) => ({
   quizzes: many(quizzes),
@@ -156,4 +157,45 @@ export const certificatesRelations = relations(certificates, ({ one }) => ({
     references: [users.id],
   }),
 }));
+
+export const arenaSessionsRelations = relations(arenaSessions, ({ one, many }) => ({
+  quiz: one(quizzes, {
+    fields: [arenaSessions.quizId],
+    references: [quizzes.id],
+  }),
+  host: one(users, {
+    fields: [arenaSessions.hostId],
+    references: [users.id],
+  }),
+  participants: many(arenaParticipants),
+  answers: many(arenaAnswers),
+}));
+
+export const arenaParticipantsRelations = relations(arenaParticipants, ({ one, many }) => ({
+  session: one(arenaSessions, {
+    fields: [arenaParticipants.sessionId],
+    references: [arenaSessions.id],
+  }),
+  user: one(users, {
+    fields: [arenaParticipants.userId],
+    references: [users.id],
+  }),
+  answers: many(arenaAnswers),
+}));
+
+export const arenaAnswersRelations = relations(arenaAnswers, ({ one }) => ({
+  session: one(arenaSessions, {
+    fields: [arenaAnswers.sessionId],
+    references: [arenaSessions.id],
+  }),
+  participant: one(arenaParticipants, {
+    fields: [arenaAnswers.participantId],
+    references: [arenaParticipants.id],
+  }),
+  question: one(questions, {
+    fields: [arenaAnswers.questionId],
+    references: [questions.id],
+  }),
+}));
+
 
