@@ -23,6 +23,7 @@ import {
   Award,
   Play,
   RotateCcw,
+  Flame,
 } from 'lucide-react';
 
 interface ActiveDraft {
@@ -305,6 +306,36 @@ export function DashboardPage() {
               </div>
             </div>
           )}
+
+          {/* Milestone 14: Knowledge Gap Heatmap & Remedial Banner */}
+          <div className="p-5 rounded-[20px] bg-gradient-to-r from-indigo-900/10 via-[#1935CA]/10 to-transparent dark:from-indigo-950/40 dark:via-blue-950/30 dark:to-transparent border border-indigo-200/60 dark:border-indigo-800/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
+            <div className="flex items-center gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#1935CA] to-indigo-600 text-white flex items-center justify-center shrink-0 shadow-md">
+                <Flame className="w-5 h-5 text-amber-300" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#1935CA] dark:text-[#38BDF8]">
+                    Knowledge Gap Heatmap & Remediation
+                  </span>
+                </div>
+                <h4 className="text-sm font-bold text-[#1E293B] dark:text-[#F8FAFC] mt-0.5">
+                  Diagnose Learning Gaps & Launch Targeted Practice
+                </h4>
+                <p className="text-xs text-[#696F79] dark:text-slate-400">
+                  Analyze your topic mastery matrix and let AI generate focused quizzes on your missed concepts.
+                </p>
+              </div>
+            </div>
+            <Link
+              to="/heatmap"
+              className="px-4 py-2 rounded-xl text-xs font-bold bg-[#1935CA] hover:bg-[#142BA3] text-white shadow-md transition flex items-center gap-1.5 shrink-0 self-end sm:self-auto"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+              <span>Open Heatmap</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
 
           {/* ===================== 3-CARD ASSESSMENT GRID (Dashboard.png Reference) ===================== */}
           <div>

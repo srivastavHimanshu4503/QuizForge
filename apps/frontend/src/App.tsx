@@ -21,6 +21,7 @@ import { ArenaPlayerPage } from './pages/ArenaPlayerPage';
 import { ArenaHostPage } from './pages/ArenaHostPage';
 import { FlashcardsPage } from './pages/FlashcardsPage';
 import { FlashcardStudyPage } from './pages/FlashcardStudyPage';
+import { HeatmapPage } from './pages/HeatmapPage';
 
 export function App() {
   return (
@@ -137,6 +138,22 @@ export function App() {
             element={
               <ProtectedRoute>
                 <FlashcardStudyPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/heatmap"
+            element={
+              <ProtectedRoute>
+                <HeatmapPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/analytics"
+            element={
+              <ProtectedRoute>
+                <HeatmapPage />
               </ProtectedRoute>
             }
           />

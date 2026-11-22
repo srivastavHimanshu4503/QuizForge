@@ -21,11 +21,12 @@ import {
   BookOpen,
   Swords,
   Layers,
+  Flame,
 } from 'lucide-react';
 
 interface AppLayoutProps {
   children: ReactNode;
-  activeNav?: 'dashboard' | 'code-review' | 'mcq' | 'history' | 'classrooms' | 'assignments' | 'arena' | 'flashcards';
+  activeNav?: 'dashboard' | 'code-review' | 'mcq' | 'history' | 'classrooms' | 'assignments' | 'arena' | 'flashcards' | 'heatmap';
 }
 
 export function AppLayout({ children, activeNav }: AppLayoutProps) {
@@ -46,6 +47,7 @@ export function AppLayout({ children, activeNav }: AppLayoutProps) {
   const isAssignments = activeNav === 'assignments' || currentPath === '/assignments';
   const isArena = activeNav === 'arena' || currentPath.startsWith('/arena');
   const isFlashcards = activeNav === 'flashcards' || currentPath.startsWith('/flashcards');
+  const isHeatmap = activeNav === 'heatmap' || currentPath.startsWith('/heatmap') || currentPath.startsWith('/analytics');
 
   const userInitials = user?.displayName
     ? user.displayName
@@ -165,6 +167,18 @@ export function AppLayout({ children, activeNav }: AppLayoutProps) {
             >
               <Layers className={`w-4 h-4 ${isFlashcards ? 'text-white' : 'text-[#696F79] dark:text-slate-400'}`} />
               <span>Flashcards</span>
+            </Link>
+
+            <Link
+              to="/heatmap"
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+                isHeatmap
+                  ? 'bg-[#1935CA] text-white shadow-[0_8px_20px_rgba(25,53,202,0.22)]'
+                  : 'text-[#696F79] dark:text-slate-400 hover:text-[#1935CA] dark:hover:text-[#38BDF8] hover:bg-[#F8F9FC] dark:hover:bg-slate-800/60'
+              }`}
+            >
+              <Flame className={`w-4 h-4 ${isHeatmap ? 'text-white' : 'text-[#696F79] dark:text-slate-400'}`} />
+              <span>Knowledge Heatmap</span>
             </Link>
 
             {user?.role === 'student' && (
@@ -352,6 +366,18 @@ export function AppLayout({ children, activeNav }: AppLayoutProps) {
                 >
                   <Layers className="w-4 h-4" />
                   <span>Flashcards</span>
+                </Link>
+                <Link
+                  to="/heatmap"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition ${
+                    isHeatmap
+                      ? 'bg-[#1935CA] text-white shadow-sm'
+                      : 'text-[#696F79] dark:text-slate-400 hover:text-[#1935CA] dark:hover:text-[#38BDF8] hover:bg-[#F8F9FC] dark:hover:bg-slate-800/60'
+                  }`}
+                >
+                  <Flame className="w-4 h-4" />
+                  <span>Knowledge Heatmap</span>
                 </Link>
                 {user?.role === 'student' && (
                   <Link
