@@ -71,11 +71,46 @@ export const attemptRoutes: FastifyPluginAsync = async (app: FastifyInstance) =>
   });
 
   // POST /api/attempts/:attemptId/submit
-  app.post<{ Params: { attemptId: string } }>('/:attemptId/submit', async (request, reply) => {
+  app.post<{
+    Params: { attemptId: string };
+    Body?: { isTimedOut?: boolean; tabSwitchCount?: number };
+  }>('/:attemptId/submit', async (request, reply) => {
     try {
       const result = await attemptService.submitAttempt(
         request.user!.id,
-        request.params.attemptId
+        request.params.attemptId,
+        request.body?.isTimedOut,
+        request.body?.tabSwitchCount
+      );
+      return reply.status(200).send({
+        success: true,
+        data: result,
+      });
+    } catch (err: unknown) {
+      if (err instanceof AttemptError) {
+        return reply.status(err.statusCode).send({
+          success: false,
+          error: {
+            code: err.code,
+            message: err.message,
+          },
+        });
+      }
+      throw err;
+    }
+  });
+
+  // POST /api/attempts/:attemptId/integrity-event
+  app.post<{
+    Params: { attemptId: string };
+    Body: { tabSwitchCount: number };
+  }>('/:attemptId/integrity-event', async (request, reply) => {
+    try {
+      const count = Number(request.body?.tabSwitchCount || 0);
+      const result = await attemptService.logIntegrityEvent(
+        request.user!.id,
+        request.params.attemptId,
+        count
       );
       return reply.status(200).send({
         success: true,

@@ -123,6 +123,10 @@ export class AttemptService {
       totalQuestions: attempt.totalQuestions,
       questions: sanitizedQuestions,
       savedAnswers,
+      timeLimitMinutes: attempt.timeLimitMinutes,
+      startedAt: attempt.startedAt,
+      tabSwitchCount: attempt.tabSwitchCount ?? 0,
+      isTimedOut: attempt.isTimedOut ?? false,
     };
   }
 
@@ -213,6 +217,8 @@ export class AttemptService {
   async submitAttempt(
     userId: string,
     attemptId: string,
+    isTimedOut = false,
+    tabSwitchCount = 0,
     database = db
   ): Promise<AttemptResult> {
     // 1. Verify Attempt ownership
@@ -292,6 +298,20 @@ export class AttemptService {
 
     const review: QuestionReview[] = [];
     const now = new Date().toISOString();
+    const startedTime = new Date(attempt.startedAt).getTime();
+    const nowTime = new Date(now).getTime();
+    const durationSeconds = Math.max(0, Math.round((nowTime - startedTime) / 1000));
+
+    let timedOut = Boolean(isTimedOut);
+    if (attempt.timeLimitMinutes) {
+      const allowedMs = attempt.timeLimitMinutes * 60 * 1000;
+      const gracePeriodMs = 25000;
+      if (nowTime - startedTime > allowedMs + gracePeriodMs) {
+        timedOut = true;
+      }
+    }
+
+    const finalTabSwitches = Math.max(attempt.tabSwitchCount ?? 0, tabSwitchCount ?? 0);
 
     database.transaction((tx) => {
       for (const qId of attempt.shuffledOrder) {
@@ -360,6 +380,8 @@ export class AttemptService {
           unansweredCount,
           accuracyPercentage,
           completedAt: now,
+          tabSwitchCount: finalTabSwitches,
+          isTimedOut: timedOut,
         })
         .where(eq(quizAttempts.id, attemptId))
         .run();
@@ -384,6 +406,11 @@ export class AttemptService {
       accuracyPercentage,
       completedAt: now,
       review,
+      timeLimitMinutes: attempt.timeLimitMinutes,
+      startedAt: attempt.startedAt,
+      durationSeconds,
+      tabSwitchCount: finalTabSwitches,
+      isTimedOut: timedOut,
     };
   }
 
@@ -482,6 +509,10 @@ export class AttemptService {
       });
     }
 
+    const startedTime = new Date(attempt.startedAt).getTime();
+    const completedTime = attempt.completedAt ? new Date(attempt.completedAt).getTime() : Date.now();
+    const durationSeconds = Math.max(0, Math.round((completedTime - startedTime) / 1000));
+
     return {
       attemptId: attempt.id,
       quizId: attempt.quizId,
@@ -496,7 +527,42 @@ export class AttemptService {
       accuracyPercentage: attempt.accuracyPercentage ?? 0,
       completedAt: attempt.completedAt ?? new Date().toISOString(),
       review,
+      timeLimitMinutes: attempt.timeLimitMinutes,
+      startedAt: attempt.startedAt,
+      durationSeconds,
+      tabSwitchCount: attempt.tabSwitchCount ?? 0,
+      isTimedOut: Boolean(attempt.isTimedOut),
     };
+  }
+
+  async logIntegrityEvent(
+    userId: string,
+    attemptId: string,
+    tabSwitchCount: number,
+    database = db
+  ): Promise<{ tabSwitchCount: number }> {
+    const attempt = database
+      .select({ id: quizAttempts.id, tabSwitchCount: quizAttempts.tabSwitchCount, status: quizAttempts.status })
+      .from(quizAttempts)
+      .where(and(eq(quizAttempts.id, attemptId), eq(quizAttempts.userId, userId)))
+      .get();
+
+    if (!attempt) {
+      throw new AttemptError('Attempt not found or unauthorized.', 404, 'ATTEMPT_NOT_FOUND');
+    }
+
+    if (attempt.status !== 'in_progress') {
+      return { tabSwitchCount: attempt.tabSwitchCount ?? 0 };
+    }
+
+    const newCount = Math.max(attempt.tabSwitchCount ?? 0, tabSwitchCount);
+    database
+      .update(quizAttempts)
+      .set({ tabSwitchCount: newCount })
+      .where(eq(quizAttempts.id, attemptId))
+      .run();
+
+    return { tabSwitchCount: newCount };
   }
 
   async getUserHistory(

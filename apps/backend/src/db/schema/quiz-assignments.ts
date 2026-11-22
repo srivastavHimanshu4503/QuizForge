@@ -23,6 +23,9 @@ export const quizAssignments = sqliteTable(
     dueDate: text('due_date'),
     maxAttempts: integer('max_attempts').notNull().default(1),
     timeLimitMinutes: integer('time_limit_minutes'),
+    shuffleQuestions: integer('shuffle_questions', { mode: 'boolean' })
+      .notNull()
+      .default(true),
     showFeedbackImmediately: integer('show_feedback_immediately', { mode: 'boolean' })
       .notNull()
       .default(true),

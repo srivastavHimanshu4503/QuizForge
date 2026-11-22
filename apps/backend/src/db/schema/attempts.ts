@@ -32,6 +32,9 @@ export const quizAttempts = sqliteTable(
       .$defaultFn(() => new Date().toISOString()),
     completedAt: text('completed_at'),
     assignmentId: text('assignment_id'),
+    timeLimitMinutes: integer('time_limit_minutes'),
+    tabSwitchCount: integer('tab_switch_count').default(0),
+    isTimedOut: integer('is_timed_out', { mode: 'boolean' }).default(false),
   },
   (table) => [
     uniqueIndex('attempts_quiz_user_attempt_number_idx').on(table.quizId, table.userId, table.attemptNumber),

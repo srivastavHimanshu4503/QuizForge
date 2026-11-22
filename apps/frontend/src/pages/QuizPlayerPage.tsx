@@ -6,7 +6,19 @@ import { ProgressBar } from '../components/quiz/ProgressBar';
 import { OptionCard } from '../components/quiz/OptionCard';
 import { QuestionPalette } from '../components/quiz/QuestionPalette';
 import { SubmitModal } from '../components/quiz/SubmitModal';
-import { ArrowLeft, ArrowRight, CheckCircle2, Loader2, AlertCircle, Home, Keyboard } from 'lucide-react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  Loader2,
+  AlertCircle,
+  Home,
+  Keyboard,
+  Clock,
+  ShieldAlert,
+  ShieldCheck,
+  X,
+} from 'lucide-react';
 
 export function QuizPlayerPage() {
   const { attemptId } = useParams<{ attemptId: string }>();
@@ -27,6 +39,11 @@ export function QuizPlayerPage() {
     isLastQuestion,
     answeredCount,
     unansweredCount,
+    remainingSeconds,
+    tabSwitchCount,
+    isTimedOut,
+    lastFocusWarning,
+    dismissFocusWarning,
     goToQuestion,
     prevQuestion,
     nextQuestion,
@@ -45,6 +62,27 @@ export function QuizPlayerPage() {
       // Error handled in hook
     }
   }, [submitQuiz, navigate, attemptId]);
+
+  // Auto-submit when time expires
+  useEffect(() => {
+    if (isTimedOut && !isSubmitting) {
+      void (async () => {
+        try {
+          await submitQuiz({ isTimedOut: true });
+          navigate(`/quiz/${attemptId}/results?timedOut=true`);
+        } catch {
+          // Handled
+        }
+      })();
+    }
+  }, [isTimedOut, isSubmitting, submitQuiz, navigate, attemptId]);
+
+  const formatTime = (totalSec: number | null): string => {
+    if (totalSec === null) return '';
+    const m = Math.floor(totalSec / 60);
+    const s = totalSec % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
 
   // Keyboard engagement: A/B/C/D to select, Enter to advance/submit, Arrows to navigate, Esc to close modal
   useEffect(() => {
@@ -192,12 +230,35 @@ export function QuizPlayerPage() {
             <span>Dashboard</span>
           </Link>
           <span className="text-slate-300 dark:text-slate-600">/</span>
-          <span className="text-xs font-bold text-[#1E293B] dark:text-[#F8FAFC] truncate max-w-[200px] sm:max-w-xs">
+          <span className="text-xs font-bold text-[#1E293B] dark:text-[#F8FAFC] truncate max-w-[150px] sm:max-w-xs">
             {attempt.topic}
           </span>
         </div>
 
         <div className="flex items-center gap-3">
+          {/* Proctored status pill */}
+          <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-[#696F79] dark:text-slate-300">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+            <span>Integrity Guard</span>
+          </div>
+
+          {/* Countdown Timer */}
+          {remainingSeconds !== null && (
+            <div
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl font-mono text-xs sm:text-sm font-bold border transition-colors ${
+                remainingSeconds <= 60
+                  ? 'bg-rose-50 dark:bg-rose-950/70 border-rose-300 dark:border-rose-800 text-rose-600 dark:text-rose-400 animate-pulse'
+                  : remainingSeconds <= 180
+                  ? 'bg-amber-50 dark:bg-amber-950/60 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400'
+                  : 'bg-[#EEF2FF] dark:bg-slate-800 border-indigo-200 dark:border-slate-700 text-[#1935CA] dark:text-[#38BDF8]'
+              }`}
+              title="Time remaining for this quiz"
+            >
+              <Clock className="w-4 h-4 shrink-0" />
+              <span>{formatTime(remainingSeconds)}</span>
+            </div>
+          )}
+
           <button
             type="button"
             onClick={openSubmitModal}
@@ -208,6 +269,26 @@ export function QuizPlayerPage() {
           </button>
         </div>
       </header>
+
+      {/* Academic Integrity Alert Banner */}
+      {lastFocusWarning && (
+        <div className="bg-amber-50 dark:bg-amber-950/70 border-b border-amber-200 dark:border-amber-900 px-4 sm:px-8 py-2.5 text-xs text-amber-800 dark:text-amber-300 flex items-center justify-between transition">
+          <div className="flex items-center gap-2">
+            <ShieldAlert className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+            <span className="font-semibold">{lastFocusWarning}</span>
+            <span className="text-[11px] opacity-80 hidden sm:inline">
+              (Total tab switches recorded: {tabSwitchCount})
+            </span>
+          </div>
+          <button
+            onClick={dismissFocusWarning}
+            className="p-1 rounded text-amber-600 hover:text-amber-800 dark:hover:text-amber-200 transition"
+            title="Acknowledge warning"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
 
       {/* Main Content */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">

@@ -38,6 +38,7 @@ import {
   AlertTriangle,
   TrendingUp,
   Search,
+  Clock,
 } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { GenerateQuizModal } from '../components/quiz/GenerateQuizModal';
@@ -80,6 +81,8 @@ export function ClassroomsPage() {
   const [assignTitle, setAssignTitle] = useState('');
   const [assignMaxAttempts, setAssignMaxAttempts] = useState(1);
   const [assignDueDate, setAssignDueDate] = useState('');
+  const [assignTimeLimit, setAssignTimeLimit] = useState<number | ''>('');
+  const [assignShuffle, setAssignShuffle] = useState(true);
   const [myQuizzes, setMyQuizzes] = useState<CreatedQuizSummaryDto[]>([]);
 
   // Generation launcher modals inside classroom
@@ -90,6 +93,8 @@ export function ClassroomsPage() {
   const [editAssignTitle, setEditAssignTitle] = useState('');
   const [editAssignDueDate, setEditAssignDueDate] = useState('');
   const [editAssignMaxAttempts, setEditAssignMaxAttempts] = useState(1);
+  const [editAssignTimeLimit, setEditAssignTimeLimit] = useState<number | ''>('');
+  const [editAssignShuffle, setEditAssignShuffle] = useState(true);
 
   // Share Modal
   const [shareModalData, setShareModalData] = useState<{
@@ -284,10 +289,14 @@ export function ClassroomsPage() {
         quizType: selectedQuiz?.quizType || 'mcq',
         title: assignTitle.trim(),
         maxAttempts: Number(assignMaxAttempts),
+        timeLimitMinutes: assignTimeLimit ? Number(assignTimeLimit) : null,
+        shuffleQuestions: assignShuffle,
         dueDate: assignDueDate ? new Date(assignDueDate).toISOString() : undefined,
         showFeedbackImmediately: true,
       });
       setShowAssignModal(false);
+      setAssignTimeLimit('');
+      setAssignShuffle(true);
       fetchClassDetails(selectedClassId);
       if (activeTab === 'gradebook' && isTeacher) fetchGradebook(selectedClassId);
     } catch (err) {
@@ -305,6 +314,8 @@ export function ClassroomsPage() {
       await apiClient.put(`/api/classrooms/assignments/${editingAssignment.id}`, {
         title: editAssignTitle.trim(),
         maxAttempts: Number(editAssignMaxAttempts),
+        timeLimitMinutes: editAssignTimeLimit ? Number(editAssignTimeLimit) : null,
+        shuffleQuestions: editAssignShuffle,
         dueDate: editAssignDueDate ? new Date(editAssignDueDate).toISOString() : null,
       });
       setEditingAssignment(null);
@@ -772,6 +783,8 @@ export function ClassroomsPage() {
                                       setEditAssignTitle(a.title);
                                       setEditAssignDueDate(a.dueDate ? a.dueDate.split('T')[0] || '' : '');
                                       setEditAssignMaxAttempts(a.maxAttempts);
+                                      setEditAssignTimeLimit(a.timeLimitMinutes ?? '');
+                                      setEditAssignShuffle(a.shuffleQuestions ?? true);
                                     }}
                                     className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[#696F79] dark:text-slate-300 hover:text-[#1E293B] dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 bg-[#F8F9FC] dark:bg-slate-800 rounded-xl border border-slate-200/80 dark:border-slate-700 transition"
                                     title="Edit Assignment Settings (Due date, attempts, title)"
@@ -1059,17 +1072,33 @@ export function ClassroomsPage() {
                                           }
                                           return (
                                             <td key={a.id} className="py-3 px-4 text-center">
-                                              <span
-                                                className={`inline-block px-2.5 py-1 rounded-lg text-xs font-bold ${
-                                                  (sc.percentage ?? 0) >= 80
-                                                    ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
-                                                    : (sc.percentage ?? 0) >= 60
-                                                    ? 'bg-blue-50 dark:bg-blue-950/40 text-[#1935CA] dark:text-[#38BDF8] border border-blue-200 dark:border-blue-800'
-                                                    : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800'
-                                                }`}
-                                              >
-                                                {sc.score}/{sc.totalQuestions} ({sc.percentage}%)
-                                              </span>
+                                              <div className="flex flex-col items-center gap-0.5">
+                                                <span
+                                                  className={`inline-block px-2.5 py-1 rounded-lg text-xs font-bold ${
+                                                    (sc.percentage ?? 0) >= 80
+                                                      ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
+                                                      : (sc.percentage ?? 0) >= 60
+                                                      ? 'bg-blue-50 dark:bg-blue-950/40 text-[#1935CA] dark:text-[#38BDF8] border border-blue-200 dark:border-blue-800'
+                                                      : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800'
+                                                  }`}
+                                                >
+                                                  {sc.score}/{sc.totalQuestions} ({sc.percentage}%)
+                                                </span>
+                                                {(sc.isTimedOut || (sc.tabSwitchCount ?? 0) > 0) && (
+                                                  <div className="flex items-center gap-1 text-[10px]">
+                                                    {sc.isTimedOut && (
+                                                      <span className="text-rose-500 font-bold" title="Auto-submitted (Time Limit reached)">
+                                                        ⏱️ Timed out
+                                                      </span>
+                                                    )}
+                                                    {(sc.tabSwitchCount ?? 0) > 0 && (
+                                                      <span className="text-amber-600 dark:text-amber-400 font-medium" title={`${sc.tabSwitchCount} tab switch(es) recorded`}>
+                                                        ⚠️ {sc.tabSwitchCount}
+                                                      </span>
+                                                    )}
+                                                  </div>
+                                                )}
+                                              </div>
                                             </td>
                                           );
                                         })}
@@ -1540,6 +1569,41 @@ export function ClassroomsPage() {
                   </div>
                 </div>
 
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-[#1E293B] dark:text-slate-200 mb-1.5 flex items-center justify-between">
+                      <span className="flex items-center gap-1.5">
+                        <Clock className="w-3.5 h-3.5 text-[#1935CA] dark:text-[#38BDF8]" />
+                        <span>Timer (Mins)</span>
+                      </span>
+                      <span className="text-[10px] text-[#696F79] dark:text-slate-400 font-normal">Optional</span>
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={300}
+                      placeholder="e.g. 15, 30"
+                      value={assignTimeLimit}
+                      onChange={(e) => setAssignTimeLimit(e.target.value === '' ? '' : Number(e.target.value))}
+                      className="w-full px-4 py-2.5 rounded-xl bg-[#F8F9FC] dark:bg-[#1E293B] border border-slate-200/80 dark:border-slate-700 text-[#1E293B] dark:text-[#F8FAFC] text-sm focus:ring-2 focus:ring-[#1935CA] focus:bg-white dark:focus:bg-[#1E293B] outline-none font-medium"
+                    />
+                  </div>
+
+                  <div className="flex flex-col justify-end">
+                    <label className="flex items-center gap-2.5 p-2.5 rounded-xl bg-[#F8F9FC] dark:bg-[#1E293B] border border-slate-200/80 dark:border-slate-700 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={assignShuffle}
+                        onChange={(e) => setAssignShuffle(e.target.checked)}
+                        className="w-4 h-4 text-[#1935CA] rounded focus:ring-[#1935CA]"
+                      />
+                      <span className="text-xs font-bold text-[#1E293B] dark:text-slate-200">
+                        Shuffle Questions
+                      </span>
+                    </label>
+                  </div>
+                </div>
+
                 <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
                   <button
                     type="button"
@@ -1620,6 +1684,41 @@ export function ClassroomsPage() {
                       onChange={(e) => setEditAssignDueDate(e.target.value)}
                       className="w-full px-4 py-2.5 rounded-xl bg-[#F8F9FC] dark:bg-[#1E293B] border border-slate-200/80 dark:border-slate-700 text-[#1E293B] dark:text-[#F8FAFC] text-sm focus:ring-2 focus:ring-[#1935CA] focus:bg-white dark:focus:bg-[#1E293B] outline-none font-medium"
                     />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-[#1E293B] dark:text-slate-200 mb-1.5 flex items-center justify-between">
+                      <span className="flex items-center gap-1.5">
+                        <Clock className="w-3.5 h-3.5 text-[#1935CA] dark:text-[#38BDF8]" />
+                        <span>Timer (Mins)</span>
+                      </span>
+                      <span className="text-[10px] text-[#696F79] dark:text-slate-400 font-normal">Optional</span>
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={300}
+                      placeholder="e.g. 15, 30"
+                      value={editAssignTimeLimit}
+                      onChange={(e) => setEditAssignTimeLimit(e.target.value === '' ? '' : Number(e.target.value))}
+                      className="w-full px-4 py-2.5 rounded-xl bg-[#F8F9FC] dark:bg-[#1E293B] border border-slate-200/80 dark:border-slate-700 text-[#1E293B] dark:text-[#F8FAFC] text-sm focus:ring-2 focus:ring-[#1935CA] focus:bg-white dark:focus:bg-[#1E293B] outline-none font-medium"
+                    />
+                  </div>
+
+                  <div className="flex flex-col justify-end">
+                    <label className="flex items-center gap-2.5 p-2.5 rounded-xl bg-[#F8F9FC] dark:bg-[#1E293B] border border-slate-200/80 dark:border-slate-700 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={editAssignShuffle}
+                        onChange={(e) => setEditAssignShuffle(e.target.checked)}
+                        className="w-4 h-4 text-[#1935CA] rounded focus:ring-[#1935CA]"
+                      />
+                      <span className="text-xs font-bold text-[#1E293B] dark:text-slate-200">
+                        Shuffle Questions
+                      </span>
+                    </label>
                   </div>
                 </div>
 
@@ -1762,6 +1861,7 @@ export function ClassroomsPage() {
                         <th className="p-3">Status</th>
                         <th className="p-3">Attempts</th>
                         <th className="p-3">Best Score</th>
+                        <th className="p-3">Integrity & Duration</th>
                         <th className="p-3">Last Attempt</th>
                       </tr>
                     </thead>
@@ -1788,6 +1888,33 @@ export function ClassroomsPage() {
                           <td className="p-3 font-mono font-bold">{s.attemptsCount}</td>
                           <td className="p-3 font-bold text-[#1935CA] dark:text-[#38BDF8]">
                             {s.bestScore !== null ? `${s.bestScore} pts` : '—'}
+                          </td>
+                          <td className="p-3">
+                            {s.status === 'completed' ? (
+                              <div className="flex flex-col gap-1 text-[11px]">
+                                {s.durationSeconds !== null && s.durationSeconds !== undefined && (
+                                  <span className="font-mono text-slate-500 dark:text-slate-400">
+                                    ⏱️ {Math.floor(s.durationSeconds / 60)}m {s.durationSeconds % 60}s
+                                  </span>
+                                )}
+                                {s.isTimedOut && (
+                                  <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 w-fit">
+                                    Timed Out
+                                  </span>
+                                )}
+                                {(s.tabSwitchCount ?? 0) > 0 ? (
+                                  <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 w-fit">
+                                    ⚠️ {s.tabSwitchCount} switch(es)
+                                  </span>
+                                ) : (
+                                  <span className="text-emerald-600 dark:text-emerald-400 text-[10px] font-medium">
+                                    ✓ Clean
+                                  </span>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-slate-400">—</span>
+                            )}
                           </td>
                           <td className="p-3 text-[#696F79] dark:text-slate-400">
                             {s.lastAttemptAt

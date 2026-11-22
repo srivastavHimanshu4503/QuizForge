@@ -462,6 +462,92 @@ describe('RBAC & Classroom / Assignment Engine (Milestone 2)', () => {
     expect(body.data.maxAttempts).toBe(3);
   });
 
+  it('allows teacher to create a timed & shuffled assignment (Milestone 9)', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/classrooms/assignments',
+      headers: { cookie: teacherCookie },
+      payload: {
+        classroomId,
+        quizId,
+        quizType: 'mcq',
+        title: 'Timed Exam: Distributed Systems Final',
+        description: 'Strict 10-minute exam with question randomization and academic integrity defenses.',
+        maxAttempts: 1,
+        timeLimitMinutes: 10,
+        shuffleQuestions: true,
+      },
+    });
+
+    expect(res.statusCode).toBe(201);
+    const body = JSON.parse(res.payload);
+    expect(body.success).toBe(true);
+    expect(body.data.timeLimitMinutes).toBe(10);
+    expect(body.data.shuffleQuestions).toBe(true);
+    const timedAssignmentId = body.data.id;
+
+    // Student starts attempt on timed assignment
+    const startRes = await app.inject({
+      method: 'POST',
+      url: `/api/classrooms/assignments/${timedAssignmentId}/start`,
+      headers: { cookie: studentCookie },
+    });
+    expect(startRes.statusCode).toBe(201);
+    const startBody = JSON.parse(startRes.payload);
+    const timedAttemptId = startBody.data.attemptId;
+
+    // Verify active attempt returns timeLimitMinutes
+    const getRes = await app.inject({
+      method: 'GET',
+      url: `/api/attempts/${timedAttemptId}`,
+      headers: { cookie: studentCookie },
+    });
+    expect(getRes.statusCode).toBe(200);
+    const getBody = JSON.parse(getRes.payload);
+    expect(getBody.data.timeLimitMinutes).toBe(10);
+    expect(getBody.data.questions).toBeDefined();
+
+    // Student records integrity event (tab switch)
+    const integrityRes = await app.inject({
+      method: 'POST',
+      url: `/api/attempts/${timedAttemptId}/integrity-event`,
+      headers: { cookie: studentCookie },
+      payload: { tabSwitchCount: 4 },
+    });
+    expect(integrityRes.statusCode).toBe(200);
+    const integrityBody = JSON.parse(integrityRes.payload);
+    expect(integrityBody.success).toBe(true);
+    expect(integrityBody.data.tabSwitchCount).toBe(4);
+
+    // Student submits timed-out attempt
+    const submitRes = await app.inject({
+      method: 'POST',
+      url: `/api/attempts/${timedAttemptId}/submit`,
+      headers: { cookie: studentCookie },
+      payload: { isTimedOut: true, tabSwitchCount: 4 },
+    });
+    expect(submitRes.statusCode).toBe(200);
+    const submitBody = JSON.parse(submitRes.payload);
+    expect(submitBody.success).toBe(true);
+    expect(submitBody.data.isTimedOut).toBe(true);
+    expect(submitBody.data.tabSwitchCount).toBe(4);
+    expect(typeof submitBody.data.durationSeconds).toBe('number');
+
+    // Teacher views submissions and sees integrity flag and timeout
+    const subRes = await app.inject({
+      method: 'GET',
+      url: `/api/classrooms/assignments/${timedAssignmentId}/submissions`,
+      headers: { cookie: teacherCookie },
+    });
+    expect(subRes.statusCode).toBe(200);
+    const subBody = JSON.parse(subRes.payload);
+    const studentEntry = subBody.data.find((s: any) => s.studentName === 'Alice Student');
+    expect(studentEntry).toBeDefined();
+    expect(studentEntry.tabSwitchCount).toBe(4);
+    expect(studentEntry.isTimedOut).toBe(true);
+    expect(studentEntry.timeLimitMinutes).toBe(10);
+  });
+
   it('allows teacher to delete an assignment via DELETE /api/classrooms/assignments/:id', async () => {
     const res = await app.inject({
       method: 'DELETE',

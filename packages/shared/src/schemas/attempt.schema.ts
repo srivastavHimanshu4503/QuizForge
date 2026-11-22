@@ -19,7 +19,17 @@ export const activeAttemptSchema = z.object({
   totalQuestions: z.number().int(),
   questions: z.array(clientQuestionSchema),
   savedAnswers: z.record(z.string(), choiceIdEnum.nullable()),
+  timeLimitMinutes: z.number().int().nullable().optional(),
+  startedAt: z.string().optional(),
+  tabSwitchCount: z.number().int().optional(),
+  isTimedOut: z.boolean().optional(),
 });
+
+export const submitAttemptPayloadSchema = z.object({
+  isTimedOut: z.boolean().optional(),
+  tabSwitchCount: z.number().int().min(0).optional(),
+});
+export type SubmitAttemptPayload = z.infer<typeof submitAttemptPayloadSchema>;
 
 export const questionReviewSchema = z.object({
   question_id: z.string(),
@@ -45,6 +55,11 @@ export const attemptResultSchema = z.object({
   accuracyPercentage: z.number(),
   completedAt: z.string(),
   review: z.array(questionReviewSchema),
+  timeLimitMinutes: z.number().int().nullable().optional(),
+  startedAt: z.string().optional(),
+  durationSeconds: z.number().int().optional(),
+  tabSwitchCount: z.number().int().optional(),
+  isTimedOut: z.boolean().optional(),
 });
 
 export const historyItemTypeEnum = z.enum(['mcq', 'code_review']);

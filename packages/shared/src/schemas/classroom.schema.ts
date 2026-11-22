@@ -57,6 +57,7 @@ export const createAssignmentSchema = z.object({
     .max(300, 'Time limit cannot exceed 300 minutes')
     .optional()
     .nullable(),
+  shuffleQuestions: z.boolean().default(true),
   showFeedbackImmediately: z.boolean().default(true),
 });
 
@@ -91,6 +92,7 @@ export const updateAssignmentSchema = z.object({
     .max(300, 'Time limit cannot exceed 300 minutes')
     .optional()
     .nullable(),
+  shuffleQuestions: z.boolean().optional(),
   showFeedbackImmediately: z.boolean().optional(),
 });
 
@@ -119,6 +121,7 @@ export interface ClassroomAssignmentSummaryDto {
   dueDate: string | null;
   maxAttempts: number;
   timeLimitMinutes?: number | null;
+  shuffleQuestions?: boolean;
   shareCode?: string | null;
   createdAt: string;
 }
@@ -155,6 +158,7 @@ export interface AssignmentDto {
   dueDate?: string | null;
   maxAttempts: number;
   timeLimitMinutes?: number | null;
+  shuffleQuestions: boolean;
   showFeedbackImmediately: boolean;
   myAttemptsCount: number;
   myBestScore?: number | null;
@@ -171,6 +175,10 @@ export interface StudentSubmissionDto {
   bestScore: number | null;
   lastAttemptAt: string | null;
   status: 'not_started' | 'in_progress' | 'completed';
+  timeLimitMinutes?: number | null;
+  tabSwitchCount?: number;
+  isTimedOut?: boolean;
+  durationSeconds?: number | null;
 }
 
 export interface GradebookQuestionAnalysis {
@@ -202,6 +210,9 @@ export interface GradebookStudentScore {
   percentage: number | null;
   attemptsCount: number;
   lastAttemptAt: string | null;
+  tabSwitchCount?: number;
+  isTimedOut?: boolean;
+  durationSeconds?: number | null;
 }
 
 export interface GradebookStudentRow {

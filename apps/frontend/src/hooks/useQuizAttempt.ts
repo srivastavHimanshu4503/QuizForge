@@ -39,6 +39,12 @@ export function useQuizAttempt(attemptId: string) {
   const [autosaveStatus, setAutosaveStatus] = useState<AutosaveStatus>('saved');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState<boolean>(false);
+  const [tabSwitchCount, setTabSwitchCount] = useState<number>(
+    initialCache?.attempt?.tabSwitchCount || 0
+  );
+  const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
+  const [isTimedOut, setIsTimedOut] = useState<boolean>(false);
+  const [lastFocusWarning, setLastFocusWarning] = useState<string | null>(null);
 
   const fetchAttempt = useCallback(async () => {
     if (!attemptId) return;
@@ -52,6 +58,9 @@ export function useQuizAttempt(attemptId: string) {
     try {
       const data = await apiClient.get<ActiveAttempt>(`/api/attempts/${attemptId}`);
       setAttempt(data);
+      if (data.tabSwitchCount !== undefined) {
+        setTabSwitchCount((prev) => Math.max(prev, data.tabSwitchCount || 0));
+      }
 
       setAnswers((prevLocal) => {
         // Merge server saved answers with any newer local unsaved selections
@@ -101,6 +110,71 @@ export function useQuizAttempt(attemptId: string) {
   useEffect(() => {
     fetchAttempt();
   }, [fetchAttempt]);
+
+  // Timed Quiz countdown timer
+  useEffect(() => {
+    if (!attempt || !attempt.timeLimitMinutes || !attempt.startedAt || attempt.status !== 'in_progress') {
+      setRemainingSeconds(null);
+      return;
+    }
+
+    const startedTime = new Date(attempt.startedAt).getTime();
+    const totalAllowedMs = attempt.timeLimitMinutes * 60 * 1000;
+    const expiresAt = startedTime + totalAllowedMs;
+
+    const updateTimer = () => {
+      const now = Date.now();
+      const diffSec = Math.max(0, Math.floor((expiresAt - now) / 1000));
+      setRemainingSeconds(diffSec);
+
+      if (diffSec <= 0) {
+        setIsTimedOut(true);
+      }
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, [attempt?.timeLimitMinutes, attempt?.startedAt, attempt?.status]);
+
+  // Academic Integrity: Focus loss & Tab-blur detection
+  useEffect(() => {
+    if (!attempt || attempt.status !== 'in_progress') return;
+
+    let lastSwitchTime = 0;
+
+    const handleFocusLoss = () => {
+      const now = Date.now();
+      // Debounce focus loss within 1500ms
+      if (now - lastSwitchTime < 1500) return;
+      lastSwitchTime = now;
+
+      setTabSwitchCount((prev) => {
+        const next = prev + 1;
+        setLastFocusWarning(`Exam window lost focus. Integrity violation #${next} logged.`);
+
+        apiClient
+          .post(`/api/attempts/${attemptId}/integrity-event`, { tabSwitchCount: next })
+          .catch(() => {});
+
+        return next;
+      });
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        handleFocusLoss();
+      }
+    };
+
+    window.addEventListener('blur', handleFocusLoss);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('blur', handleFocusLoss);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [attempt?.status, attemptId]);
 
   const goToQuestion = (index: number) => {
     if (!attempt || index < 0 || index >= attempt.questions.length) return;
@@ -168,7 +242,7 @@ export function useQuizAttempt(attemptId: string) {
     }
   };
 
-  const submitQuiz = async (): Promise<AttemptResult> => {
+  const submitQuiz = async (options?: { isTimedOut?: boolean }): Promise<AttemptResult> => {
     setIsSubmitting(true);
     try {
       // Before submitting, ensure any locally held answers are pushed to the backend
@@ -185,7 +259,10 @@ export function useQuizAttempt(attemptId: string) {
         }
       }
 
-      const result = await apiClient.post<AttemptResult>(`/api/attempts/${attemptId}/submit`);
+      const result = await apiClient.post<AttemptResult>(`/api/attempts/${attemptId}/submit`, {
+        isTimedOut: Boolean(options?.isTimedOut || isTimedOut),
+        tabSwitchCount,
+      });
 
       // Clear cached draft from localStorage on successful completion
       try {
@@ -244,6 +321,11 @@ export function useQuizAttempt(attemptId: string) {
     answeredCount,
     unansweredCount,
     progressPercentage,
+    remainingSeconds,
+    tabSwitchCount,
+    isTimedOut,
+    lastFocusWarning,
+    dismissFocusWarning: () => setLastFocusWarning(null),
     goToQuestion,
     prevQuestion,
     nextQuestion,

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { AttemptResult } from '@quiz-forge/shared';
 import { apiClient, ApiError } from '../api/client';
 import { ScoreCard } from '../components/quiz/ScoreCard';
@@ -12,10 +12,15 @@ import {
   Loader2,
   AlertCircle,
   Filter,
+  Clock,
+  ShieldAlert,
+  ShieldCheck,
+  Timer,
 } from 'lucide-react';
 
 export function QuizResultsPage() {
   const { attemptId } = useParams<{ attemptId: string }>();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
   const [result, setResult] = useState<AttemptResult | null>(null);
@@ -24,6 +29,15 @@ export function QuizResultsPage() {
   const [isRestarting, setIsRestarting] = useState(false);
   const [isNewQuizModalOpen, setIsNewQuizModalOpen] = useState(false);
   const [filterMode, setFilterMode] = useState<'all' | 'incorrect' | 'correct'>('all');
+
+  const isTimedOut = Boolean(result?.isTimedOut || searchParams.get('timedOut') === 'true');
+
+  const formatDuration = (seconds?: number) => {
+    if (seconds === undefined || seconds === null) return null;
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}m ${s}s`;
+  };
 
   useEffect(() => {
     const fetchResults = async () => {
@@ -116,6 +130,53 @@ export function QuizResultsPage() {
   return (
     <AppLayout activeNav="mcq">
       <div className="space-y-6">
+        {/* Time-out Alert Banner */}
+        {isTimedOut && (
+          <div className="p-4 rounded-[20px] bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300 flex items-center gap-3">
+            <Timer className="w-5 h-5 shrink-0 text-rose-600 dark:text-rose-400" />
+            <div>
+              <h4 className="font-bold text-xs sm:text-sm">Time Limit Reached</h4>
+              <p className="text-xs opacity-90 mt-0.5">
+                The allocated time for this quiz expired. Your saved answers were automatically submitted.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Exam Integrity & Duration Metrics Bar */}
+        {(result.timeLimitMinutes || result.durationSeconds || (result.tabSwitchCount !== undefined && result.tabSwitchCount > 0)) && (
+          <div className="p-4 sm:p-5 rounded-[20px] bg-white dark:bg-[#151C2C] border border-slate-100 dark:border-slate-800 shadow-[0_10px_30px_rgba(25,53,202,0.04)] flex flex-wrap items-center justify-between gap-4 transition-colors duration-200">
+            <div className="flex items-center gap-4 flex-wrap text-xs">
+              {result.durationSeconds !== undefined && (
+                <div className="flex items-center gap-2 text-[#696F79] dark:text-slate-400">
+                  <Clock className="w-4 h-4 text-[#1935CA] dark:text-[#38BDF8]" />
+                  <span>
+                    Time Spent:{' '}
+                    <strong className="text-[#1E293B] dark:text-[#F8FAFC]">
+                      {formatDuration(result.durationSeconds)}
+                    </strong>
+                    {result.timeLimitMinutes ? ` (Limit: ${result.timeLimitMinutes}m)` : ''}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2">
+              {(result.tabSwitchCount ?? 0) === 0 ? (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 text-xs font-semibold">
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>Clean Integrity Session (0 Tab Switches)</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800 text-xs font-semibold">
+                  <ShieldAlert className="w-3.5 h-3.5" />
+                  <span>Integrity Flag: {result.tabSwitchCount} Tab Switch(es) Logged</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Score Card */}
         <ScoreCard result={result} />
 

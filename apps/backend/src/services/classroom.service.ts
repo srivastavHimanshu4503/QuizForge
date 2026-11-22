@@ -432,6 +432,7 @@ export class ClassroomService {
         dueDate: input.dueDate || null,
         maxAttempts: input.maxAttempts,
         timeLimitMinutes: input.timeLimitMinutes || null,
+        shuffleQuestions: input.shuffleQuestions ?? true,
         showFeedbackImmediately: input.showFeedbackImmediately,
       })
       .returning()
@@ -453,6 +454,7 @@ export class ClassroomService {
       dueDate: assignment.dueDate,
       maxAttempts: assignment.maxAttempts,
       timeLimitMinutes: assignment.timeLimitMinutes,
+      shuffleQuestions: assignment.shuffleQuestions ?? true,
       showFeedbackImmediately: assignment.showFeedbackImmediately,
       myAttemptsCount: 0,
       myBestScore: null,
@@ -538,6 +540,7 @@ export class ClassroomService {
           dueDate: a.dueDate,
           maxAttempts: a.maxAttempts,
           timeLimitMinutes: a.timeLimitMinutes,
+          shuffleQuestions: a.shuffleQuestions ?? true,
           showFeedbackImmediately: a.showFeedbackImmediately,
           myAttemptsCount: attemptsCount,
           myBestScore: bestScore,
@@ -637,6 +640,7 @@ export class ClassroomService {
       dueDate: assignment.dueDate,
       maxAttempts: assignment.maxAttempts,
       timeLimitMinutes: assignment.timeLimitMinutes,
+      shuffleQuestions: assignment.shuffleQuestions ?? true,
       showFeedbackImmediately: assignment.showFeedbackImmediately,
       myAttemptsCount: attempts.length,
       myBestScore: bestScore,
@@ -692,6 +696,7 @@ export class ClassroomService {
       let bestScore: number | null = null;
       let status: 'not_started' | 'in_progress' | 'completed' = 'not_started';
       let lastAttemptAt: string | null = null;
+      let bestAttempt = attempts[0];
 
       if (attempts.length > 0) {
         lastAttemptAt = attempts[0]?.startedAt || null;
@@ -705,9 +710,21 @@ export class ClassroomService {
               bestScore = bestScore === null ? a.score : Math.max(bestScore, a.score);
             }
           }
+          const top = attempts.find((a) => a.score === bestScore && a.status === 'completed');
+          if (top) bestAttempt = top;
         } else if (hasInProgress) {
           status = 'in_progress';
         }
+      }
+
+      let durationSeconds: number | null = null;
+      if (bestAttempt?.startedAt && bestAttempt?.completedAt) {
+        durationSeconds = Math.max(
+          0,
+          Math.round(
+            (new Date(bestAttempt.completedAt).getTime() - new Date(bestAttempt.startedAt).getTime()) / 1000
+          )
+        );
       }
 
       return {
@@ -718,6 +735,10 @@ export class ClassroomService {
         bestScore,
         lastAttemptAt,
         status,
+        timeLimitMinutes: assignment.timeLimitMinutes,
+        tabSwitchCount: bestAttempt?.tabSwitchCount ?? 0,
+        isTimedOut: Boolean(bestAttempt?.isTimedOut),
+        durationSeconds,
       };
     });
   }
@@ -813,10 +834,21 @@ export class ClassroomService {
       .all();
 
     const questionIds = masterQuestions.map((q) => q.id);
-    const shuffledOrder = shuffleArray([...questionIds]);
+    const shuffledOrder = assignment.shuffleQuestions ? shuffleArray([...questionIds]) : [...questionIds];
 
     const newAttemptId = crypto.randomUUID();
-    const attemptNumber = existingAttempts.length + 1;
+    const userQuizAttempts = database
+      .select({ attemptNumber: quizAttempts.attemptNumber })
+      .from(quizAttempts)
+      .where(
+        and(
+          eq(quizAttempts.quizId, masterQuiz.id),
+          eq(quizAttempts.userId, studentId)
+        )
+      )
+      .all();
+    const maxAttemptNumber = userQuizAttempts.reduce((m, a) => Math.max(m, a.attemptNumber), 0);
+    const attemptNumber = maxAttemptNumber + 1;
 
     database
       .insert(quizAttempts)
@@ -829,6 +861,7 @@ export class ClassroomService {
         status: 'in_progress',
         shuffledOrder,
         totalQuestions: questionIds.length,
+        timeLimitMinutes: assignment.timeLimitMinutes,
       })
       .run();
 
@@ -869,6 +902,7 @@ export class ClassroomService {
     if (input.dueDate !== undefined) updates.dueDate = input.dueDate;
     if (input.maxAttempts !== undefined) updates.maxAttempts = input.maxAttempts;
     if (input.timeLimitMinutes !== undefined) updates.timeLimitMinutes = input.timeLimitMinutes;
+    if (input.shuffleQuestions !== undefined) updates.shuffleQuestions = input.shuffleQuestions;
     if (input.showFeedbackImmediately !== undefined) updates.showFeedbackImmediately = input.showFeedbackImmediately;
 
     database
@@ -1126,6 +1160,7 @@ export class ClassroomService {
           studentSumPercentages += percentage;
         }
 
+        const topAttempt = attempts.find((att) => att.score === bestScore) || attempts[0];
         scores[a.id] = {
           assignmentId: a.id,
           status,
@@ -1134,6 +1169,8 @@ export class ClassroomService {
           percentage,
           attemptsCount: attempts.length,
           lastAttemptAt,
+          tabSwitchCount: topAttempt?.tabSwitchCount ?? 0,
+          isTimedOut: Boolean(topAttempt?.isTimedOut),
         };
       }
 
