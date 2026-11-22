@@ -12,6 +12,7 @@ import { codeAnswers } from './code-answers';
 import { classrooms } from './classrooms';
 import { classroomMembers } from './classroom-members';
 import { quizAssignments } from './quiz-assignments';
+import { certificates } from './certificates';
 
 export const usersRelations = relations(users, ({ many }) => ({
   quizzes: many(quizzes),
@@ -140,3 +141,19 @@ export const attemptAnswersRelations = relations(attemptAnswers, ({ one }) => ({
     references: [questions.id],
   }),
 }));
+
+export const certificatesRelations = relations(certificates, ({ one }) => ({
+  attempt: one(quizAttempts, {
+    fields: [certificates.attemptId],
+    references: [quizAttempts.id],
+  }),
+  quiz: one(quizzes, {
+    fields: [certificates.quizId],
+    references: [quizzes.id],
+  }),
+  user: one(users, {
+    fields: [certificates.userId],
+    references: [users.id],
+  }),
+}));
+

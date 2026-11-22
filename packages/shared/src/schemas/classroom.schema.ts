@@ -173,6 +173,7 @@ export interface StudentSubmissionDto {
   studentEmail: string;
   attemptsCount: number;
   bestScore: number | null;
+  bestAttemptId?: string | null;
   lastAttemptAt: string | null;
   status: 'not_started' | 'in_progress' | 'completed';
   timeLimitMinutes?: number | null;

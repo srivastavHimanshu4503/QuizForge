@@ -11,4 +11,5 @@ export * from './code-answers';
 export * from './classrooms';
 export * from './classroom-members';
 export * from './quiz-assignments';
+export * from './certificates';
 export * from './relations';

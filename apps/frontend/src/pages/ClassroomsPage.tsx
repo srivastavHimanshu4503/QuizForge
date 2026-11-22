@@ -1863,6 +1863,7 @@ export function ClassroomsPage() {
                         <th className="p-3">Best Score</th>
                         <th className="p-3">Integrity & Duration</th>
                         <th className="p-3">Last Attempt</th>
+                        <th className="p-3">Report</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -1920,6 +1921,40 @@ export function ClassroomsPage() {
                             {s.lastAttemptAt
                               ? new Date(s.lastAttemptAt).toLocaleDateString()
                               : 'Not attempted'}
+                          </td>
+                          <td className="p-3">
+                            {s.bestAttemptId ? (
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  try {
+                                    const res = await fetch(`/api/certificates/${s.bestAttemptId}/report-card`, {
+                                      credentials: 'include',
+                                    });
+                                    if (!res.ok) throw new Error('Failed to download report.');
+                                    const blob = await res.blob();
+                                    const url = window.URL.createObjectURL(blob);
+                                    const a = document.createElement('a');
+                                    a.href = url;
+                                    const safeName = s.studentName.replace(/[^a-zA-Z0-9_-]/g, '_');
+                                    a.download = `QuizForge-Report-${safeName}.pdf`;
+                                    document.body.appendChild(a);
+                                    a.click();
+                                    a.remove();
+                                    window.URL.revokeObjectURL(url);
+                                  } catch (err: any) {
+                                    alert(err.message || 'Failed to download report card.');
+                                  }
+                                }}
+                                title="Download Student Diagnostic Report Card (PDF)"
+                                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#1935CA]/10 hover:bg-[#1935CA]/20 text-[#1935CA] dark:text-[#38BDF8] text-[10px] font-bold transition active:scale-95"
+                              >
+                                <FileText className="w-3 h-3" />
+                                <span>PDF Report</span>
+                              </button>
+                            ) : (
+                              <span className="text-slate-400 text-[10px]">—</span>
+                            )}
                           </td>
                         </tr>
                       ))}

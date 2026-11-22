@@ -36,6 +36,13 @@
       "when": 1795358067284,
       "tag": "0004_pink_roughhouse",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1795362464594,
+      "tag": "0005_damp_genesis",
+      "breakpoints": true
     }
   ]
 }

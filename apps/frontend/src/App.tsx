@@ -14,6 +14,7 @@ import { ClassroomsPage } from './pages/ClassroomsPage';
 import { StudentAssignmentsPage } from './pages/StudentAssignmentsPage';
 import { QuizStudioPage } from './pages/QuizStudioPage';
 import { SharedQuizLandingPage } from './pages/SharedQuizLandingPage';
+import { VerifyCertificatePage } from './pages/VerifyCertificatePage';
 
 export function App() {
   return (
@@ -23,6 +24,8 @@ export function App() {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/verify/:code?" element={<VerifyCertificatePage />} />
+          <Route path="/verify" element={<VerifyCertificatePage />} />
           <Route
             path="/"
             element={

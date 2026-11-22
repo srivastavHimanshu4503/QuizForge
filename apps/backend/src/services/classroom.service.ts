@@ -733,6 +733,7 @@ export class ClassroomService {
         studentEmail: s.studentEmail,
         attemptsCount: attempts.length,
         bestScore,
+        bestAttemptId: bestAttempt?.id ?? null,
         lastAttemptAt,
         status,
         timeLimitMinutes: assignment.timeLimitMinutes,
