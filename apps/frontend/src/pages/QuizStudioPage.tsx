@@ -233,7 +233,7 @@ export function QuizStudioPage() {
     return (
       <AppLayout activeNav="history">
         <div className="flex flex-col items-center justify-center p-12">
-          <Loader2 className="w-8 h-8 text-[#1935CA] animate-spin" />
+          <Loader2 className="w-8 h-8 text-[#1935CA] dark:text-indigo-400 animate-spin" />
         </div>
       </AppLayout>
     );
@@ -243,10 +243,10 @@ export function QuizStudioPage() {
     <AppLayout activeNav="history">
       <div className="space-y-6 pb-12">
         {/* Top Navigation */}
-        <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+        <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
           <Link
             to="/history"
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-[#696F79] hover:text-[#1935CA] transition"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-[#696F79] dark:text-slate-400 hover:text-[#1935CA] dark:hover:text-indigo-400 transition"
           >
             <ChevronLeft className="w-4 h-4" />
             <span>Back to History</span>
@@ -256,7 +256,7 @@ export function QuizStudioPage() {
             <button
               type="button"
               onClick={handleTakeQuiz}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-[#1E293B] bg-white hover:bg-slate-50 border border-slate-200/80 shadow-sm transition"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-[#1E293B] dark:text-[#F8FAFC] bg-white dark:bg-[#151C2C] hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-700 shadow-sm transition"
             >
               <Play className="w-3.5 h-3.5" />
               <span>Take Quiz</span>
@@ -265,17 +265,17 @@ export function QuizStudioPage() {
         </div>
 
         {/* Studio Header Card */}
-        <div className="bg-white border border-slate-100 rounded-[20px] p-6 sm:p-8 shadow-[0_10px_30px_rgba(25,53,202,0.05)]">
-          <div className="flex flex-wrap items-center justify-between gap-4 mb-6 pb-6 border-b border-slate-100">
+        <div className="bg-white dark:bg-[#151C2C] border border-slate-100 dark:border-slate-800 rounded-[20px] p-6 sm:p-8 shadow-[0_10px_30px_rgba(25,53,202,0.05)]">
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-6 pb-6 border-b border-slate-100 dark:border-slate-800">
             <div className="flex items-center gap-3">
-              <div className="p-3 rounded-2xl bg-[#EEF2FF] text-[#1935CA]">
+              <div className="p-3 rounded-2xl bg-[#EEF2FF] dark:bg-indigo-950/50 text-[#1935CA] dark:text-indigo-300">
                 <SlidersHorizontal className="w-6 h-6" />
               </div>
               <div>
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#EEF2FF] text-[#1935CA] text-[11px] font-bold uppercase tracking-wider mb-1">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#EEF2FF] dark:bg-indigo-950/50 text-[#1935CA] dark:text-indigo-300 text-[11px] font-bold uppercase tracking-wider mb-1">
                   <span>Review & Publishing Studio</span>
                 </div>
-                <h1 className="text-2xl font-black text-[#1E293B]">Quiz Studio</h1>
+                <h1 className="text-2xl font-black text-[#1E293B] dark:text-[#F8FAFC]">Quiz Studio</h1>
               </div>
             </div>
 
@@ -284,8 +284,8 @@ export function QuizStudioPage() {
               <span
                 className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
                   quiz?.status === 'published'
-                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                    : 'bg-amber-50 text-amber-700 border border-amber-200'
+                    ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50'
+                    : 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50'
                 }`}
               >
                 {quiz?.status === 'published' ? 'Published' : 'Draft'}
@@ -298,7 +298,7 @@ export function QuizStudioPage() {
                 disabled={isPublishing}
                 className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
                   quiz?.status === 'published'
-                    ? 'bg-white hover:bg-slate-50 text-[#1E293B] border border-slate-200 shadow-sm'
+                    ? 'bg-white dark:bg-[#151C2C] hover:bg-slate-50 dark:hover:bg-slate-800 text-[#1E293B] dark:text-[#F8FAFC] border border-slate-200 dark:border-slate-700 shadow-sm'
                     : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20'
                 }`}
               >
@@ -325,14 +325,14 @@ export function QuizStudioPage() {
 
           {/* Share Code Section if Published */}
           {quiz?.status === 'published' && quiz.shareCode && (
-            <div className="mb-6 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 flex flex-wrap items-center justify-between gap-3">
+            <div className="mb-6 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50 flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <Share2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                <Share2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                 <div>
-                  <p className="text-xs font-bold text-emerald-700 uppercase tracking-wider">
+                  <p className="text-xs font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
                     Public Share Link Active
                   </p>
-                  <p className="text-xs text-[#696F79] mt-0.5">
+                  <p className="text-xs text-[#696F79] dark:text-slate-400 mt-0.5">
                     Anyone with this link can attempt this quiz without modifying your master copy.
                   </p>
                 </div>
@@ -340,23 +340,23 @@ export function QuizStudioPage() {
               <button
                 type="button"
                 onClick={handleCopyShareLink}
-                className="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-emerald-700 border border-emerald-200 shadow-sm text-xs font-bold flex items-center gap-1.5 transition"
+                className="px-3.5 py-2 rounded-xl bg-white dark:bg-[#151C2C] hover:bg-slate-50 dark:hover:bg-slate-800 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50 shadow-sm text-xs font-bold flex items-center gap-1.5 transition"
               >
-                {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                 <span>{isCopied ? 'Link Copied!' : 'Copy Share Link'}</span>
               </button>
             </div>
           )}
 
           {successMsg && (
-            <div className="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold flex items-center gap-2">
+            <div className="mb-6 p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 text-xs font-semibold flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 shrink-0" />
               <span>{successMsg}</span>
             </div>
           )}
 
           {error && (
-            <div className="mb-6 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2">
+            <div className="mb-6 p-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-rose-700 dark:text-rose-300 text-xs font-semibold flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{error}</span>
             </div>
@@ -365,25 +365,25 @@ export function QuizStudioPage() {
           {/* Metadata Controls */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-[#1E293B] mb-1.5">
+              <label className="block text-xs font-bold text-[#1E293B] dark:text-[#F8FAFC] mb-1.5">
                 Quiz Topic / Title
               </label>
               <input
                 type="text"
                 value={topic}
                 onChange={(e) => handleTopicChange(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl bg-[#F8F9FC] border border-slate-200/80 text-sm text-[#1E293B] focus:ring-2 focus:ring-[#1935CA] focus:bg-white outline-none font-medium"
+                className="w-full px-4 py-2.5 rounded-xl bg-[#F8F9FC] dark:bg-[#1E293B] border border-slate-200/80 dark:border-slate-700 text-sm text-[#1E293B] dark:text-[#F8FAFC] focus:ring-2 focus:ring-[#1935CA] focus:bg-white dark:focus:bg-[#151C2C] outline-none font-medium"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-[#1E293B] mb-1.5">
+              <label className="block text-xs font-bold text-[#1E293B] dark:text-[#F8FAFC] mb-1.5">
                 Difficulty Level
               </label>
               <select
                 value={difficulty}
                 onChange={(e) => handleDifficultyChange(e.target.value as QuizDifficulty)}
-                className="w-full px-4 py-2.5 rounded-xl bg-[#F8F9FC] border border-slate-200/80 text-sm text-[#1E293B] focus:ring-2 focus:ring-[#1935CA] focus:bg-white outline-none font-medium"
+                className="w-full px-4 py-2.5 rounded-xl bg-[#F8F9FC] dark:bg-[#1E293B] border border-slate-200/80 dark:border-slate-700 text-sm text-[#1E293B] dark:text-[#F8FAFC] focus:ring-2 focus:ring-[#1935CA] focus:bg-white dark:focus:bg-[#151C2C] outline-none font-medium"
               >
                 <option value="easy">Easy</option>
                 <option value="medium">Medium</option>
@@ -397,7 +397,7 @@ export function QuizStudioPage() {
         {/* Questions Editor */}
         <div className="space-y-6">
           <div className="flex items-center justify-between px-1">
-            <h2 className="text-lg font-bold text-[#1E293B]">
+            <h2 className="text-lg font-bold text-[#1E293B] dark:text-[#F8FAFC]">
               Questions ({questions.length})
             </h2>
             <button
@@ -413,10 +413,10 @@ export function QuizStudioPage() {
           {questions.map((q, idx) => (
             <div
               key={q.id || idx}
-              className="bg-white border border-slate-100 rounded-[20px] p-6 shadow-[0_10px_30px_rgba(25,53,202,0.05)] space-y-4"
+              className="bg-white dark:bg-[#151C2C] border border-slate-100 dark:border-slate-800 rounded-[20px] p-6 shadow-[0_10px_30px_rgba(25,53,202,0.05)] space-y-4"
             >
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <span className="text-xs font-extrabold uppercase tracking-wider text-[#1935CA]">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                <span className="text-xs font-extrabold uppercase tracking-wider text-[#1935CA] dark:text-indigo-400">
                   Question {idx + 1}
                 </span>
 
@@ -425,7 +425,7 @@ export function QuizStudioPage() {
                     type="button"
                     onClick={() => handleMoveQuestion(idx, 'up')}
                     disabled={idx === 0}
-                    className="p-1 rounded-lg text-slate-400 hover:text-[#1935CA] hover:bg-slate-100 disabled:opacity-30 transition"
+                    className="p-1 rounded-lg text-slate-400 hover:text-[#1935CA] dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 transition"
                     title="Move Up"
                   >
                     <ArrowUp className="w-4 h-4" />
@@ -434,7 +434,7 @@ export function QuizStudioPage() {
                     type="button"
                     onClick={() => handleMoveQuestion(idx, 'down')}
                     disabled={idx === questions.length - 1}
-                    className="p-1 rounded-lg text-slate-400 hover:text-[#1935CA] hover:bg-slate-100 disabled:opacity-30 transition"
+                    className="p-1 rounded-lg text-slate-400 hover:text-[#1935CA] dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 transition"
                     title="Move Down"
                   >
                     <ArrowDown className="w-4 h-4" />
@@ -442,7 +442,7 @@ export function QuizStudioPage() {
                   <button
                     type="button"
                     onClick={() => handleDeleteQuestion(idx)}
-                    className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
+                    className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition"
                     title="Delete Question"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -452,20 +452,20 @@ export function QuizStudioPage() {
 
               {/* Question Text */}
               <div>
-                <label className="block text-xs font-bold text-[#1E293B] mb-1">
+                <label className="block text-xs font-bold text-[#1E293B] dark:text-[#F8FAFC] mb-1">
                   Question Prompt
                 </label>
                 <textarea
                   rows={2}
                   value={q.questionText}
                   onChange={(e) => handleQuestionTextChange(idx, e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8F9FC] border border-slate-200/80 text-sm text-[#1E293B] focus:ring-2 focus:ring-[#1935CA] focus:bg-white outline-none font-medium resize-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8F9FC] dark:bg-[#1E293B] border border-slate-200/80 dark:border-slate-700 text-sm text-[#1E293B] dark:text-[#F8FAFC] focus:ring-2 focus:ring-[#1935CA] focus:bg-white dark:focus:bg-[#151C2C] outline-none font-medium resize-none"
                 />
               </div>
 
               {/* Choices */}
               <div className="space-y-2">
-                <label className="block text-xs font-bold text-[#1E293B]">
+                <label className="block text-xs font-bold text-[#1E293B] dark:text-[#F8FAFC]">
                   Choices (Select radio for correct answer)
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -476,8 +476,8 @@ export function QuizStudioPage() {
                         key={c.choice_id}
                         className={`p-3 rounded-xl border flex items-center gap-2.5 transition ${
                           isCorrect
-                            ? 'bg-emerald-50 border-emerald-300 ring-1 ring-emerald-200'
-                            : 'bg-[#F8F9FC] border-slate-200/80'
+                            ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-700 ring-1 ring-emerald-200 dark:ring-emerald-800'
+                            : 'bg-[#F8F9FC] dark:bg-[#1E293B] border-slate-200/80 dark:border-slate-700'
                         }`}
                       >
                         <input
@@ -487,7 +487,7 @@ export function QuizStudioPage() {
                           onChange={() => handleCorrectChoiceChange(idx, c.choice_id)}
                           className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 accent-emerald-600"
                         />
-                        <span className="font-bold text-xs text-[#1E293B] shrink-0">
+                        <span className="font-bold text-xs text-[#1E293B] dark:text-[#F8FAFC] shrink-0">
                           {c.choice_id}:
                         </span>
                         <input
@@ -496,7 +496,7 @@ export function QuizStudioPage() {
                           onChange={(e) =>
                             handleChoiceTextChange(idx, c.choice_id, e.target.value)
                           }
-                          className="flex-1 bg-transparent text-xs text-[#1E293B] font-medium outline-none"
+                          className="flex-1 bg-transparent text-xs text-[#1E293B] dark:text-[#F8FAFC] font-medium outline-none"
                         />
                       </div>
                     );
@@ -506,14 +506,14 @@ export function QuizStudioPage() {
 
               {/* Explanation */}
               <div>
-                <label className="block text-xs font-bold text-[#1E293B] mb-1">
+                <label className="block text-xs font-bold text-[#1E293B] dark:text-[#F8FAFC] mb-1">
                   Pedagogical Explanation
                 </label>
                 <textarea
                   rows={2}
                   value={q.explanation}
                   onChange={(e) => handleExplanationChange(idx, e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8F9FC] border border-slate-200/80 text-xs text-[#1E293B] focus:ring-2 focus:ring-[#1935CA] focus:bg-white outline-none font-medium resize-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F8F9FC] dark:bg-[#1E293B] border border-slate-200/80 dark:border-slate-700 text-xs text-[#1E293B] dark:text-[#F8FAFC] focus:ring-2 focus:ring-[#1935CA] focus:bg-white dark:focus:bg-[#151C2C] outline-none font-medium resize-none"
                 />
               </div>
             </div>

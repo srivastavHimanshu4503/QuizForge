@@ -120,12 +120,12 @@ export function QuizResultsPage() {
         <ScoreCard result={result} />
 
         {/* Action Callout Bar */}
-        <div className="bg-white border border-slate-100 rounded-[20px] p-6 sm:p-7 shadow-[0_10px_30px_rgba(25,53,202,0.05)] flex flex-wrap items-center justify-between gap-4">
+        <div className="bg-white dark:bg-[#151C2C] border border-slate-100 dark:border-slate-800 rounded-[20px] p-6 sm:p-7 shadow-[0_10px_30px_rgba(25,53,202,0.05)] flex flex-wrap items-center justify-between gap-4 transition-colors duration-200">
           <div>
-            <h3 className="text-lg font-bold text-[#1E293B] mb-1">
+            <h3 className="text-lg font-bold text-[#1E293B] dark:text-[#F8FAFC] mb-1">
               Ready for your next challenge?
             </h3>
-            <p className="text-xs text-[#696F79] font-medium">
+            <p className="text-xs text-[#696F79] dark:text-slate-400 font-medium">
               Retake this quiz with questions in a shuffled order (zero AI calls), or generate a new quiz.
             </p>
           </div>
@@ -148,9 +148,9 @@ export function QuizResultsPage() {
             <button
               type="button"
               onClick={() => setIsNewQuizModalOpen(true)}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold bg-white hover:bg-slate-50 text-[#1E293B] border border-slate-200/80 shadow-sm transition"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold bg-white dark:bg-[#151C2C] hover:bg-slate-50 dark:hover:bg-slate-800 text-[#1E293B] dark:text-[#F8FAFC] border border-slate-200/80 dark:border-slate-700 shadow-sm transition"
             >
-              <Sparkles className="w-4 h-4 text-[#1935CA]" />
+              <Sparkles className="w-4 h-4 text-[#1935CA] dark:text-[#38BDF8]" />
               <span>Generate Another Quiz</span>
             </button>
           </div>
@@ -158,18 +158,18 @@ export function QuizResultsPage() {
 
         {/* Review Section */}
         <section className="space-y-6">
-          <div className="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-slate-100">
+          <div className="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-slate-100 dark:border-slate-800">
             <div>
-              <h2 className="text-2xl font-bold text-[#1E293B] tracking-tight">
+              <h2 className="text-2xl font-bold text-[#1E293B] dark:text-[#F8FAFC] tracking-tight">
                 Answer-by-Answer Review
               </h2>
-              <p className="text-xs text-[#696F79] mt-0.5 font-medium">
+              <p className="text-xs text-[#696F79] dark:text-slate-400 mt-0.5 font-medium">
                 Inspect your selections alongside correct answers and explanations
               </p>
             </div>
 
             {/* Filter Tabs */}
-            <div className="flex items-center gap-1.5 p-1 rounded-xl bg-white border border-slate-200/80 text-xs shadow-sm">
+            <div className="flex items-center gap-1.5 p-1 rounded-xl bg-white dark:bg-[#151C2C] border border-slate-200/80 dark:border-slate-700 text-xs shadow-sm">
               <Filter className="w-3.5 h-3.5 text-slate-400 ml-2 mr-1" />
               <button
                 type="button"
@@ -177,7 +177,7 @@ export function QuizResultsPage() {
                 className={`px-3 py-1 rounded-lg font-bold transition ${
                   filterMode === 'all'
                     ? 'bg-[#1935CA] text-white shadow-sm'
-                    : 'text-[#696F79] hover:text-[#1E293B]'
+                    : 'text-[#696F79] dark:text-slate-400 hover:text-[#1E293B] dark:hover:text-white'
                 }`}
               >
                 All ({result.review.length})
@@ -188,7 +188,7 @@ export function QuizResultsPage() {
                 className={`px-3 py-1 rounded-lg font-bold transition ${
                   filterMode === 'incorrect'
                     ? 'bg-rose-600 text-white shadow-sm'
-                    : 'text-[#696F79] hover:text-[#1E293B]'
+                    : 'text-[#696F79] dark:text-slate-400 hover:text-[#1E293B] dark:hover:text-white'
                 }`}
               >
                 Missed ({result.incorrectCount + result.unansweredCount})
@@ -199,7 +199,7 @@ export function QuizResultsPage() {
                 className={`px-3 py-1 rounded-lg font-bold transition ${
                   filterMode === 'correct'
                     ? 'bg-emerald-600 text-white shadow-sm'
-                    : 'text-[#696F79] hover:text-[#1E293B]'
+                    : 'text-[#696F79] dark:text-slate-400 hover:text-[#1E293B] dark:hover:text-white'
                 }`}
               >
                 Correct ({result.correctCount})
@@ -217,7 +217,7 @@ export function QuizResultsPage() {
             ))}
 
             {filteredReview.length === 0 && (
-              <div className="p-8 rounded-[20px] bg-white border border-slate-100 shadow-[0_10px_30px_rgba(25,53,202,0.05)] text-center text-[#696F79] text-sm">
+              <div className="p-8 rounded-[20px] bg-white dark:bg-[#151C2C] border border-slate-100 dark:border-slate-800 shadow-[0_10px_30px_rgba(25,53,202,0.05)] text-center text-[#696F79] dark:text-slate-400 text-sm">
                 No questions matching the selected filter.
               </div>
             )}

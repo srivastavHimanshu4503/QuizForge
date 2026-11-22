@@ -264,23 +264,23 @@ export function CodeQuizPlayerPage() {
     <AppLayout activeNav="code-review">
       <div className="space-y-6">
         {/* ===================== TOP HEADER & BREADCRUMB BAR ===================== */}
-        <div className="bg-white rounded-[20px] p-4 sm:p-5 shadow-[0_10px_30px_rgba(25,53,202,0.05)] border border-slate-100/80 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="bg-white dark:bg-[#151C2C] rounded-[20px] p-4 sm:p-5 shadow-[0_10px_30px_rgba(25,53,202,0.05)] border border-slate-100/80 dark:border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition-colors duration-200">
           {/* Breadcrumbs */}
-          <div className="flex items-center gap-2 text-xs font-medium text-[#696F79] flex-wrap">
-            <Link to="/" className="hover:text-[#1935CA] transition font-semibold">
+          <div className="flex items-center gap-2 text-xs font-medium text-[#696F79] dark:text-slate-400 flex-wrap">
+            <Link to="/" className="hover:text-[#1935CA] dark:hover:text-[#38BDF8] transition font-semibold">
               Dashboard
             </Link>
-            <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
+            <ChevronRight className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600" />
             <span>GitHub Code Reviews</span>
-            <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
-            <span className="font-bold text-[#1935CA] font-mono">
+            <ChevronRight className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600" />
+            <span className="font-bold text-[#1935CA] dark:text-[#38BDF8] font-mono">
               {attempt.repoUrl.replace('https://github.com/', '')}
             </span>
           </div>
 
           {/* Interactive Question Matrix Palette Pills */}
           <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex items-center gap-1.5 p-1 bg-[#F8F9FC] rounded-xl border border-slate-100">
+            <div className="flex items-center gap-1.5 p-1 bg-[#F8F9FC] dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
               {attempt.questions.map((q, idx) => {
                 const isSelected = idx === currentIndex;
                 const isAnswered = Boolean(evaluations[q.id]);
@@ -293,8 +293,8 @@ export function CodeQuizPlayerPage() {
                       isSelected
                         ? 'bg-[#1935CA] text-white shadow-md'
                         : isAnswered
-                        ? 'bg-[#ECFDF5] text-emerald-700 border border-emerald-300 hover:bg-emerald-100'
-                        : 'bg-white text-[#696F79] hover:text-[#1E293B] border border-slate-200'
+                        ? 'bg-[#ECFDF5] dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 hover:bg-emerald-100'
+                        : 'bg-white dark:bg-[#151C2C] text-[#696F79] dark:text-slate-400 hover:text-[#1E293B] dark:hover:text-white border border-slate-200 dark:border-slate-700'
                     }`}
                     title={`Question ${idx + 1}: ${isAnswered ? 'Evaluated' : 'Pending'}`}
                   >
@@ -319,26 +319,26 @@ export function CodeQuizPlayerPage() {
         {/* ===================== 2-COLUMN MAIN WORKSPACE (lg:grid-cols-12) ===================== */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* ===================== LEFT: CODE SNIPPET VIEWER (lg:col-span-7) ===================== */}
-          <div className="lg:col-span-7 bg-white rounded-[20px] p-5 sm:p-6 shadow-[0_10px_30px_rgba(25,53,202,0.05)] border border-slate-100/80 space-y-4">
+          <div className="lg:col-span-7 bg-white dark:bg-[#151C2C] rounded-[20px] p-5 sm:p-6 shadow-[0_10px_30px_rgba(25,53,202,0.05)] border border-slate-100/80 dark:border-slate-800 space-y-4 transition-colors duration-200">
             {/* Snippet Header */}
-            <div className="flex items-center justify-between flex-wrap gap-2 pb-3 border-b border-slate-100">
+            <div className="flex items-center justify-between flex-wrap gap-2 pb-3 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-2">
-                <FileCode className="w-4 h-4 text-[#1935CA]" />
-                <span className="font-mono text-xs font-bold text-[#1E293B] break-all">
+                <FileCode className="w-4 h-4 text-[#1935CA] dark:text-[#38BDF8]" />
+                <span className="font-mono text-xs font-bold text-[#1E293B] dark:text-[#F8FAFC] break-all">
                   {currentQuestion.codeSnippetPath}
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-[11px] font-mono text-[#696F79]">
+                <span className="text-[11px] font-mono text-[#696F79] dark:text-slate-400">
                   Lines {startLine}–{startLine + codeLines.length - 1}
                 </span>
                 <span
                   className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                     currentQuestion.difficulty === 'hard'
-                      ? 'bg-rose-50 text-rose-600 border border-rose-200'
+                      ? 'bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800'
                       : currentQuestion.difficulty === 'medium'
-                      ? 'bg-amber-50 text-amber-600 border border-amber-200'
-                      : 'bg-emerald-50 text-emerald-600 border border-emerald-200'
+                      ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800'
+                      : 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
                   }`}
                 >
                   {currentQuestion.difficulty}
@@ -346,8 +346,8 @@ export function CodeQuizPlayerPage() {
               </div>
             </div>
 
-            {/* High-Contrast Code Snippet Container (Recent Quiz.png Reference) */}
-            <div className="bg-[#0F172A] text-slate-100 rounded-xl overflow-hidden shadow-inner border border-slate-800">
+            {/* High-Contrast Code Snippet Container (Recent Quiz.png Reference - forced dark) */}
+            <div className="bg-[#0F172A] text-slate-100 rounded-xl overflow-hidden shadow-inner border border-slate-800" style={{ colorScheme: 'only dark' }}>
               <div className="px-4 py-2 bg-slate-900 border-b border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400 font-mono">
                 <span>Code Excerpt</span>
                 <span>UTF-8 • Read-only</span>
@@ -375,26 +375,26 @@ export function CodeQuizPlayerPage() {
           </div>
 
           {/* ===================== RIGHT: ADVERSARIAL QUESTION & EVALUATION (lg:col-span-5) ===================== */}
-          <div className="lg:col-span-5 bg-white rounded-[20px] p-5 sm:p-6 shadow-[0_10px_30px_rgba(25,53,202,0.05)] border border-slate-100/80 space-y-5">
+          <div className="lg:col-span-5 bg-white dark:bg-[#151C2C] rounded-[20px] p-5 sm:p-6 shadow-[0_10px_30px_rgba(25,53,202,0.05)] border border-slate-100/80 dark:border-slate-800 space-y-5 transition-colors duration-200">
             {/* Question Header */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="px-3 py-1 rounded-full bg-[#EEF2FF] text-[#1935CA] text-xs font-bold">
+                <span className="px-3 py-1 rounded-full bg-[#EEF2FF] dark:bg-slate-800 text-[#1935CA] dark:text-[#38BDF8] text-xs font-bold">
                   Question {currentIndex + 1} of {totalQuestions}
                 </span>
-                <span className="text-[11px] font-semibold text-[#696F79]">
+                <span className="text-[11px] font-semibold text-[#696F79] dark:text-slate-400">
                   {currentEval ? 'Evaluated by LLM' : 'Awaiting Answer'}
                 </span>
               </div>
 
-              <h3 className="text-base sm:text-lg font-bold text-[#1E293B] leading-snug">
+              <h3 className="text-base sm:text-lg font-bold text-[#1E293B] dark:text-[#F8FAFC] leading-snug">
                 {currentQuestion.questionText}
               </h3>
             </div>
 
             {/* Answer Textarea */}
             <div>
-              <label className="block text-xs font-bold text-[#1E293B] mb-1.5">
+              <label className="block text-xs font-bold text-[#1E293B] dark:text-slate-200 mb-1.5">
                 Your Code Explanation / Defense:
               </label>
               <textarea
@@ -402,7 +402,7 @@ export function CodeQuizPlayerPage() {
                 value={answers[currentQuestion.id] || ''}
                 onChange={(e) => handleAnswerChange(e.target.value)}
                 placeholder="Explain the intent, architectural trade-offs, edge cases, and why this snippet is constructed this way..."
-                className="w-full p-3.5 rounded-xl bg-[#F8F9FC] text-[#1E293B] placeholder-[#94A3B8] text-sm border border-slate-200/80 focus:ring-2 focus:ring-[#1935CA] focus:bg-white transition outline-none font-medium resize-y"
+                className="w-full p-3.5 rounded-xl bg-[#F8F9FC] dark:bg-[#1E293B] text-[#1E293B] dark:text-[#F8FAFC] placeholder-[#94A3B8] dark:placeholder-slate-500 text-sm border border-slate-200/80 dark:border-slate-700 focus:ring-2 focus:ring-[#1935CA] focus:bg-white dark:focus:bg-[#1E293B] transition outline-none font-medium resize-y"
               />
             </div>
 
@@ -432,7 +432,7 @@ export function CodeQuizPlayerPage() {
                   type="button"
                   onClick={() => setCurrentIndex((prev) => Math.max(0, prev - 1))}
                   disabled={currentIndex === 0}
-                  className="p-2 rounded-xl bg-[#F8F9FC] text-[#1E293B] hover:bg-slate-200 disabled:opacity-30 transition"
+                  className="p-2 rounded-xl bg-[#F8F9FC] dark:bg-slate-800 text-[#1E293B] dark:text-[#F8FAFC] hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-30 transition"
                   title="Previous Question"
                 >
                   <ArrowLeft className="w-4 h-4" />
@@ -441,7 +441,7 @@ export function CodeQuizPlayerPage() {
                   type="button"
                   onClick={() => setCurrentIndex((prev) => Math.min(totalQuestions - 1, prev + 1))}
                   disabled={isLastQuestion}
-                  className="p-2 rounded-xl bg-[#F8F9FC] text-[#1E293B] hover:bg-slate-200 disabled:opacity-30 transition"
+                  className="p-2 rounded-xl bg-[#F8F9FC] dark:bg-slate-800 text-[#1E293B] dark:text-[#F8FAFC] hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-30 transition"
                   title="Next Question"
                 >
                   <ArrowRight className="w-4 h-4" />
@@ -451,19 +451,19 @@ export function CodeQuizPlayerPage() {
 
             {/* Inline Instant Grading Critique (Recent Quiz.png Reference) */}
             {currentEval && (
-              <div className="p-4 rounded-xl bg-[#F8F9FC] border border-slate-200/80 space-y-3.5 animate-in fade-in">
+              <div className="p-4 rounded-xl bg-[#F8F9FC] dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 space-y-3.5 animate-in fade-in">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-[#1E293B] uppercase tracking-wider flex items-center gap-1.5">
-                    <Award className="w-4 h-4 text-[#1935CA]" />
+                  <span className="text-xs font-bold text-[#1E293B] dark:text-[#F8FAFC] uppercase tracking-wider flex items-center gap-1.5">
+                    <Award className="w-4 h-4 text-[#1935CA] dark:text-[#38BDF8]" />
                     <span>Rubric Score</span>
                   </span>
                   <span
                     className={`px-3 py-1 rounded-full text-xs font-extrabold ${
                       (currentEval.score ?? 0) >= 7
-                        ? 'bg-emerald-100 text-emerald-700'
+                        ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300'
                         : (currentEval.score ?? 0) >= 4
-                        ? 'bg-amber-100 text-amber-700'
-                        : 'bg-rose-100 text-rose-700'
+                        ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300'
+                        : 'bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300'
                     }`}
                   >
                     {currentEval.score ?? 0} / 10
@@ -473,11 +473,11 @@ export function CodeQuizPlayerPage() {
                 {/* Rubric Progress Bars */}
                 <div className="space-y-2 text-xs">
                   <div>
-                    <div className="flex justify-between text-[11px] font-semibold text-[#696F79] mb-1">
+                    <div className="flex justify-between text-[11px] font-semibold text-[#696F79] dark:text-slate-400 mb-1">
                       <span>Accuracy</span>
                       <span>{currentEval.accuracy_score ?? 0} / 4</span>
                     </div>
-                    <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                    <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5 overflow-hidden">
                       <div
                         className="bg-emerald-500 h-1.5 rounded-full"
                         style={{
@@ -488,11 +488,11 @@ export function CodeQuizPlayerPage() {
                   </div>
 
                   <div>
-                    <div className="flex justify-between text-[11px] font-semibold text-[#696F79] mb-1">
+                    <div className="flex justify-between text-[11px] font-semibold text-[#696F79] dark:text-slate-400 mb-1">
                       <span>Depth</span>
                       <span>{currentEval.depth_score ?? 0} / 3</span>
                     </div>
-                    <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                    <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5 overflow-hidden">
                       <div
                         className="bg-[#1935CA] h-1.5 rounded-full"
                         style={{
@@ -503,11 +503,11 @@ export function CodeQuizPlayerPage() {
                   </div>
 
                   <div>
-                    <div className="flex justify-between text-[11px] font-semibold text-[#696F79] mb-1">
+                    <div className="flex justify-between text-[11px] font-semibold text-[#696F79] dark:text-slate-400 mb-1">
                       <span>Completeness</span>
                       <span>{currentEval.completeness_score ?? 0} / 3</span>
                     </div>
-                    <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                    <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5 overflow-hidden">
                       <div
                         className="bg-[#38BDF8] h-1.5 rounded-full"
                         style={{
@@ -521,17 +521,17 @@ export function CodeQuizPlayerPage() {
                 {/* Key Concepts Identified vs Missed */}
                 {((currentEval.key_concepts_identified && currentEval.key_concepts_identified.length > 0) ||
                   (currentEval.key_concepts_missed && currentEval.key_concepts_missed.length > 0)) && (
-                  <div className="pt-2 border-t border-slate-200/60 space-y-2">
+                  <div className="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 space-y-2">
                     {currentEval.key_concepts_identified && currentEval.key_concepts_identified.length > 0 && (
                       <div>
-                        <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider block mb-1">
+                        <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider block mb-1">
                           Concepts Identified:
                         </span>
                         <div className="flex flex-wrap gap-1">
                           {currentEval.key_concepts_identified.map((c, i) => (
                             <span
                               key={i}
-                              className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-medium"
+                              className="px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 text-[10px] font-medium"
                             >
                               {c}
                             </span>
@@ -541,14 +541,14 @@ export function CodeQuizPlayerPage() {
                     )}
                     {currentEval.key_concepts_missed && currentEval.key_concepts_missed.length > 0 && (
                       <div>
-                        <span className="text-[10px] font-bold text-rose-700 uppercase tracking-wider block mb-1">
+                        <span className="text-[10px] font-bold text-rose-700 dark:text-rose-400 uppercase tracking-wider block mb-1">
                           Concepts Missed:
                         </span>
                         <div className="flex flex-wrap gap-1">
                           {currentEval.key_concepts_missed.map((c, i) => (
                             <span
                               key={i}
-                              className="px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 text-[10px] font-medium"
+                              className="px-2 py-0.5 rounded-md bg-rose-100 dark:bg-rose-950/80 text-rose-800 dark:text-rose-300 text-[10px] font-medium"
                             >
                               {c}
                             </span>
@@ -561,11 +561,11 @@ export function CodeQuizPlayerPage() {
 
                 {/* Constructive LLM Feedback */}
                 {currentEval.feedback && (
-                  <div className="pt-2 border-t border-slate-200/60">
-                    <span className="text-[10px] font-bold text-[#696F79] uppercase tracking-wider block mb-1">
+                  <div className="pt-2 border-t border-slate-200/60 dark:border-slate-700/60">
+                    <span className="text-[10px] font-bold text-[#696F79] dark:text-slate-400 uppercase tracking-wider block mb-1">
                       Critique & Feedback:
                     </span>
-                    <p className="text-xs text-[#475569] leading-relaxed font-medium">
+                    <p className="text-xs text-[#475569] dark:text-slate-300 leading-relaxed font-medium">
                       {currentEval.feedback}
                     </p>
                   </div>
@@ -579,15 +579,15 @@ export function CodeQuizPlayerPage() {
       {/* ===================== SUBMISSION MODAL ===================== */}
       {isSubmitModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-white rounded-[24px] max-w-md w-full p-6 sm:p-7 shadow-2xl border border-slate-100 text-center">
-            <div className="w-12 h-12 rounded-2xl bg-[#EEF2FF] text-[#1935CA] flex items-center justify-center mx-auto mb-4">
+          <div className="bg-white dark:bg-[#151C2C] rounded-[24px] max-w-md w-full p-6 sm:p-7 shadow-2xl border border-slate-100 dark:border-slate-800 text-center">
+            <div className="w-12 h-12 rounded-2xl bg-[#EEF2FF] dark:bg-slate-800 text-[#1935CA] dark:text-[#38BDF8] flex items-center justify-center mx-auto mb-4">
               <Send className="w-6 h-6" />
             </div>
 
-            <h3 className="text-xl font-extrabold text-[#1935CA] tracking-tight mb-2">
+            <h3 className="text-xl font-extrabold text-[#1935CA] dark:text-[#38BDF8] tracking-tight mb-2">
               Finalize Code Review?
             </h3>
-            <p className="text-xs text-[#696F79] leading-relaxed mb-5">
+            <p className="text-xs text-[#696F79] dark:text-slate-400 leading-relaxed mb-5">
               You have evaluated <strong>{evaluatedCount} of {totalQuestions}</strong> questions with the LLM. Once submitted, your scores and mastery badges will be finalized.
             </p>
 
@@ -596,7 +596,7 @@ export function CodeQuizPlayerPage() {
                 type="button"
                 onClick={() => setIsSubmitModalOpen(false)}
                 disabled={isSubmitting}
-                className="w-1/2 py-2.5 rounded-xl bg-[#F8F9FC] hover:bg-slate-200 text-[#1E293B] font-bold text-xs transition"
+                className="w-1/2 py-2.5 rounded-xl bg-[#F8F9FC] dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[#1E293B] dark:text-[#F8FAFC] font-bold text-xs transition"
               >
                 Keep Reviewing
               </button>

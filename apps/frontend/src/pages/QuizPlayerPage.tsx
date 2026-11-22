@@ -139,10 +139,10 @@ export function QuizPlayerPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#F8F9FC] flex flex-col items-center justify-center p-4">
-        <Loader2 className="w-10 h-10 text-[#1935CA] animate-spin mb-4" />
-        <h2 className="text-xl font-bold text-[#1E293B] mb-1">Loading Quiz...</h2>
-        <p className="text-sm text-[#696F79]">
+      <div className="min-h-screen bg-[#F8F9FC] dark:bg-[#0B0F19] flex flex-col items-center justify-center p-4">
+        <Loader2 className="w-10 h-10 text-[#1935CA] dark:text-[#38BDF8] animate-spin mb-4" />
+        <h2 className="text-xl font-bold text-[#1E293B] dark:text-[#F8FAFC] mb-1">Loading Quiz...</h2>
+        <p className="text-sm text-[#696F79] dark:text-slate-400">
           Preparing your questions and previous selections
         </p>
       </div>
@@ -151,12 +151,12 @@ export function QuizPlayerPage() {
 
   if (error || !attempt || !currentQuestion) {
     return (
-      <div className="min-h-screen bg-[#F8F9FC] flex flex-col items-center justify-center p-4 text-center">
-        <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 mb-4 inline-flex">
+      <div className="min-h-screen bg-[#F8F9FC] dark:bg-[#0B0F19] flex flex-col items-center justify-center p-4 text-center">
+        <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-900 text-rose-600 dark:text-rose-400 mb-4 inline-flex">
           <AlertCircle className="w-8 h-8" />
         </div>
-        <h2 className="text-2xl font-bold text-[#1E293B] mb-2">Quiz Load Error</h2>
-        <p className="text-sm text-[#696F79] max-w-md mb-6">
+        <h2 className="text-2xl font-bold text-[#1E293B] dark:text-[#F8FAFC] mb-2">Quiz Load Error</h2>
+        <p className="text-sm text-[#696F79] dark:text-slate-400 max-w-md mb-6">
           {error || 'Unable to retrieve quiz attempt.'}
         </p>
         <div className="flex items-center gap-3">
@@ -168,7 +168,7 @@ export function QuizPlayerPage() {
           </button>
           <Link
             to="/"
-            className="px-5 py-2.5 rounded-xl text-xs font-bold bg-white hover:bg-slate-50 text-[#1E293B] border border-slate-200 shadow-sm transition"
+            className="px-5 py-2.5 rounded-xl text-xs font-bold bg-white dark:bg-[#151C2C] hover:bg-slate-50 dark:hover:bg-slate-800 text-[#1E293B] dark:text-[#F8FAFC] border border-slate-200 dark:border-slate-700 shadow-sm transition"
           >
             Back to Dashboard
           </Link>
@@ -180,19 +180,19 @@ export function QuizPlayerPage() {
   const selectedChoice = answers[currentQuestion.question_id] ?? null;
 
   return (
-    <div className="min-h-screen bg-[#F8F9FC] text-[#1E293B] flex flex-col antialiased">
+    <div className="min-h-screen bg-[#F8F9FC] dark:bg-[#0B0F19] text-[#1E293B] dark:text-[#F8FAFC] flex flex-col antialiased transition-colors duration-200">
       {/* Header */}
-      <header className="border-b border-slate-100 bg-white px-4 sm:px-8 py-3.5 flex items-center justify-between sticky top-0 z-40 shadow-sm">
+      <header className="border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-[#151C2C] px-4 sm:px-8 py-3.5 flex items-center justify-between sticky top-0 z-40 shadow-sm transition-colors duration-200">
         <div className="flex items-center gap-3">
           <Link
             to="/"
-            className="flex items-center gap-2 text-xs font-bold text-[#696F79] hover:text-[#1935CA] transition"
+            className="flex items-center gap-2 text-xs font-bold text-[#696F79] dark:text-slate-400 hover:text-[#1935CA] dark:hover:text-[#38BDF8] transition"
           >
             <Home className="w-4 h-4" />
             <span>Dashboard</span>
           </Link>
-          <span className="text-slate-300">/</span>
-          <span className="text-xs font-bold text-[#1E293B] truncate max-w-[200px] sm:max-w-xs">
+          <span className="text-slate-300 dark:text-slate-600">/</span>
+          <span className="text-xs font-bold text-[#1E293B] dark:text-[#F8FAFC] truncate max-w-[200px] sm:max-w-xs">
             {attempt.topic}
           </span>
         </div>
@@ -222,22 +222,22 @@ export function QuizPlayerPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 items-start">
           {/* Question & Options Column (2 spans) */}
           <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white border border-slate-100 rounded-[20px] p-6 sm:p-8 shadow-[0_10px_30px_rgba(25,53,202,0.05)]">
+            <div className="bg-white dark:bg-[#151C2C] border border-slate-100 dark:border-slate-800 rounded-[20px] p-6 sm:p-8 shadow-[0_10px_30px_rgba(25,53,202,0.05)] transition-colors duration-200">
               <div className="flex items-center justify-between mb-4">
-                <span className="text-xs font-extrabold uppercase tracking-wider text-[#1935CA]">
+                <span className="text-xs font-extrabold uppercase tracking-wider text-[#1935CA] dark:text-[#38BDF8]">
                   Question {currentIndex + 1} of {totalQuestions}
                 </span>
                 {selectedChoice ? (
-                  <span className="text-xs text-emerald-700 font-bold flex items-center gap-1 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                  <span className="text-xs text-emerald-700 dark:text-emerald-400 font-bold flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-1 rounded-full border border-emerald-200 dark:border-emerald-800">
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     Answered (Choice {selectedChoice})
                   </span>
                 ) : (
-                  <span className="text-xs text-[#696F79] font-medium">Unanswered</span>
+                  <span className="text-xs text-[#696F79] dark:text-slate-400 font-medium">Unanswered</span>
                 )}
               </div>
 
-              <h2 className="text-xl sm:text-2xl font-bold text-[#1E293B] leading-snug mb-8">
+              <h2 className="text-xl sm:text-2xl font-bold text-[#1E293B] dark:text-[#F8FAFC] leading-snug mb-8">
                 {currentQuestion.question}
               </h2>
 
@@ -264,7 +264,7 @@ export function QuizPlayerPage() {
                   type="button"
                   onClick={prevQuestion}
                   disabled={isFirstQuestion}
-                  className="flex items-center gap-2 px-5 py-3 rounded-2xl text-sm font-bold bg-white border border-slate-200 text-[#1E293B] hover:bg-slate-50 transition disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+                  className="flex items-center gap-2 px-5 py-3 rounded-2xl text-sm font-bold bg-white dark:bg-[#151C2C] border border-slate-200 dark:border-slate-700 text-[#1E293B] dark:text-[#F8FAFC] hover:bg-slate-50 dark:hover:bg-slate-800 transition disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
                 >
                   <ArrowLeft className="w-4 h-4" />
                   <span>Previous</span>
@@ -292,12 +292,12 @@ export function QuizPlayerPage() {
               </div>
 
               {/* Keyboard Shortcut Hints */}
-              <div className="hidden md:flex items-center gap-2 text-xs text-[#696F79]">
-                <span className="flex items-center gap-1 font-mono text-[11px] bg-slate-100 px-2 py-1 rounded-lg border border-slate-200 text-[#1E293B]">
-                  <kbd className="font-bold text-[#1935CA]">A-D</kbd> select
+              <div className="hidden md:flex items-center gap-2 text-xs text-[#696F79] dark:text-slate-400">
+                <span className="flex items-center gap-1 font-mono text-[11px] bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-[#1E293B] dark:text-[#F8FAFC]">
+                  <kbd className="font-bold text-[#1935CA] dark:text-[#38BDF8]">A-D</kbd> select
                 </span>
-                <span className="flex items-center gap-1 font-mono text-[11px] bg-slate-100 px-2 py-1 rounded-lg border border-slate-200 text-[#1E293B]">
-                  <kbd className="font-bold text-[#1935CA]">↵</kbd> {isLastQuestion ? 'submit' : 'next'}
+                <span className="flex items-center gap-1 font-mono text-[11px] bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-[#1E293B] dark:text-[#F8FAFC]">
+                  <kbd className="font-bold text-[#1935CA] dark:text-[#38BDF8]">↵</kbd> {isLastQuestion ? 'submit' : 'next'}
                 </span>
               </div>
             </div>
@@ -312,30 +312,30 @@ export function QuizPlayerPage() {
               onSelectIndex={goToQuestion}
             />
 
-            <div className="bg-white border border-slate-100 rounded-[20px] p-5 text-xs text-[#696F79] shadow-[0_10px_30px_rgba(25,53,202,0.05)] space-y-3">
-              <div className="flex items-center gap-2 font-bold text-[#1E293B]">
-                <Keyboard className="w-4 h-4 text-[#1935CA]" />
+            <div className="bg-white dark:bg-[#151C2C] border border-slate-100 dark:border-slate-800 rounded-[20px] p-5 text-xs text-[#696F79] dark:text-slate-400 shadow-[0_10px_30px_rgba(25,53,202,0.05)] space-y-3 transition-colors duration-200">
+              <div className="flex items-center gap-2 font-bold text-[#1E293B] dark:text-[#F8FAFC]">
+                <Keyboard className="w-4 h-4 text-[#1935CA] dark:text-[#38BDF8]" />
                 <span>Keyboard Shortcuts</span>
               </div>
               <div className="space-y-2 font-medium">
                 <div className="flex items-center justify-between">
                   <span>Select Choice</span>
                   <div className="flex gap-1 font-mono text-[11px]">
-                    <kbd className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[#1935CA] font-bold">A</kbd>
-                    <kbd className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[#1935CA] font-bold">B</kbd>
-                    <kbd className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[#1935CA] font-bold">C</kbd>
-                    <kbd className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[#1935CA] font-bold">D</kbd>
+                    <kbd className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[#1935CA] dark:text-[#38BDF8] font-bold">A</kbd>
+                    <kbd className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[#1935CA] dark:text-[#38BDF8] font-bold">B</kbd>
+                    <kbd className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[#1935CA] dark:text-[#38BDF8] font-bold">C</kbd>
+                    <kbd className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[#1935CA] dark:text-[#38BDF8] font-bold">D</kbd>
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Next / Submit</span>
-                  <kbd className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[#1935CA] font-mono font-bold text-[11px]">Enter ↵</kbd>
+                  <kbd className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[#1935CA] dark:text-[#38BDF8] font-mono font-bold text-[11px]">Enter ↵</kbd>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Prev / Next Question</span>
                   <div className="flex gap-1 font-mono text-[11px]">
-                    <kbd className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[#1935CA] font-bold">←</kbd>
-                    <kbd className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[#1935CA] font-bold">→</kbd>
+                    <kbd className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[#1935CA] dark:text-[#38BDF8] font-bold">←</kbd>
+                    <kbd className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[#1935CA] dark:text-[#38BDF8] font-bold">→</kbd>
                   </div>
                 </div>
               </div>

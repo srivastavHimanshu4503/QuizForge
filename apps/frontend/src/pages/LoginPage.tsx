@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { apiClient } from '../api/client';
 import { CaptchaChallenge } from '@quiz-forge/shared';
+import { ThemeToggle } from '../components/common/ThemeToggle';
 import {
   Sparkles,
   AlertCircle,
@@ -94,7 +95,12 @@ export function LoginPage() {
   const displayError = formError || error;
 
   return (
-    <div className="min-h-screen flex bg-[#F8F9FC]">
+    <div className="min-h-screen flex bg-[#F8F9FC] dark:bg-[#0B0F19] text-[#1E293B] dark:text-[#F8FAFC] relative transition-colors duration-200">
+      {/* Floating Theme Toggle in top-right */}
+      <div className="absolute top-4 right-4 z-50">
+        <ThemeToggle showMenu />
+      </div>
+
       {/* ===================== LEFT HERO PANEL (Hidden on < 1024px) ===================== */}
       <div className="hidden lg:flex lg:w-1/2 bg-[#1935CA] text-white p-12 lg:p-16 flex-col justify-between relative overflow-hidden">
         {/* Decorative corner brackets & background shapes */}
@@ -158,28 +164,28 @@ export function LoginPage() {
 
       {/* ===================== RIGHT AUTH FORM PANEL ===================== */}
       <div className="w-full lg:w-1/2 flex flex-col justify-center items-center p-6 sm:p-12 min-h-screen">
-        <div className="w-full max-w-[420px] bg-white rounded-[20px] p-8 sm:p-10 shadow-[0_10px_30px_rgba(25,53,202,0.05)] border border-slate-100/80">
+        <div className="w-full max-w-[420px] bg-white dark:bg-[#151C2C] rounded-[20px] p-8 sm:p-10 shadow-[0_10px_30px_rgba(25,53,202,0.05)] border border-slate-100/80 dark:border-slate-800 transition-colors duration-200">
           {/* Header */}
           <div className="mb-8">
             <div className="lg:hidden flex items-center gap-2 mb-4">
               <div className="w-8 h-8 rounded-full bg-[#1935CA] text-white flex items-center justify-center">
                 <Sparkles className="w-4 h-4" />
               </div>
-              <span className="font-extrabold text-xl text-[#1935CA]">QuizForge</span>
+              <span className="font-extrabold text-xl text-[#1935CA] dark:text-[#38BDF8]">QuizForge</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1935CA] tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1935CA] dark:text-[#38BDF8] tracking-tight">
               Login to your Account
             </h1>
-            <p className="mt-2 text-xs sm:text-sm text-[#696F79] font-medium">
+            <p className="mt-2 text-xs sm:text-sm text-[#696F79] dark:text-slate-400 font-medium">
               Welcome back! Select a demo role or enter your credentials.
             </p>
           </div>
 
           {/* Quick Demo Credentials */}
-          <div className="mb-6 p-4 rounded-xl bg-[#F8F9FC] border border-slate-100 text-xs">
-            <div className="font-bold text-[#1E293B] mb-2.5 flex items-center justify-between">
+          <div className="mb-6 p-4 rounded-xl bg-[#F8F9FC] dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 text-xs">
+            <div className="font-bold text-[#1E293B] dark:text-slate-200 mb-2.5 flex items-center justify-between">
               <span>Quick-Fill Demo Roles</span>
-              <span className="text-[10px] text-[#1935CA] font-mono font-bold bg-[#EEF2FF] px-2 py-0.5 rounded-full">
+              <span className="text-[10px] text-[#1935CA] dark:text-[#38BDF8] font-mono font-bold bg-[#EEF2FF] dark:bg-slate-700/80 px-2 py-0.5 rounded-full">
                 QuizForge2026!
               </span>
             </div>
@@ -191,7 +197,7 @@ export function LoginPage() {
                   setPassword('QuizForge2026!');
                   setFormError(null);
                 }}
-                className="px-3 py-2 rounded-lg bg-white hover:bg-[#EEF2FF] text-[#1935CA] border border-slate-200/80 hover:border-[#1935CA]/30 text-center font-bold shadow-sm transition active:scale-98"
+                className="px-3 py-2 rounded-lg bg-white dark:bg-[#151C2C] hover:bg-[#EEF2FF] dark:hover:bg-slate-700/60 text-[#1935CA] dark:text-[#38BDF8] border border-slate-200/80 dark:border-slate-700 text-center font-bold shadow-sm transition active:scale-98"
               >
                 Teacher (Instructor)
               </button>
@@ -202,7 +208,7 @@ export function LoginPage() {
                   setPassword('QuizForge2026!');
                   setFormError(null);
                 }}
-                className="px-3 py-2 rounded-lg bg-white hover:bg-emerald-50 text-emerald-700 border border-slate-200/80 hover:border-emerald-300 text-center font-bold shadow-sm transition active:scale-98"
+                className="px-3 py-2 rounded-lg bg-white dark:bg-[#151C2C] hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-slate-200/80 dark:border-emerald-800/40 text-center font-bold shadow-sm transition active:scale-98"
               >
                 Student (Learner)
               </button>
@@ -210,8 +216,8 @@ export function LoginPage() {
           </div>
 
           {displayError && (
-            <div className="mb-6 p-3.5 rounded-xl bg-[#FEF2F2] border border-rose-200 flex items-start gap-2.5 text-rose-700 text-xs font-medium">
-              <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+            <div className="mb-6 p-3.5 rounded-xl bg-[#FEF2F2] dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/40 flex items-start gap-2.5 text-rose-700 dark:text-rose-400 text-xs font-medium">
+              <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
               <span>{displayError}</span>
             </div>
           )}
@@ -221,7 +227,7 @@ export function LoginPage() {
             <div>
               <label
                 htmlFor="email"
-                className="block text-xs font-bold text-[#1E293B] mb-1.5"
+                className="block text-xs font-bold text-[#1E293B] dark:text-slate-200 mb-1.5"
               >
                 Email address*
               </label>
@@ -233,7 +239,7 @@ export function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter email address"
-                  className="w-full px-4 py-3 rounded-xl bg-white text-[#1E293B] placeholder-[#94A3B8] text-sm shadow-[0_4px_16px_rgba(15,23,42,0.05)] border-0 focus:ring-2 focus:ring-[#1935CA] transition outline-none font-medium"
+                  className="w-full px-4 py-3 rounded-xl bg-white dark:bg-[#1E293B] text-[#1E293B] dark:text-[#F8FAFC] placeholder-[#94A3B8] dark:placeholder-slate-500 text-sm shadow-[0_4px_16px_rgba(15,23,42,0.05)] border border-slate-200/60 dark:border-slate-700 focus:ring-2 focus:ring-[#1935CA] transition outline-none font-medium"
                 />
               </div>
             </div>
@@ -242,7 +248,7 @@ export function LoginPage() {
             <div>
               <label
                 htmlFor="password"
-                className="block text-xs font-bold text-[#1E293B] mb-1.5"
+                className="block text-xs font-bold text-[#1E293B] dark:text-slate-200 mb-1.5"
               >
                 Enter password*
               </label>
@@ -254,12 +260,12 @@ export function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Password"
-                  className="w-full px-4 py-3 pr-11 rounded-xl bg-white text-[#1E293B] placeholder-[#94A3B8] text-sm shadow-[0_4px_16px_rgba(15,23,42,0.05)] border-0 focus:ring-2 focus:ring-[#1935CA] transition outline-none font-medium"
+                  className="w-full px-4 py-3 pr-11 rounded-xl bg-white dark:bg-[#1E293B] text-[#1E293B] dark:text-[#F8FAFC] placeholder-[#94A3B8] dark:placeholder-slate-500 text-sm shadow-[0_4px_16px_rgba(15,23,42,0.05)] border border-slate-200/60 dark:border-slate-700 focus:ring-2 focus:ring-[#1935CA] transition outline-none font-medium"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[#94A3B8] hover:text-[#1E293B] transition"
+                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[#94A3B8] hover:text-[#1E293B] dark:hover:text-white transition"
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -272,16 +278,16 @@ export function LoginPage() {
               <div className="flex items-center justify-between">
                 <label
                   htmlFor="captcha"
-                  className="inline-flex items-center gap-1.5 text-xs font-bold text-[#1E293B]"
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-[#1E293B] dark:text-slate-200"
                 >
-                  <ShieldCheck className="w-3.5 h-3.5 text-[#1935CA]" />
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#1935CA] dark:text-[#38BDF8]" />
                   <span>Security Verification*</span>
                 </label>
                 <button
                   type="button"
                   onClick={fetchCaptcha}
                   disabled={isLoadingCaptcha}
-                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#1935CA] hover:underline disabled:opacity-50"
+                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#1935CA] dark:text-[#38BDF8] hover:underline disabled:opacity-50"
                   title="Reload challenge"
                 >
                   <RefreshCw className={`w-3 h-3 ${isLoadingCaptcha ? 'animate-spin' : ''}`} />
@@ -290,9 +296,9 @@ export function LoginPage() {
               </div>
 
               {/* Challenge Banner + Input */}
-              <div className="p-3 rounded-xl bg-[#EEF2FF] border border-[#1935CA]/20 flex items-center justify-between gap-3 shadow-inner">
-                <span className="text-xs font-semibold text-[#696F79]">Solve challenge:</span>
-                <span className="font-mono font-extrabold text-[#1935CA] tracking-wider text-sm select-none">
+              <div className="p-3 rounded-xl bg-[#EEF2FF] dark:bg-slate-800 border border-[#1935CA]/20 dark:border-slate-700 flex items-center justify-between gap-3 shadow-inner">
+                <span className="text-xs font-semibold text-[#696F79] dark:text-slate-400">Solve challenge:</span>
+                <span className="font-mono font-extrabold text-[#1935CA] dark:text-[#38BDF8] tracking-wider text-sm select-none">
                   {isLoadingCaptcha ? 'Loading...' : (captcha?.question || 'Solve challenge')}
                 </span>
               </div>
@@ -304,18 +310,18 @@ export function LoginPage() {
                 value={captchaAnswer}
                 onChange={(e) => setCaptchaAnswer(e.target.value)}
                 placeholder="Enter numerical answer"
-                className="w-full px-4 py-3 rounded-xl bg-white text-[#1E293B] placeholder-[#94A3B8] text-sm shadow-[0_4px_16px_rgba(15,23,42,0.05)] border border-slate-200/80 focus:ring-2 focus:ring-[#1935CA] transition outline-none font-medium"
+                className="w-full px-4 py-3 rounded-xl bg-white dark:bg-[#1E293B] text-[#1E293B] dark:text-[#F8FAFC] placeholder-[#94A3B8] dark:placeholder-slate-500 text-sm shadow-[0_4px_16px_rgba(15,23,42,0.05)] border border-slate-200/80 dark:border-slate-700 focus:ring-2 focus:ring-[#1935CA] transition outline-none font-medium"
               />
             </div>
 
             {/* Remember Me & Forgot Password */}
             <div className="flex items-center justify-between pt-1">
-              <label className="flex items-center gap-2 text-xs font-medium text-[#696F79] cursor-pointer">
+              <label className="flex items-center gap-2 text-xs font-medium text-[#696F79] dark:text-slate-400 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="rounded border-slate-300 text-[#1935CA] focus:ring-[#1935CA] w-4 h-4"
+                  className="rounded border-slate-300 dark:border-slate-600 text-[#1935CA] focus:ring-[#1935CA] w-4 h-4 bg-white dark:bg-slate-800"
                 />
                 <span>Remember my password</span>
               </label>
@@ -325,7 +331,7 @@ export function LoginPage() {
                   e.preventDefault();
                   alert('Use the quick-fill buttons above to log in with demo accounts.');
                 }}
-                className="text-xs font-bold text-[#1935CA] hover:underline"
+                className="text-xs font-bold text-[#1935CA] dark:text-[#38BDF8] hover:underline"
               >
                 Forgot Password?
               </a>
@@ -351,20 +357,20 @@ export function LoginPage() {
           {/* Divider */}
           <div className="relative my-6 text-center">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-slate-100" />
+              <div className="w-full border-t border-slate-100 dark:border-slate-800" />
             </div>
-            <span className="relative px-3 bg-white text-xs text-[#94A3B8] uppercase font-bold tracking-wider">
+            <span className="relative px-3 bg-white dark:bg-[#151C2C] text-xs text-[#94A3B8] dark:text-slate-400 uppercase font-bold tracking-wider">
               or
             </span>
           </div>
 
           {/* Bottom link */}
           <div className="text-center">
-            <p className="text-xs font-medium text-[#696F79]">
+            <p className="text-xs font-medium text-[#696F79] dark:text-slate-400">
               Don't have an account?{' '}
               <Link
                 to="/register"
-                className="font-bold text-[#1935CA] hover:underline"
+                className="font-bold text-[#1935CA] dark:text-[#38BDF8] hover:underline"
               >
                 Create one now
               </Link>

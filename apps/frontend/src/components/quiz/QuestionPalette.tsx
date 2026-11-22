@@ -21,13 +21,13 @@ export function QuestionPalette({
   ).length;
 
   return (
-    <div className="bg-white border border-slate-100 rounded-[20px] p-5 shadow-[0_10px_30px_rgba(25,53,202,0.05)]">
-      <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
-        <h3 className="text-xs font-bold text-[#696F79] uppercase tracking-wider">
+    <div className="bg-white dark:bg-[#151C2C] border border-slate-100 dark:border-slate-800 rounded-[20px] p-5 shadow-[0_10px_30px_rgba(25,53,202,0.05)] transition-colors duration-200">
+      <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
+        <h3 className="text-xs font-bold text-[#696F79] dark:text-slate-400 uppercase tracking-wider">
           Question Palette
         </h3>
-        <span className="text-xs text-[#696F79] font-medium">
-          <strong className="text-[#1935CA] font-bold">{answeredCount}</strong> / {questions.length} answered
+        <span className="text-xs text-[#696F79] dark:text-slate-400 font-medium">
+          <strong className="text-[#1935CA] dark:text-[#38BDF8] font-bold">{answeredCount}</strong> / {questions.length} answered
         </span>
       </div>
 
@@ -36,14 +36,14 @@ export function QuestionPalette({
           const isAnswered = answers[q.question_id] !== null && answers[q.question_id] !== undefined;
           const isCurrent = idx === currentIndex;
 
-          let badgeStyle = 'bg-[#F8F9FC] text-[#696F79] border-slate-200/80 hover:bg-slate-100 hover:text-[#1E293B]';
+          let badgeStyle = 'bg-[#F8F9FC] dark:bg-slate-800 text-[#696F79] dark:text-slate-400 border-slate-200/80 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-[#1E293B] dark:hover:text-white';
 
           if (isAnswered) {
-            badgeStyle = 'bg-emerald-50 text-emerald-700 border-emerald-200 font-bold';
+            badgeStyle = 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 font-bold';
           }
 
           if (isCurrent) {
-            badgeStyle = 'bg-[#1935CA] text-white font-extrabold ring-2 ring-[#1935CA] ring-offset-2 border-transparent shadow-md';
+            badgeStyle = 'bg-[#1935CA] text-white font-extrabold ring-2 ring-[#1935CA] dark:ring-[#38BDF8] ring-offset-2 dark:ring-offset-[#151C2C] border-transparent shadow-md';
           }
 
           return (
@@ -67,7 +67,7 @@ export function QuestionPalette({
       </div>
 
       {/* Legend */}
-      <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-[#696F79] font-medium">
+      <div className="mt-5 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-[#696F79] dark:text-slate-400 font-medium">
         <div className="flex items-center gap-1.5">
           <div className="w-2.5 h-2.5 rounded-full bg-[#1935CA]"></div>
           <span>Current</span>
@@ -77,7 +77,7 @@ export function QuestionPalette({
           <span>Answered</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-2.5 h-2.5 rounded-full bg-slate-300"></div>
+          <div className="w-2.5 h-2.5 rounded-full bg-slate-300 dark:bg-slate-600"></div>
           <span>Unanswered</span>
         </div>
       </div>

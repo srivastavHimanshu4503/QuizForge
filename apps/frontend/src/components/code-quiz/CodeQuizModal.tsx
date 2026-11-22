@@ -128,19 +128,19 @@ export function CodeQuizModal({ isOpen, onClose, onQuizCreated }: CodeQuizModalP
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white rounded-[24px] max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-white dark:bg-[#151C2C] rounded-[24px] max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-slate-100 dark:border-slate-800 max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+        <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-[#1935CA] text-white flex items-center justify-center shadow-md">
               <Code2 className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-xl font-extrabold text-[#1935CA] tracking-tight">
+              <h3 className="text-xl font-extrabold text-[#1935CA] dark:text-indigo-400 tracking-tight">
                 New GitHub Code Review
               </h3>
-              <p className="text-xs text-[#696F79] font-medium">
+              <p className="text-xs text-[#696F79] dark:text-slate-400 font-medium">
                 Adversarial line-by-line review powered by AI
               </p>
             </div>
@@ -149,14 +149,14 @@ export function CodeQuizModal({ isOpen, onClose, onQuizCreated }: CodeQuizModalP
             type="button"
             onClick={onClose}
             disabled={isGenerating}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {error && (
-          <div className="mt-5 p-3.5 rounded-xl bg-[#FEF2F2] border border-rose-200 flex items-start gap-2.5 text-rose-700 text-xs font-medium">
+          <div className="mt-5 p-3.5 rounded-xl bg-[#FEF2F2] dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 flex items-start gap-2.5 text-rose-700 dark:text-rose-300 text-xs font-medium">
             <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
             <span>{error}</span>
           </div>
@@ -165,7 +165,7 @@ export function CodeQuizModal({ isOpen, onClose, onQuizCreated }: CodeQuizModalP
         <form onSubmit={handleSubmit} className="mt-5 space-y-5">
           {/* GitHub Repository URL */}
           <div>
-            <label className="block text-xs font-bold text-[#1E293B] mb-1.5">
+            <label className="block text-xs font-bold text-[#1E293B] dark:text-[#F8FAFC] mb-1.5">
               GitHub Repository URL*
             </label>
             <input
@@ -174,12 +174,12 @@ export function CodeQuizModal({ isOpen, onClose, onQuizCreated }: CodeQuizModalP
               value={repoUrl}
               onChange={(e) => setRepoUrl(e.target.value)}
               placeholder="https://github.com/owner/repository"
-              className="w-full px-4 py-3 rounded-xl bg-[#F8F9FC] text-[#1E293B] placeholder-[#94A3B8] text-sm border border-slate-200/80 focus:ring-2 focus:ring-[#1935CA] focus:bg-white transition outline-none font-medium"
+              className="w-full px-4 py-3 rounded-xl bg-[#F8F9FC] dark:bg-[#1E293B] text-[#1E293B] dark:text-[#F8FAFC] placeholder-[#94A3B8] text-sm border border-slate-200/80 dark:border-slate-700 focus:ring-2 focus:ring-[#1935CA] focus:bg-white dark:focus:bg-[#151C2C] transition outline-none font-medium"
             />
 
             {/* Presets */}
             <div className="flex flex-wrap items-center gap-1.5 mt-2.5">
-              <span className="text-[11px] font-semibold text-[#696F79]">Presets:</span>
+              <span className="text-[11px] font-semibold text-[#696F79] dark:text-slate-400">Presets:</span>
               {REPO_PRESETS.map((preset) => {
                 const shortName = preset.replace('https://github.com/', '');
                 return (
@@ -187,7 +187,7 @@ export function CodeQuizModal({ isOpen, onClose, onQuizCreated }: CodeQuizModalP
                     key={preset}
                     type="button"
                     onClick={() => setRepoUrl(preset)}
-                    className="px-2 py-0.5 rounded-md bg-[#EEF2FF] hover:bg-[#1935CA] text-[#1935CA] hover:text-white text-[10px] font-mono font-bold transition"
+                    className="px-2 py-0.5 rounded-md bg-[#EEF2FF] dark:bg-indigo-950/50 hover:bg-[#1935CA] text-[#1935CA] dark:text-indigo-300 hover:text-white text-[10px] font-mono font-bold transition"
                   >
                     {shortName}
                   </button>
@@ -198,7 +198,7 @@ export function CodeQuizModal({ isOpen, onClose, onQuizCreated }: CodeQuizModalP
 
           {/* LLM Provider Selection Cards */}
           <div>
-            <label className="block text-xs font-bold text-[#1E293B] mb-2">
+            <label className="block text-xs font-bold text-[#1E293B] dark:text-[#F8FAFC] mb-2">
               Select LLM Reasoning Engine
             </label>
             {isLoadingProviders ? (
@@ -214,25 +214,25 @@ export function CodeQuizModal({ isOpen, onClose, onQuizCreated }: CodeQuizModalP
                       onClick={() => setLlmProvider(p.id as LLMProviderType)}
                       className={`p-3 rounded-xl border text-left transition relative ${
                         isSelected
-                          ? 'border-[#1935CA] bg-[#EEF2FF] shadow-sm'
-                          : 'border-slate-200/80 bg-[#F8F9FC] hover:border-slate-300'
+                          ? 'border-[#1935CA] bg-[#EEF2FF] dark:bg-indigo-950/40 shadow-sm'
+                          : 'border-slate-200/80 dark:border-slate-700 bg-[#F8F9FC] dark:bg-[#1E293B] hover:border-slate-300 dark:hover:border-slate-600'
                       }`}
                     >
                       <div className="flex items-center justify-between mb-1">
                         <span
                           className={`text-xs font-bold leading-tight ${
-                            isSelected ? 'text-[#1935CA]' : 'text-[#1E293B]'
+                            isSelected ? 'text-[#1935CA] dark:text-indigo-400' : 'text-[#1E293B] dark:text-[#F8FAFC]'
                           }`}
                         >
                           {p.displayName}
                         </span>
                         <span
                           className={`w-2 h-2 rounded-full ${
-                            p.isAvailable ? 'bg-emerald-500' : 'bg-slate-300'
+                            p.isAvailable ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'
                           }`}
                         />
                       </div>
-                      <span className="text-[10px] text-[#696F79] font-mono block">
+                      <span className="text-[10px] text-[#696F79] dark:text-slate-400 font-mono block">
                         {p.defaultModel.replace(/^(openai|meta|nvidia|google)\//i, '')}
                       </span>
                     </button>
@@ -245,10 +245,10 @@ export function CodeQuizModal({ isOpen, onClose, onQuizCreated }: CodeQuizModalP
           {/* Question Count Slider */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-xs font-bold text-[#1E293B]">
+              <label className="text-xs font-bold text-[#1E293B] dark:text-[#F8FAFC]">
                 Number of Review Questions
               </label>
-              <span className="px-2.5 py-0.5 rounded-full bg-[#EEF2FF] text-[#1935CA] font-bold text-xs">
+              <span className="px-2.5 py-0.5 rounded-full bg-[#EEF2FF] dark:bg-indigo-950/50 text-[#1935CA] dark:text-indigo-300 font-bold text-xs">
                 {questionCount} Questions
               </span>
             </div>
@@ -261,7 +261,7 @@ export function CodeQuizModal({ isOpen, onClose, onQuizCreated }: CodeQuizModalP
               onChange={(e) => setQuestionCount(Number(e.target.value))}
               className="w-full accent-[#1935CA] cursor-pointer"
             />
-            <div className="flex justify-between text-[10px] text-[#94A3B8] font-semibold mt-1">
+            <div className="flex justify-between text-[10px] text-[#94A3B8] dark:text-slate-400 font-semibold mt-1">
               <span>3 (Quick Review)</span>
               <span>5 (Standard)</span>
               <span>10 (Deep Audit)</span>
@@ -273,16 +273,16 @@ export function CodeQuizModal({ isOpen, onClose, onQuizCreated }: CodeQuizModalP
             <button
               type="button"
               onClick={() => setShowAdvanced(!showAdvanced)}
-              className="text-xs font-bold text-[#1935CA] flex items-center gap-1 hover:underline"
+              className="text-xs font-bold text-[#1935CA] dark:text-indigo-400 flex items-center gap-1 hover:underline"
             >
               <span>{showAdvanced ? 'Hide Advanced Focus' : 'Show Advanced Focus (Subfolders & Topics)'}</span>
               {showAdvanced ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
             </button>
 
             {showAdvanced && (
-              <div className="mt-3 p-4 rounded-xl bg-[#F8F9FC] border border-slate-100 space-y-3 animate-in fade-in">
+              <div className="mt-3 p-4 rounded-xl bg-[#F8F9FC] dark:bg-[#1E293B] border border-slate-100 dark:border-slate-800 space-y-3 animate-in fade-in">
                 <div>
-                  <label className="block text-[11px] font-bold text-[#1E293B] mb-1">
+                  <label className="block text-[11px] font-bold text-[#1E293B] dark:text-[#F8FAFC] mb-1">
                     Specific Subfolder Path (Optional)
                   </label>
                   <input
@@ -290,11 +290,11 @@ export function CodeQuizModal({ isOpen, onClose, onQuizCreated }: CodeQuizModalP
                     value={subfolder}
                     onChange={(e) => setSubfolder(e.target.value)}
                     placeholder="e.g. packages/core or src/services"
-                    className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-xs text-[#1E293B] outline-none focus:ring-1 focus:ring-[#1935CA]"
+                    className="w-full px-3 py-2 rounded-lg bg-white dark:bg-[#151C2C] border border-slate-200 dark:border-slate-700 text-xs text-[#1E293B] dark:text-[#F8FAFC] outline-none focus:ring-1 focus:ring-[#1935CA]"
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-bold text-[#1E293B] mb-1">
+                  <label className="block text-[11px] font-bold text-[#1E293B] dark:text-[#F8FAFC] mb-1">
                     Focus Concepts (Optional)
                   </label>
                   <input
@@ -302,7 +302,7 @@ export function CodeQuizModal({ isOpen, onClose, onQuizCreated }: CodeQuizModalP
                     value={focusAreas}
                     onChange={(e) => setFocusAreas(e.target.value)}
                     placeholder="e.g. error handling, state machine, auth"
-                    className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-xs text-[#1E293B] outline-none focus:ring-1 focus:ring-[#1935CA]"
+                    className="w-full px-3 py-2 rounded-lg bg-white dark:bg-[#151C2C] border border-slate-200 dark:border-slate-700 text-xs text-[#1E293B] dark:text-[#F8FAFC] outline-none focus:ring-1 focus:ring-[#1935CA]"
                   />
                 </div>
               </div>

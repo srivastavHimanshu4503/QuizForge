@@ -307,23 +307,23 @@ export function ClassroomsPage() {
     <AppLayout activeNav="classrooms">
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800 transition-colors duration-200">
           <div>
             <div className="flex items-center gap-2.5">
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1E293B] tracking-tight">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1E293B] dark:text-[#F8FAFC] tracking-tight">
                 {isTeacher ? 'Instructor Classroom Studio' : 'My Enrolled Classrooms'}
               </h1>
               <span
                 className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
                   isTeacher
-                    ? 'bg-purple-100 text-purple-700'
-                    : 'bg-[#EEF2FF] text-[#1935CA]'
+                    ? 'bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300'
+                    : 'bg-[#EEF2FF] dark:bg-slate-800 text-[#1935CA] dark:text-[#38BDF8]'
                 }`}
               >
                 {isTeacher ? 'Teacher' : 'Student'}
               </span>
             </div>
-            <p className="text-sm text-[#696F79] mt-1 font-medium">
+            <p className="text-sm text-[#696F79] dark:text-slate-400 mt-1 font-medium">
               {isTeacher
                 ? 'Organize student cohorts, assign quizzes with deadlines, inspect gradebook analytics, and share access codes.'
                 : 'Collaborate with your classes, view authorized assignments, and track submission scores.'}
@@ -343,9 +343,9 @@ export function ClassroomsPage() {
               <>
                 <Link
                   to="/assignments"
-                  className="flex items-center gap-2 px-4 py-2.5 text-xs font-bold text-[#1E293B] hover:text-[#1935CA] bg-white hover:bg-slate-50 rounded-xl transition border border-slate-200/80 shadow-sm"
+                  className="flex items-center gap-2 px-4 py-2.5 text-xs font-bold text-[#1E293B] dark:text-[#F8FAFC] hover:text-[#1935CA] dark:hover:text-[#38BDF8] bg-white dark:bg-[#151C2C] hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition border border-slate-200/80 dark:border-slate-700 shadow-sm"
                 >
-                  <ClipboardList className="w-4 h-4 text-[#1935CA]" />
+                  <ClipboardList className="w-4 h-4 text-[#1935CA] dark:text-[#38BDF8]" />
                   <span>My Assigned Tasks</span>
                 </Link>
                 <button
@@ -361,7 +361,7 @@ export function ClassroomsPage() {
         </div>
 
         {error && (
-          <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium">
+          <div className="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-400 text-xs font-medium">
             {error}
           </div>
         )}
@@ -370,19 +370,19 @@ export function ClassroomsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Left Column: Classroom List */}
           <div className="lg:col-span-4 space-y-3">
-            <h2 className="text-xs font-bold text-[#696F79] uppercase tracking-wider px-1">
+            <h2 className="text-xs font-bold text-[#696F79] dark:text-slate-400 uppercase tracking-wider px-1">
               Classrooms ({classrooms.length})
             </h2>
 
             {isLoading ? (
-              <div className="p-8 text-center text-[#696F79] text-sm bg-white rounded-[20px] shadow-[0_10px_30px_rgba(25,53,202,0.05)] border border-slate-100">
+              <div className="p-8 text-center text-[#696F79] dark:text-slate-400 text-sm bg-white dark:bg-[#151C2C] rounded-[20px] shadow-[0_10px_30px_rgba(25,53,202,0.05)] border border-slate-100 dark:border-slate-800">
                 Loading classrooms...
               </div>
             ) : classrooms.length === 0 ? (
-              <div className="p-8 text-center text-[#696F79] text-sm bg-white rounded-[20px] shadow-[0_10px_30px_rgba(25,53,202,0.05)] border border-slate-100 space-y-2">
+              <div className="p-8 text-center text-[#696F79] dark:text-slate-400 text-sm bg-white dark:bg-[#151C2C] rounded-[20px] shadow-[0_10px_30px_rgba(25,53,202,0.05)] border border-slate-100 dark:border-slate-800 space-y-2">
                 <Users className="w-8 h-8 text-slate-400 mx-auto" />
-                <p className="font-semibold text-[#1E293B]">No classrooms found.</p>
-                <p className="text-xs text-[#696F79]">
+                <p className="font-semibold text-[#1E293B] dark:text-[#F8FAFC]">No classrooms found.</p>
+                <p className="text-xs text-[#696F79] dark:text-slate-400">
                   {isTeacher ? 'Create your first classroom above.' : 'Join a classroom with a teacher code.'}
                 </p>
               </div>
@@ -395,25 +395,25 @@ export function ClassroomsPage() {
                     onClick={() => setSelectedClassId(c.id)}
                     className={`p-5 rounded-[20px] cursor-pointer transition-all ${
                       isSelected
-                        ? 'bg-white border-2 border-[#1935CA] shadow-[0_12px_32px_rgba(25,53,202,0.12)]'
-                        : 'bg-white border border-slate-100 shadow-[0_10px_30px_rgba(25,53,202,0.04)] hover:shadow-[0_14px_36px_rgba(25,53,202,0.08)]'
+                        ? 'bg-white dark:bg-[#151C2C] border-2 border-[#1935CA] dark:border-[#38BDF8] shadow-[0_12px_32px_rgba(25,53,202,0.12)]'
+                        : 'bg-white dark:bg-[#151C2C] border border-slate-100 dark:border-slate-800 shadow-[0_10px_30px_rgba(25,53,202,0.04)] hover:shadow-[0_14px_36px_rgba(25,53,202,0.08)]'
                     }`}
                   >
                     <div className="flex items-start justify-between">
                       <div>
-                        <h3 className="font-bold text-[#1E293B] text-base">{c.name}</h3>
+                        <h3 className="font-bold text-[#1E293B] dark:text-[#F8FAFC] text-base">{c.name}</h3>
                         {c.description && (
-                          <p className="text-xs text-[#696F79] line-clamp-1 mt-0.5">{c.description}</p>
+                          <p className="text-xs text-[#696F79] dark:text-slate-400 line-clamp-1 mt-0.5">{c.description}</p>
                         )}
                       </div>
-                      <span className="px-2.5 py-1 rounded-lg bg-[#F8F9FC] text-[#1935CA] font-mono text-xs font-bold border border-slate-200/80">
+                      <span className="px-2.5 py-1 rounded-lg bg-[#F8F9FC] dark:bg-slate-800 text-[#1935CA] dark:text-[#38BDF8] font-mono text-xs font-bold border border-slate-200/80 dark:border-slate-700">
                         {c.code}
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-4 mt-3 text-xs text-[#696F79] font-medium">
+                    <div className="flex items-center gap-4 mt-3 text-xs text-[#696F79] dark:text-slate-400 font-medium">
                       <div className="flex items-center gap-1.5">
-                        <Users className="w-3.5 h-3.5 text-[#1935CA]" />
+                        <Users className="w-3.5 h-3.5 text-[#1935CA] dark:text-[#38BDF8]" />
                         <span>{c.memberCount} students</span>
                       </div>
                       <div className="flex items-center gap-1.5">
@@ -430,51 +430,51 @@ export function ClassroomsPage() {
           {/* Right Column: Classroom Detail & Assignments */}
           <div className="lg:col-span-8">
             {isLoadingDetails ? (
-              <div className="p-12 text-center text-[#696F79] text-sm bg-white rounded-[20px] shadow-[0_10px_30px_rgba(25,53,202,0.05)] border border-slate-100">
+              <div className="p-12 text-center text-[#696F79] dark:text-slate-400 text-sm bg-white dark:bg-[#151C2C] rounded-[20px] shadow-[0_10px_30px_rgba(25,53,202,0.05)] border border-slate-100 dark:border-slate-800">
                 Loading classroom details...
               </div>
             ) : !classDetails ? (
-              <div className="p-12 text-center text-[#696F79] text-sm bg-white rounded-[20px] shadow-[0_10px_30px_rgba(25,53,202,0.05)] border border-slate-100">
+              <div className="p-12 text-center text-[#696F79] dark:text-slate-400 text-sm bg-white dark:bg-[#151C2C] rounded-[20px] shadow-[0_10px_30px_rgba(25,53,202,0.05)] border border-slate-100 dark:border-slate-800">
                 Select a classroom from the left to view members and assignments.
               </div>
             ) : (
               <div className="space-y-6">
                 {/* Classroom Overview Card */}
-                <div className="p-6 sm:p-7 rounded-[20px] bg-white border border-slate-100 shadow-[0_10px_30px_rgba(25,53,202,0.05)] space-y-4">
+                <div className="p-6 sm:p-7 rounded-[20px] bg-white dark:bg-[#151C2C] border border-slate-100 dark:border-slate-800 shadow-[0_10px_30px_rgba(25,53,202,0.05)] space-y-4 transition-colors duration-200">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
                       <div className="flex items-center gap-3">
-                        <h2 className="text-xl font-bold text-[#1E293B]">{classDetails.classroom.name}</h2>
+                        <h2 className="text-xl font-bold text-[#1E293B] dark:text-[#F8FAFC]">{classDetails.classroom.name}</h2>
                         {isTeacher && (
                           <button
                             onClick={() => handleDeleteClassroom(classDetails.classroom.id)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition"
                             title="Delete Classroom"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
                         )}
                       </div>
-                      <p className="text-sm text-[#696F79] mt-1 font-medium">
-                        Instructor: <span className="text-[#1E293B] font-bold">{classDetails.classroom.teacherName}</span>
+                      <p className="text-sm text-[#696F79] dark:text-slate-400 mt-1 font-medium">
+                        Instructor: <span className="text-[#1E293B] dark:text-[#F8FAFC] font-bold">{classDetails.classroom.teacherName}</span>
                       </p>
                       {classDetails.classroom.description && (
-                        <p className="text-xs text-[#696F79] mt-2">{classDetails.classroom.description}</p>
+                        <p className="text-xs text-[#696F79] dark:text-slate-400 mt-2">{classDetails.classroom.description}</p>
                       )}
                     </div>
 
                     <div className="flex flex-wrap items-center gap-3">
-                      <div className="p-3 rounded-xl bg-[#F8F9FC] border border-slate-200/80 text-center">
-                        <span className="text-[10px] font-bold text-[#696F79] uppercase tracking-wider block">
+                      <div className="p-3 rounded-xl bg-[#F8F9FC] dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 text-center">
+                        <span className="text-[10px] font-bold text-[#696F79] dark:text-slate-400 uppercase tracking-wider block">
                           Join Code
                         </span>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-lg font-mono font-extrabold text-[#1935CA] tracking-wider">
+                          <span className="text-lg font-mono font-extrabold text-[#1935CA] dark:text-[#38BDF8] tracking-wider">
                             {classDetails.classroom.code}
                           </span>
                           <button
                             onClick={() => copyToClipboard(classDetails.classroom.code)}
-                            className="p-1 rounded text-slate-400 hover:text-[#1935CA] hover:bg-[#EEF2FF] transition"
+                            className="p-1 rounded text-slate-400 hover:text-[#1935CA] dark:hover:text-[#38BDF8] hover:bg-[#EEF2FF] dark:hover:bg-slate-700 transition"
                             title="Copy join code"
                           >
                             {copiedCode === classDetails.classroom.code ? (
@@ -495,7 +495,7 @@ export function ClassroomsPage() {
                             url: `${window.location.origin}/classrooms?join=${classDetails.classroom.code}`,
                           })
                         }
-                        className="flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-bold text-[#1935CA] bg-[#EEF2FF] hover:bg-[#E0E7FF] rounded-xl transition"
+                        className="flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-bold text-[#1935CA] dark:text-[#38BDF8] bg-[#EEF2FF] dark:bg-slate-800 hover:bg-[#E0E7FF] dark:hover:bg-slate-700 rounded-xl transition"
                         title="Share Classroom Invite Link"
                       >
                         <Share2 className="w-4 h-4" />
@@ -521,13 +521,13 @@ export function ClassroomsPage() {
                 {/* Assignments Section */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between px-1">
-                    <h3 className="text-xs font-bold text-[#696F79] uppercase tracking-wider">
+                    <h3 className="text-xs font-bold text-[#696F79] dark:text-slate-400 uppercase tracking-wider">
                       Assignments ({classDetails.assignments.length})
                     </h3>
                     {!isTeacher ? (
                       <Link
                         to="/assignments"
-                        className="text-xs font-bold text-[#1935CA] hover:underline flex items-center gap-1"
+                        className="text-xs font-bold text-[#1935CA] dark:text-[#38BDF8] hover:underline flex items-center gap-1"
                       >
                         <span>Take Assigned Quizzes</span>
                         <ArrowRight className="w-3.5 h-3.5" />
@@ -539,7 +539,7 @@ export function ClassroomsPage() {
                             fetchMyQuizzes();
                             setShowAssignModal(true);
                           }}
-                          className="text-xs font-bold text-[#1935CA] hover:underline flex items-center gap-1"
+                          className="text-xs font-bold text-[#1935CA] dark:text-[#38BDF8] hover:underline flex items-center gap-1"
                         >
                           <Plus className="w-3.5 h-3.5" />
                           <span>Assign Quiz</span>
@@ -549,7 +549,7 @@ export function ClassroomsPage() {
                   </div>
 
                   {classDetails.assignments.length === 0 ? (
-                    <div className="p-8 text-center text-[#696F79] text-sm bg-white rounded-[20px] shadow-[0_10px_30px_rgba(25,53,202,0.05)] border border-slate-100 space-y-2">
+                    <div className="p-8 text-center text-[#696F79] dark:text-slate-400 text-sm bg-white dark:bg-[#151C2C] rounded-[20px] shadow-[0_10px_30px_rgba(25,53,202,0.05)] border border-slate-100 dark:border-slate-800 space-y-2">
                       <p>No quizzes have been assigned to this classroom yet.</p>
                       {isTeacher && (
                         <button
@@ -557,7 +557,7 @@ export function ClassroomsPage() {
                             fetchMyQuizzes();
                             setShowAssignModal(true);
                           }}
-                          className="px-4 py-2 text-xs font-bold text-[#1935CA] bg-[#EEF2FF] hover:bg-[#E0E7FF] rounded-xl transition"
+                          className="px-4 py-2 text-xs font-bold text-[#1935CA] dark:text-[#38BDF8] bg-[#EEF2FF] dark:bg-slate-800 hover:bg-[#E0E7FF] dark:hover:bg-slate-700 rounded-xl transition"
                         >
                           Create First Assignment
                         </button>
@@ -568,18 +568,18 @@ export function ClassroomsPage() {
                       {classDetails.assignments.map((a) => (
                         <div
                           key={a.id}
-                          className="p-4 sm:p-5 rounded-[18px] bg-white border border-slate-100 shadow-[0_8px_24px_rgba(25,53,202,0.04)] flex flex-col md:flex-row md:items-center justify-between gap-4"
+                          className="p-4 sm:p-5 rounded-[18px] bg-white dark:bg-[#151C2C] border border-slate-100 dark:border-slate-800 shadow-[0_8px_24px_rgba(25,53,202,0.04)] flex flex-col md:flex-row md:items-center justify-between gap-4 transition-colors duration-200"
                         >
                           <div className="space-y-1.5 flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-bold text-[#1E293B] text-sm truncate">{a.title}</span>
-                              <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-[#EEF2FF] text-[#1935CA]">
+                              <span className="font-bold text-[#1E293B] dark:text-[#F8FAFC] text-sm truncate">{a.title}</span>
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-[#EEF2FF] dark:bg-slate-800 text-[#1935CA] dark:text-[#38BDF8]">
                                 {a.quizType === 'code_review' ? 'Code Review' : 'MCQ'}
                               </span>
                             </div>
-                            <div className="flex flex-wrap items-center gap-4 text-xs text-[#696F79] font-medium">
+                            <div className="flex flex-wrap items-center gap-4 text-xs text-[#696F79] dark:text-slate-400 font-medium">
                               {a.dueDate && (
-                                <div className="flex items-center gap-1 text-amber-600">
+                                <div className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
                                   <Calendar className="w-3.5 h-3.5" />
                                   <span>Due: {new Date(a.dueDate).toLocaleDateString()}</span>
                                 </div>
@@ -597,7 +597,7 @@ export function ClassroomsPage() {
                                 {a.quizType === 'mcq' && (
                                   <Link
                                     to={`/studio/${a.quizId}`}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[#1935CA] hover:bg-[#EEF2FF] bg-[#F8F9FC] rounded-xl border border-slate-200/80 transition"
+                                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[#1935CA] dark:text-[#38BDF8] hover:bg-[#EEF2FF] dark:hover:bg-slate-700 bg-[#F8F9FC] dark:bg-slate-800 rounded-xl border border-slate-200/80 dark:border-slate-700 transition"
                                     title="Edit questions, choices and answers in Quiz Studio"
                                   >
                                     <SlidersHorizontal className="w-3.5 h-3.5" />
@@ -617,7 +617,7 @@ export function ClassroomsPage() {
                                         : `${window.location.origin}/classrooms?join=${classDetails.classroom.code}`,
                                     })
                                   }
-                                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[#1935CA] hover:bg-[#EEF2FF] bg-[#F8F9FC] rounded-xl border border-slate-200/80 transition"
+                                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[#1935CA] dark:text-[#38BDF8] hover:bg-[#EEF2FF] dark:hover:bg-slate-700 bg-[#F8F9FC] dark:bg-slate-800 rounded-xl border border-slate-200/80 dark:border-slate-700 transition"
                                   title="Share quiz or direct access code"
                                 >
                                   <Share2 className="w-3.5 h-3.5" />
@@ -632,7 +632,7 @@ export function ClassroomsPage() {
                                     setEditAssignDueDate(a.dueDate ? a.dueDate.split('T')[0] || '' : '');
                                     setEditAssignMaxAttempts(a.maxAttempts);
                                   }}
-                                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[#696F79] hover:text-[#1E293B] hover:bg-slate-100 bg-[#F8F9FC] rounded-xl border border-slate-200/80 transition"
+                                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[#696F79] dark:text-slate-300 hover:text-[#1E293B] dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 bg-[#F8F9FC] dark:bg-slate-800 rounded-xl border border-slate-200/80 dark:border-slate-700 transition"
                                   title="Edit Assignment Settings (Due date, attempts, title)"
                                 >
                                   <Settings className="w-3.5 h-3.5" />
@@ -642,7 +642,7 @@ export function ClassroomsPage() {
                                 {/* Gradebook */}
                                 <button
                                   onClick={() => handleViewSubmissions(a.id)}
-                                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[#1935CA] hover:bg-[#EEF2FF] bg-[#F8F9FC] rounded-xl border border-slate-200/80 transition"
+                                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[#1935CA] dark:text-[#38BDF8] hover:bg-[#EEF2FF] dark:hover:bg-slate-700 bg-[#F8F9FC] dark:bg-slate-800 rounded-xl border border-slate-200/80 dark:border-slate-700 transition"
                                 >
                                   <Award className="w-3.5 h-3.5" />
                                   <span>Gradebook</span>
@@ -651,7 +651,7 @@ export function ClassroomsPage() {
                                 {/* Delete Assignment */}
                                 <button
                                   onClick={() => handleDeleteAssignment(a.id)}
-                                  className="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition border border-transparent hover:border-rose-100"
+                                  className="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition border border-transparent hover:border-rose-100"
                                   title="Delete Assignment"
                                 >
                                   <Trash2 className="w-4 h-4" />
@@ -675,35 +675,35 @@ export function ClassroomsPage() {
 
                 {/* Roster Section */}
                 <div className="space-y-3">
-                  <h3 className="text-xs font-bold text-[#696F79] uppercase tracking-wider px-1">
+                  <h3 className="text-xs font-bold text-[#696F79] dark:text-slate-400 uppercase tracking-wider px-1">
                     Enrolled Students ({classDetails.members.length})
                   </h3>
 
                   {classDetails.members.length === 0 ? (
-                    <div className="p-8 text-center text-[#696F79] text-sm bg-white rounded-[20px] shadow-[0_10px_30px_rgba(25,53,202,0.05)] border border-slate-100">
+                    <div className="p-8 text-center text-[#696F79] dark:text-slate-400 text-sm bg-white dark:bg-[#151C2C] rounded-[20px] shadow-[0_10px_30px_rgba(25,53,202,0.05)] border border-slate-100 dark:border-slate-800">
                       No students have joined yet. Share the code{' '}
-                      <span className="font-mono text-[#1935CA] font-bold">
+                      <span className="font-mono text-[#1935CA] dark:text-[#38BDF8] font-bold">
                         {classDetails.classroom.code}
                       </span>{' '}
                       with your class!
                     </div>
                   ) : (
-                    <div className="p-2 rounded-[20px] bg-white border border-slate-100 shadow-[0_10px_30px_rgba(25,53,202,0.05)] divide-y divide-slate-100">
+                    <div className="p-2 rounded-[20px] bg-white dark:bg-[#151C2C] border border-slate-100 dark:border-slate-800 shadow-[0_10px_30px_rgba(25,53,202,0.05)] divide-y divide-slate-100 dark:divide-slate-800">
                       {classDetails.members.map((m) => (
                         <div
                           key={m.studentId}
                           className="p-3.5 flex items-center justify-between text-xs"
                         >
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-[#EEF2FF] text-[#1935CA] flex items-center justify-center font-bold">
+                            <div className="w-8 h-8 rounded-full bg-[#EEF2FF] dark:bg-slate-800 text-[#1935CA] dark:text-[#38BDF8] flex items-center justify-center font-bold">
                               {m.studentName.charAt(0)}
                             </div>
                             <div>
-                              <span className="font-bold text-[#1E293B] block">{m.studentName}</span>
-                              <span className="text-[#696F79] text-[11px] font-medium">{m.studentEmail}</span>
+                              <span className="font-bold text-[#1E293B] dark:text-[#F8FAFC] block">{m.studentName}</span>
+                              <span className="text-[#696F79] dark:text-slate-400 text-[11px] font-medium">{m.studentEmail}</span>
                             </div>
                           </div>
-                          <span className="text-[#696F79] text-[11px] font-medium">
+                          <span className="text-[#696F79] dark:text-slate-400 text-[11px] font-medium">
                             Joined {new Date(m.joinedAt).toLocaleDateString()}
                           </span>
                         </div>
@@ -719,15 +719,15 @@ export function ClassroomsPage() {
         {/* Create Classroom Modal */}
         {showCreateModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-            <div className="bg-white rounded-[24px] p-6 sm:p-7 w-full max-w-md shadow-2xl space-y-4 border border-slate-100">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <h3 className="text-lg font-bold text-[#1E293B] flex items-center gap-2">
-                  <GraduationCap className="w-5 h-5 text-[#1935CA]" />
+            <div className="bg-white dark:bg-[#151C2C] rounded-[24px] p-6 sm:p-7 w-full max-w-md shadow-2xl space-y-4 border border-slate-100 dark:border-slate-800 transition-colors duration-200">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                <h3 className="text-lg font-bold text-[#1E293B] dark:text-[#F8FAFC] flex items-center gap-2">
+                  <GraduationCap className="w-5 h-5 text-[#1935CA] dark:text-[#38BDF8]" />
                   <span>Create New Classroom</span>
                 </h3>
                 <button
                   onClick={() => setShowCreateModal(false)}
-                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -735,7 +735,7 @@ export function ClassroomsPage() {
 
               <form onSubmit={handleCreateClass} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-[#1E293B] mb-1.5">
+                  <label className="block text-xs font-bold text-[#1E293B] dark:text-slate-200 mb-1.5">
                     Classroom Name *
                   </label>
                   <input
@@ -744,12 +744,12 @@ export function ClassroomsPage() {
                     placeholder="e.g. Computer Science 101"
                     value={newClassName}
                     onChange={(e) => setNewClassName(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl bg-[#F8F9FC] border border-slate-200/80 text-[#1E293B] placeholder-[#94A3B8] text-sm focus:ring-2 focus:ring-[#1935CA] focus:bg-white outline-none font-medium"
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#F8F9FC] dark:bg-[#1E293B] border border-slate-200/80 dark:border-slate-700 text-[#1E293B] dark:text-[#F8FAFC] placeholder-[#94A3B8] dark:placeholder-slate-500 text-sm focus:ring-2 focus:ring-[#1935CA] focus:bg-white dark:focus:bg-[#1E293B] outline-none font-medium"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#1E293B] mb-1.5">
+                  <label className="block text-xs font-bold text-[#1E293B] dark:text-slate-200 mb-1.5">
                     Description (Optional)
                   </label>
                   <textarea
@@ -757,7 +757,7 @@ export function ClassroomsPage() {
                     placeholder="e.g. Fall 2026 Cohort on Algorithms and Data Structures"
                     value={newClassDesc}
                     onChange={(e) => setNewClassDesc(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl bg-[#F8F9FC] border border-slate-200/80 text-[#1E293B] placeholder-[#94A3B8] text-sm focus:ring-2 focus:ring-[#1935CA] focus:bg-white outline-none font-medium resize-none"
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#F8F9FC] dark:bg-[#1E293B] border border-slate-200/80 dark:border-slate-700 text-[#1E293B] dark:text-[#F8FAFC] placeholder-[#94A3B8] dark:placeholder-slate-500 text-sm focus:ring-2 focus:ring-[#1935CA] focus:bg-white dark:focus:bg-[#1E293B] outline-none font-medium resize-none"
                   />
                 </div>
 
@@ -765,7 +765,7 @@ export function ClassroomsPage() {
                   <button
                     type="button"
                     onClick={() => setShowCreateModal(false)}
-                    className="px-4 py-2 text-xs font-bold text-[#696F79] hover:text-[#1E293B] transition"
+                    className="px-4 py-2 text-xs font-bold text-[#696F79] dark:text-slate-400 hover:text-[#1E293B] dark:hover:text-white transition"
                   >
                     Cancel
                   </button>
@@ -785,20 +785,20 @@ export function ClassroomsPage() {
         {/* Join Classroom Modal */}
         {showJoinModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-            <div className="bg-white rounded-[24px] p-6 sm:p-7 w-full max-w-sm shadow-2xl space-y-4 border border-slate-100">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <h3 className="text-lg font-bold text-[#1E293B] flex items-center gap-2">
-                  <Users className="w-5 h-5 text-[#1935CA]" />
+            <div className="bg-white dark:bg-[#151C2C] rounded-[24px] p-6 sm:p-7 w-full max-w-sm shadow-2xl space-y-4 border border-slate-100 dark:border-slate-800 transition-colors duration-200">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                <h3 className="text-lg font-bold text-[#1E293B] dark:text-[#F8FAFC] flex items-center gap-2">
+                  <Users className="w-5 h-5 text-[#1935CA] dark:text-[#38BDF8]" />
                   <span>Join Classroom</span>
                 </h3>
                 <button
                   onClick={() => setShowJoinModal(false)}
-                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
-              <p className="text-xs text-[#696F79] font-medium">
+              <p className="text-xs text-[#696F79] dark:text-slate-400 font-medium">
                 Enter the 6-character code provided by your teacher to enroll in this class.
               </p>
 
@@ -811,7 +811,7 @@ export function ClassroomsPage() {
                     placeholder="e.g. CS101A"
                     value={joinCode}
                     onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                    className="w-full px-4 py-3 rounded-xl bg-[#F8F9FC] border border-slate-200/80 text-[#1935CA] placeholder-[#94A3B8] font-mono font-extrabold text-center text-xl tracking-widest uppercase focus:ring-2 focus:ring-[#1935CA] focus:bg-white outline-none"
+                    className="w-full px-4 py-3 rounded-xl bg-[#F8F9FC] dark:bg-[#1E293B] border border-slate-200/80 dark:border-slate-700 text-[#1935CA] dark:text-[#38BDF8] placeholder-[#94A3B8] dark:placeholder-slate-500 font-mono font-extrabold text-center text-xl tracking-widest uppercase focus:ring-2 focus:ring-[#1935CA] focus:bg-white dark:focus:bg-[#1E293B] outline-none"
                   />
                 </div>
 
@@ -819,7 +819,7 @@ export function ClassroomsPage() {
                   <button
                     type="button"
                     onClick={() => setShowJoinModal(false)}
-                    className="px-4 py-2 text-xs font-bold text-[#696F79] hover:text-[#1E293B] transition"
+                    className="px-4 py-2 text-xs font-bold text-[#696F79] dark:text-slate-400 hover:text-[#1E293B] dark:hover:text-white transition"
                   >
                     Cancel
                   </button>
@@ -839,79 +839,79 @@ export function ClassroomsPage() {
         {/* Assign Quiz Modal */}
         {showAssignModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-            <div className="bg-white rounded-[24px] p-6 sm:p-7 w-full max-w-xl shadow-2xl space-y-5 border border-slate-100 max-h-[90vh] overflow-y-auto">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <h3 className="text-lg font-bold text-[#1E293B] flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-[#1935CA]" />
+            <div className="bg-white dark:bg-[#151C2C] rounded-[24px] p-6 sm:p-7 w-full max-w-xl shadow-2xl space-y-5 border border-slate-100 dark:border-slate-800 max-h-[90vh] overflow-y-auto transition-colors duration-200">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                <h3 className="text-lg font-bold text-[#1E293B] dark:text-[#F8FAFC] flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-[#1935CA] dark:text-[#38BDF8]" />
                   <span>Assign Quiz to Classroom</span>
                 </h3>
                 <button
                   onClick={() => setShowAssignModal(false)}
-                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
               {/* Quick Quiz Creator Panel */}
-              <div className="p-4 rounded-2xl bg-[#F8F9FC] border border-slate-200/70 space-y-2.5">
+              <div className="p-4 rounded-2xl bg-[#F8F9FC] dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-700/60 space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-[#1E293B] flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-[#1935CA]" />
+                  <span className="text-xs font-bold text-[#1E293B] dark:text-[#F8FAFC] flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-[#1935CA] dark:text-[#38BDF8]" />
                     <span>Create a Brand New Quiz with AI</span>
                   </span>
-                  <span className="text-[10px] text-[#696F79] font-medium">No quiz-taking required</span>
+                  <span className="text-[10px] text-[#696F79] dark:text-slate-400 font-medium">No quiz-taking required</span>
                 </div>
-                <p className="text-[11px] text-[#696F79] leading-relaxed">
+                <p className="text-[11px] text-[#696F79] dark:text-slate-400 leading-relaxed">
                   Generate questions from any source below and immediately attach them to this classroom:
                 </p>
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-1">
                   <button
                     type="button"
                     onClick={() => setActiveCreationModal('topic')}
-                    className="p-2 rounded-xl bg-white border border-slate-200 hover:border-[#1935CA] hover:bg-[#EEF2FF] text-left transition flex flex-col items-center text-center group"
+                    className="p-2 rounded-xl bg-white dark:bg-[#151C2C] border border-slate-200 dark:border-slate-700 hover:border-[#1935CA] dark:hover:border-[#38BDF8] hover:bg-[#EEF2FF] dark:hover:bg-slate-700 text-left transition flex flex-col items-center text-center group"
                   >
-                    <FileQuestion className="w-4 h-4 text-[#1935CA] mb-1 group-hover:scale-110 transition" />
-                    <span className="text-[11px] font-bold text-[#1E293B]">Topic MCQ</span>
+                    <FileQuestion className="w-4 h-4 text-[#1935CA] dark:text-[#38BDF8] mb-1 group-hover:scale-110 transition" />
+                    <span className="text-[11px] font-bold text-[#1E293B] dark:text-[#F8FAFC]">Topic MCQ</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setActiveCreationModal('pdf')}
-                    className="p-2 rounded-xl bg-white border border-slate-200 hover:border-[#1935CA] hover:bg-[#EEF2FF] text-left transition flex flex-col items-center text-center group"
+                    className="p-2 rounded-xl bg-white dark:bg-[#151C2C] border border-slate-200 dark:border-slate-700 hover:border-[#1935CA] dark:hover:border-[#38BDF8] hover:bg-[#EEF2FF] dark:hover:bg-slate-700 text-left transition flex flex-col items-center text-center group"
                   >
-                    <FileText className="w-4 h-4 text-[#1935CA] mb-1 group-hover:scale-110 transition" />
-                    <span className="text-[11px] font-bold text-[#1E293B]">PDF Doc</span>
+                    <FileText className="w-4 h-4 text-[#1935CA] dark:text-[#38BDF8] mb-1 group-hover:scale-110 transition" />
+                    <span className="text-[11px] font-bold text-[#1E293B] dark:text-[#F8FAFC]">PDF Doc</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setActiveCreationModal('url')}
-                    className="p-2 rounded-xl bg-white border border-slate-200 hover:border-[#1935CA] hover:bg-[#EEF2FF] text-left transition flex flex-col items-center text-center group"
+                    className="p-2 rounded-xl bg-white dark:bg-[#151C2C] border border-slate-200 dark:border-slate-700 hover:border-[#1935CA] dark:hover:border-[#38BDF8] hover:bg-[#EEF2FF] dark:hover:bg-slate-700 text-left transition flex flex-col items-center text-center group"
                   >
-                    <Globe className="w-4 h-4 text-[#1935CA] mb-1 group-hover:scale-110 transition" />
-                    <span className="text-[11px] font-bold text-[#1E293B]">Web URL</span>
+                    <Globe className="w-4 h-4 text-[#1935CA] dark:text-[#38BDF8] mb-1 group-hover:scale-110 transition" />
+                    <span className="text-[11px] font-bold text-[#1E293B] dark:text-[#F8FAFC]">Web URL</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setActiveCreationModal('image')}
-                    className="p-2 rounded-xl bg-white border border-slate-200 hover:border-[#1935CA] hover:bg-[#EEF2FF] text-left transition flex flex-col items-center text-center group"
+                    className="p-2 rounded-xl bg-white dark:bg-[#151C2C] border border-slate-200 dark:border-slate-700 hover:border-[#1935CA] dark:hover:border-[#38BDF8] hover:bg-[#EEF2FF] dark:hover:bg-slate-700 text-left transition flex flex-col items-center text-center group"
                   >
-                    <ImageIcon className="w-4 h-4 text-[#1935CA] mb-1 group-hover:scale-110 transition" />
-                    <span className="text-[11px] font-bold text-[#1E293B]">Diagram</span>
+                    <ImageIcon className="w-4 h-4 text-[#1935CA] dark:text-[#38BDF8] mb-1 group-hover:scale-110 transition" />
+                    <span className="text-[11px] font-bold text-[#1E293B] dark:text-[#F8FAFC]">Diagram</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setActiveCreationModal('code')}
-                    className="p-2 rounded-xl bg-white border border-slate-200 hover:border-[#1935CA] hover:bg-[#EEF2FF] text-left transition flex flex-col items-center text-center group"
+                    className="p-2 rounded-xl bg-white dark:bg-[#151C2C] border border-slate-200 dark:border-slate-700 hover:border-[#1935CA] dark:hover:border-[#38BDF8] hover:bg-[#EEF2FF] dark:hover:bg-slate-700 text-left transition flex flex-col items-center text-center group"
                   >
-                    <Code2 className="w-4 h-4 text-[#1935CA] mb-1 group-hover:scale-110 transition" />
-                    <span className="text-[11px] font-bold text-[#1E293B]">Code Review</span>
+                    <Code2 className="w-4 h-4 text-[#1935CA] dark:text-[#38BDF8] mb-1 group-hover:scale-110 transition" />
+                    <span className="text-[11px] font-bold text-[#1E293B] dark:text-[#F8FAFC]">Code Review</span>
                   </button>
                 </div>
               </div>
 
               <form onSubmit={handleCreateAssignment} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-[#1E293B] mb-1.5">
+                  <label className="block text-xs font-bold text-[#1E293B] dark:text-slate-200 mb-1.5">
                     Assignment Title *
                   </label>
                   <input
@@ -920,22 +920,22 @@ export function ClassroomsPage() {
                     value={assignTitle}
                     onChange={(e) => setAssignTitle(e.target.value)}
                     placeholder="e.g. Midterm Homework: Distributed Systems"
-                    className="w-full px-4 py-2.5 rounded-xl bg-[#F8F9FC] border border-slate-200/80 text-[#1E293B] text-sm focus:ring-2 focus:ring-[#1935CA] focus:bg-white outline-none font-medium"
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#F8F9FC] dark:bg-[#1E293B] border border-slate-200/80 dark:border-slate-700 text-[#1E293B] dark:text-[#F8FAFC] placeholder-[#94A3B8] dark:placeholder-slate-500 text-sm focus:ring-2 focus:ring-[#1935CA] focus:bg-white dark:focus:bg-[#1E293B] outline-none font-medium"
                   />
                 </div>
 
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <label className="block text-xs font-bold text-[#1E293B]">
+                    <label className="block text-xs font-bold text-[#1E293B] dark:text-slate-200">
                       Select Source Quiz *
                     </label>
-                    <span className="text-[10px] text-[#696F79]">
+                    <span className="text-[10px] text-[#696F79] dark:text-slate-400">
                       {myQuizzes.length} available quizzes
                     </span>
                   </div>
 
                   {myQuizzes.length === 0 ? (
-                    <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs">
+                    <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 text-amber-800 dark:text-amber-300 text-xs">
                       No quizzes created yet. Use the quick buttons above to generate one now!
                     </div>
                   ) : (
@@ -946,10 +946,10 @@ export function ClassroomsPage() {
                         const q = myQuizzes.find((x) => x.id === e.target.value);
                         if (q) setAssignTitle(`Homework: ${q.topic}`);
                       }}
-                      className="w-full px-4 py-2.5 rounded-xl bg-[#F8F9FC] border border-slate-200/80 text-[#1E293B] text-sm focus:ring-2 focus:ring-[#1935CA] focus:bg-white outline-none font-medium"
+                      className="w-full px-4 py-2.5 rounded-xl bg-[#F8F9FC] dark:bg-[#1E293B] border border-slate-200/80 dark:border-slate-700 text-[#1E293B] dark:text-[#F8FAFC] text-sm focus:ring-2 focus:ring-[#1935CA] focus:bg-white dark:focus:bg-[#1E293B] outline-none font-medium"
                     >
                       {myQuizzes.map((q) => (
-                        <option key={q.id} value={q.id}>
+                        <option key={q.id} value={q.id} className="dark:bg-[#151C2C]">
                           {q.topic} ({q.quizType === 'code_review' ? 'Code Review' : `${q.difficulty} • ${q.questionCount} Qs`})
                         </option>
                       ))}
@@ -959,40 +959,40 @@ export function ClassroomsPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-[#1E293B] mb-1.5">
+                    <label className="block text-xs font-bold text-[#1E293B] dark:text-slate-200 mb-1.5">
                       Max Attempts
                     </label>
                     <select
                       value={assignMaxAttempts}
                       onChange={(e) => setAssignMaxAttempts(Number(e.target.value))}
-                      className="w-full px-4 py-2.5 rounded-xl bg-[#F8F9FC] border border-slate-200/80 text-[#1E293B] text-sm focus:ring-2 focus:ring-[#1935CA] focus:bg-white outline-none font-medium"
+                      className="w-full px-4 py-2.5 rounded-xl bg-[#F8F9FC] dark:bg-[#1E293B] border border-slate-200/80 dark:border-slate-700 text-[#1E293B] dark:text-[#F8FAFC] text-sm focus:ring-2 focus:ring-[#1935CA] focus:bg-white dark:focus:bg-[#1E293B] outline-none font-medium"
                     >
-                      <option value={1}>1 (Strict Exam)</option>
-                      <option value={2}>2 Attempts</option>
-                      <option value={3}>3 Attempts</option>
-                      <option value={5}>5 Attempts</option>
-                      <option value={10}>10 Attempts</option>
+                      <option value={1} className="dark:bg-[#151C2C]">1 (Strict Exam)</option>
+                      <option value={2} className="dark:bg-[#151C2C]">2 Attempts</option>
+                      <option value={3} className="dark:bg-[#151C2C]">3 Attempts</option>
+                      <option value={5} className="dark:bg-[#151C2C]">5 Attempts</option>
+                      <option value={10} className="dark:bg-[#151C2C]">10 Attempts</option>
                     </select>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#1E293B] mb-1.5">
+                    <label className="block text-xs font-bold text-[#1E293B] dark:text-slate-200 mb-1.5">
                       Due Date (Optional)
                     </label>
                     <input
                       type="date"
                       value={assignDueDate}
                       onChange={(e) => setAssignDueDate(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl bg-[#F8F9FC] border border-slate-200/80 text-[#1E293B] text-sm focus:ring-2 focus:ring-[#1935CA] focus:bg-white outline-none font-medium"
+                      className="w-full px-4 py-2.5 rounded-xl bg-[#F8F9FC] dark:bg-[#1E293B] border border-slate-200/80 dark:border-slate-700 text-[#1E293B] dark:text-[#F8FAFC] text-sm focus:ring-2 focus:ring-[#1935CA] focus:bg-white dark:focus:bg-[#1E293B] outline-none font-medium"
                     />
                   </div>
                 </div>
 
-                <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
                   <button
                     type="button"
                     onClick={() => setShowAssignModal(false)}
-                    className="px-4 py-2 text-xs font-bold text-[#696F79] hover:text-[#1E293B] transition"
+                    className="px-4 py-2 text-xs font-bold text-[#696F79] dark:text-slate-400 hover:text-[#1E293B] dark:hover:text-white transition"
                   >
                     Cancel
                   </button>
@@ -1012,15 +1012,15 @@ export function ClassroomsPage() {
         {/* Edit Assignment Settings Modal */}
         {editingAssignment && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-            <div className="bg-white rounded-[24px] p-6 sm:p-7 w-full max-w-md shadow-2xl space-y-4 border border-slate-100">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <h3 className="text-lg font-bold text-[#1E293B] flex items-center gap-2">
-                  <Settings className="w-5 h-5 text-[#1935CA]" />
+            <div className="bg-white dark:bg-[#151C2C] rounded-[24px] p-6 sm:p-7 w-full max-w-md shadow-2xl space-y-4 border border-slate-100 dark:border-slate-800 transition-colors duration-200">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                <h3 className="text-lg font-bold text-[#1E293B] dark:text-[#F8FAFC] flex items-center gap-2">
+                  <Settings className="w-5 h-5 text-[#1935CA] dark:text-[#38BDF8]" />
                   <span>Edit Assignment Settings</span>
                 </h3>
                 <button
                   onClick={() => setEditingAssignment(null)}
-                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -1028,7 +1028,7 @@ export function ClassroomsPage() {
 
               <form onSubmit={handleUpdateAssignment} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-[#1E293B] mb-1.5">
+                  <label className="block text-xs font-bold text-[#1E293B] dark:text-slate-200 mb-1.5">
                     Assignment Title *
                   </label>
                   <input
@@ -1036,46 +1036,46 @@ export function ClassroomsPage() {
                     required
                     value={editAssignTitle}
                     onChange={(e) => setEditAssignTitle(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl bg-[#F8F9FC] border border-slate-200/80 text-[#1E293B] text-sm focus:ring-2 focus:ring-[#1935CA] focus:bg-white outline-none font-medium"
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#F8F9FC] dark:bg-[#1E293B] border border-slate-200/80 dark:border-slate-700 text-[#1E293B] dark:text-[#F8FAFC] text-sm focus:ring-2 focus:ring-[#1935CA] focus:bg-white dark:focus:bg-[#1E293B] outline-none font-medium"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-[#1E293B] mb-1.5">
+                    <label className="block text-xs font-bold text-[#1E293B] dark:text-slate-200 mb-1.5">
                       Max Attempts
                     </label>
                     <select
                       value={editAssignMaxAttempts}
                       onChange={(e) => setEditAssignMaxAttempts(Number(e.target.value))}
-                      className="w-full px-4 py-2.5 rounded-xl bg-[#F8F9FC] border border-slate-200/80 text-[#1E293B] text-sm focus:ring-2 focus:ring-[#1935CA] focus:bg-white outline-none font-medium"
+                      className="w-full px-4 py-2.5 rounded-xl bg-[#F8F9FC] dark:bg-[#1E293B] border border-slate-200/80 dark:border-slate-700 text-[#1E293B] dark:text-[#F8FAFC] text-sm focus:ring-2 focus:ring-[#1935CA] focus:bg-white dark:focus:bg-[#1E293B] outline-none font-medium"
                     >
-                      <option value={1}>1 (Strict Exam)</option>
-                      <option value={2}>2 Attempts</option>
-                      <option value={3}>3 Attempts</option>
-                      <option value={5}>5 Attempts</option>
-                      <option value={10}>10 Attempts</option>
+                      <option value={1} className="dark:bg-[#151C2C]">1 (Strict Exam)</option>
+                      <option value={2} className="dark:bg-[#151C2C]">2 Attempts</option>
+                      <option value={3} className="dark:bg-[#151C2C]">3 Attempts</option>
+                      <option value={5} className="dark:bg-[#151C2C]">5 Attempts</option>
+                      <option value={10} className="dark:bg-[#151C2C]">10 Attempts</option>
                     </select>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#1E293B] mb-1.5">
+                    <label className="block text-xs font-bold text-[#1E293B] dark:text-slate-200 mb-1.5">
                       Due Date
                     </label>
                     <input
                       type="date"
                       value={editAssignDueDate}
                       onChange={(e) => setEditAssignDueDate(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl bg-[#F8F9FC] border border-slate-200/80 text-[#1E293B] text-sm focus:ring-2 focus:ring-[#1935CA] focus:bg-white outline-none font-medium"
+                      className="w-full px-4 py-2.5 rounded-xl bg-[#F8F9FC] dark:bg-[#1E293B] border border-slate-200/80 dark:border-slate-700 text-[#1E293B] dark:text-[#F8FAFC] text-sm focus:ring-2 focus:ring-[#1935CA] focus:bg-white dark:focus:bg-[#1E293B] outline-none font-medium"
                     />
                   </div>
                 </div>
 
-                <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
                   <button
                     type="button"
                     onClick={() => setEditingAssignment(null)}
-                    className="px-4 py-2 text-xs font-bold text-[#696F79] hover:text-[#1E293B] transition"
+                    className="px-4 py-2 text-xs font-bold text-[#696F79] dark:text-slate-400 hover:text-[#1E293B] dark:hover:text-white transition"
                   >
                     Cancel
                   </button>
@@ -1095,44 +1095,44 @@ export function ClassroomsPage() {
         {/* Share Modal */}
         {shareModalData && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-            <div className="bg-white rounded-[24px] p-6 sm:p-7 w-full max-w-md shadow-2xl space-y-5 border border-slate-100">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <h3 className="text-lg font-bold text-[#1E293B] flex items-center gap-2">
-                  <Share2 className="w-5 h-5 text-[#1935CA]" />
+            <div className="bg-white dark:bg-[#151C2C] rounded-[24px] p-6 sm:p-7 w-full max-w-md shadow-2xl space-y-5 border border-slate-100 dark:border-slate-800 transition-colors duration-200">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                <h3 className="text-lg font-bold text-[#1E293B] dark:text-[#F8FAFC] flex items-center gap-2">
+                  <Share2 className="w-5 h-5 text-[#1935CA] dark:text-[#38BDF8]" />
                   <span>Share {shareModalData.type === 'classroom' ? 'Classroom Invite' : 'Quiz Assignment'}</span>
                 </h3>
                 <button
                   onClick={() => setShareModalData(null)}
-                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
               <div>
-                <h4 className="font-bold text-[#1E293B] text-sm">{shareModalData.title}</h4>
-                <p className="text-xs text-[#696F79] mt-0.5">
+                <h4 className="font-bold text-[#1E293B] dark:text-[#F8FAFC] text-sm">{shareModalData.title}</h4>
+                <p className="text-xs text-[#696F79] dark:text-slate-400 mt-0.5">
                   Send this code or direct link to your students to grant access.
                 </p>
               </div>
 
               {shareModalData.code && (
-                <div className="p-4 rounded-xl bg-[#F8F9FC] border border-slate-200/80">
-                  <span className="text-[10px] font-bold text-[#696F79] uppercase tracking-wider block mb-1">
+                <div className="p-4 rounded-xl bg-[#F8F9FC] dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700">
+                  <span className="text-[10px] font-bold text-[#696F79] dark:text-slate-400 uppercase tracking-wider block mb-1">
                     {shareModalData.type === 'classroom' ? 'Join Code' : 'Quiz Share Code'}
                   </span>
                   <div className="flex items-center justify-between">
-                    <span className="text-2xl font-mono font-black text-[#1935CA] tracking-wider">
+                    <span className="text-2xl font-mono font-black text-[#1935CA] dark:text-[#38BDF8] tracking-wider">
                       {shareModalData.code}
                     </span>
                     <button
                       onClick={() => copyToClipboard(shareModalData.code!)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[#1935CA] bg-white hover:bg-[#EEF2FF] rounded-lg border border-slate-200 shadow-sm transition"
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[#1935CA] dark:text-[#38BDF8] bg-white dark:bg-[#151C2C] hover:bg-[#EEF2FF] dark:hover:bg-slate-700 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm transition"
                     >
                       {copiedCode === shareModalData.code ? (
                         <>
                           <Check className="w-3.5 h-3.5 text-emerald-600" />
-                          <span className="text-emerald-700">Copied</span>
+                          <span className="text-emerald-700 dark:text-emerald-400">Copied</span>
                         </>
                       ) : (
                         <>
@@ -1146,7 +1146,7 @@ export function ClassroomsPage() {
               )}
 
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-[#1E293B]">
+                <label className="block text-xs font-bold text-[#1E293B] dark:text-slate-200">
                   Direct Invite Link
                 </label>
                 <div className="flex items-center gap-2">
@@ -1154,7 +1154,7 @@ export function ClassroomsPage() {
                     type="text"
                     readOnly
                     value={shareModalData.url}
-                    className="w-full px-3 py-2 rounded-xl bg-[#F8F9FC] border border-slate-200 text-xs text-[#696F79] font-mono outline-none"
+                    className="w-full px-3 py-2 rounded-xl bg-[#F8F9FC] dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-[#696F79] dark:text-slate-300 font-mono outline-none"
                   />
                   <button
                     onClick={() => copyToClipboard(shareModalData.url)}
@@ -1169,7 +1169,7 @@ export function ClassroomsPage() {
                 <button
                   type="button"
                   onClick={() => setShareModalData(null)}
-                  className="px-4 py-2 text-xs font-bold text-[#696F79] hover:text-[#1E293B]"
+                  className="px-4 py-2 text-xs font-bold text-[#696F79] dark:text-slate-400 hover:text-[#1E293B] dark:hover:text-white"
                 >
                   Done
                 </button>
@@ -1181,30 +1181,30 @@ export function ClassroomsPage() {
         {/* Submissions Gradebook Modal */}
         {selectedAssignmentId && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-            <div className="bg-white rounded-[24px] p-6 sm:p-7 w-full max-w-2xl shadow-2xl space-y-4 border border-slate-100">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <h3 className="text-lg font-bold text-[#1E293B] flex items-center gap-2">
-                  <Award className="w-5 h-5 text-[#1935CA]" />
+            <div className="bg-white dark:bg-[#151C2C] rounded-[24px] p-6 sm:p-7 w-full max-w-2xl shadow-2xl space-y-4 border border-slate-100 dark:border-slate-800 transition-colors duration-200">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                <h3 className="text-lg font-bold text-[#1E293B] dark:text-[#F8FAFC] flex items-center gap-2">
+                  <Award className="w-5 h-5 text-[#1935CA] dark:text-[#38BDF8]" />
                   <span>Assignment Submissions & Gradebook</span>
                 </h3>
                 <button
                   onClick={() => setSelectedAssignmentId(null)}
-                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
               {isLoadingSubmissions ? (
-                <div className="p-8 text-center text-[#696F79] text-sm">Loading gradebook...</div>
+                <div className="p-8 text-center text-[#696F79] dark:text-slate-400 text-sm">Loading gradebook...</div>
               ) : submissions.length === 0 ? (
-                <div className="p-8 text-center text-[#696F79] text-sm">
+                <div className="p-8 text-center text-[#696F79] dark:text-slate-400 text-sm">
                   No students enrolled in this classroom.
                 </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs text-[#1E293B]">
-                    <thead className="bg-[#F8F9FC] text-[#696F79] uppercase text-[10px] font-bold">
+                  <table className="w-full text-left text-xs text-[#1E293B] dark:text-[#F8FAFC]">
+                    <thead className="bg-[#F8F9FC] dark:bg-slate-800 text-[#696F79] dark:text-slate-400 uppercase text-[10px] font-bold">
                       <tr>
                         <th className="p-3">Student</th>
                         <th className="p-3">Status</th>
@@ -1213,31 +1213,31 @@ export function ClassroomsPage() {
                         <th className="p-3">Last Attempt</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                       {submissions.map((s) => (
-                        <tr key={s.studentId} className="hover:bg-[#F8F9FC]/80">
+                        <tr key={s.studentId} className="hover:bg-[#F8F9FC]/80 dark:hover:bg-slate-800/50">
                           <td className="p-3">
-                            <span className="font-bold text-[#1E293B] block">{s.studentName}</span>
-                            <span className="text-[10px] text-[#696F79]">{s.studentEmail}</span>
+                            <span className="font-bold text-[#1E293B] dark:text-[#F8FAFC] block">{s.studentName}</span>
+                            <span className="text-[10px] text-[#696F79] dark:text-slate-400">{s.studentEmail}</span>
                           </td>
                           <td className="p-3">
                             <span
                               className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
                                 s.status === 'completed'
-                                  ? 'bg-emerald-50 text-emerald-700'
+                                  ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300'
                                   : s.status === 'in_progress'
-                                  ? 'bg-amber-50 text-amber-700'
-                                  : 'bg-slate-100 text-slate-600'
+                                  ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300'
+                                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
                               }`}
                             >
                               {s.status.replace('_', ' ')}
                             </span>
                           </td>
                           <td className="p-3 font-mono font-bold">{s.attemptsCount}</td>
-                          <td className="p-3 font-bold text-[#1935CA]">
+                          <td className="p-3 font-bold text-[#1935CA] dark:text-[#38BDF8]">
                             {s.bestScore !== null ? `${s.bestScore} pts` : '—'}
                           </td>
-                          <td className="p-3 text-[#696F79]">
+                          <td className="p-3 text-[#696F79] dark:text-slate-400">
                             {s.lastAttemptAt
                               ? new Date(s.lastAttemptAt).toLocaleDateString()
                               : 'Not attempted'}

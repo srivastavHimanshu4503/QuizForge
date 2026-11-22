@@ -151,23 +151,23 @@ export function CodeQuizResultsPage() {
     <AppLayout activeNav="code-review">
       <div className="max-w-5xl mx-auto space-y-6">
         {/* Top Header Bar */}
-        <div className="bg-white rounded-[20px] p-4 sm:p-5 shadow-[0_10px_30px_rgba(25,53,202,0.05)] border border-slate-100/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-2 text-xs font-medium text-[#696F79]">
-            <Link to="/" className="hover:text-[#1935CA] transition font-semibold">
+        <div className="bg-white dark:bg-[#151C2C] rounded-[20px] p-4 sm:p-5 shadow-[0_10px_30px_rgba(25,53,202,0.05)] border border-slate-100/80 dark:border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-colors duration-200">
+          <div className="flex items-center gap-2 text-xs font-medium text-[#696F79] dark:text-slate-400">
+            <Link to="/" className="hover:text-[#1935CA] dark:hover:text-[#38BDF8] transition font-semibold">
               Dashboard
             </Link>
-            <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
-            <Link to="/history" className="hover:text-[#1935CA] transition font-semibold">
+            <ChevronRight className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600" />
+            <Link to="/history" className="hover:text-[#1935CA] dark:hover:text-[#38BDF8] transition font-semibold">
               History
             </Link>
-            <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
-            <span className="font-bold text-[#1935CA]">Evaluation Results</span>
+            <ChevronRight className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600" />
+            <span className="font-bold text-[#1935CA] dark:text-[#38BDF8]">Evaluation Results</span>
           </div>
 
           <div className="flex items-center gap-2.5">
             <Link
               to="/history"
-              className="px-4 py-2 rounded-xl text-xs font-bold text-[#1E293B] bg-[#F8F9FC] hover:bg-slate-200 transition"
+              className="px-4 py-2 rounded-xl text-xs font-bold text-[#1E293B] dark:text-[#F8FAFC] bg-[#F8F9FC] dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition"
             >
               All Quizzes
             </Link>
@@ -193,23 +193,23 @@ export function CodeQuizResultsPage() {
         </div>
 
         {/* Hero Score Card */}
-        <div className="bg-white rounded-[20px] p-6 sm:p-8 shadow-[0_10px_30px_rgba(25,53,202,0.05)] border border-slate-100/80 relative overflow-hidden">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 pb-6 border-b border-slate-100">
+        <div className="bg-white dark:bg-[#151C2C] rounded-[20px] p-6 sm:p-8 shadow-[0_10px_30px_rgba(25,53,202,0.05)] border border-slate-100/80 dark:border-slate-800 relative overflow-hidden transition-colors duration-200">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 pb-6 border-b border-slate-100 dark:border-slate-800">
             <div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EEF2FF] text-[#1935CA] text-xs font-bold mb-3">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EEF2FF] dark:bg-slate-800 text-[#1935CA] dark:text-[#38BDF8] text-xs font-bold mb-3">
                 <Award className="w-3.5 h-3.5" />
                 <span>Code Review Assessment Complete</span>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1935CA] tracking-tight">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1935CA] dark:text-[#38BDF8] tracking-tight">
                 Review Evaluation Summary
               </h1>
-              <p className="mt-1.5 text-xs sm:text-sm text-[#696F79]">
+              <p className="mt-1.5 text-xs sm:text-sm text-[#696F79] dark:text-slate-400">
                 Repository:{' '}
                 <a
                   href={data.repoUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="font-mono text-[#1E293B] font-bold hover:text-[#1935CA] inline-flex items-center gap-1"
+                  className="font-mono text-[#1E293B] dark:text-[#F8FAFC] font-bold hover:text-[#1935CA] dark:hover:text-[#38BDF8] inline-flex items-center gap-1"
                 >
                   <span>{data.repoOwner}/{data.repoName}</span>
                   <ExternalLink className="w-3 h-3 text-[#94A3B8]" />
@@ -221,10 +221,10 @@ export function CodeQuizResultsPage() {
             {/* Score & Badge */}
             <div className="flex flex-col items-start sm:items-end gap-2">
               <div className="flex items-baseline gap-1.5">
-                <span className="text-4xl sm:text-5xl font-black text-[#1E293B]">
+                <span className="text-4xl sm:text-5xl font-black text-[#1E293B] dark:text-[#F8FAFC]">
                   {data.totalScore.toFixed(1)}
                 </span>
-                <span className="text-base text-[#94A3B8] font-bold">
+                <span className="text-base text-[#94A3B8] dark:text-slate-400 font-bold">
                   / {data.maxPossibleScore} pts
                 </span>
               </div>
@@ -236,12 +236,12 @@ export function CodeQuizResultsPage() {
 
           {/* Aggregate Rubric Bars Strip */}
           <div className="pt-6 grid grid-cols-1 sm:grid-cols-3 gap-5">
-            <div className="p-4 rounded-xl bg-[#F8F9FC] border border-slate-100/80">
+            <div className="p-4 rounded-xl bg-[#F8F9FC] dark:bg-slate-800/60 border border-slate-100/80 dark:border-slate-700/60">
               <div className="flex justify-between items-center mb-2">
-                <span className="text-xs font-bold text-[#1E293B]">Accuracy</span>
-                <span className="text-xs font-extrabold text-emerald-600">{avgAccuracy} / 4.0</span>
+                <span className="text-xs font-bold text-[#1E293B] dark:text-[#F8FAFC]">Accuracy</span>
+                <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400">{avgAccuracy} / 4.0</span>
               </div>
-              <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+              <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
                 <div
                   className="bg-emerald-500 h-2 rounded-full"
                   style={{ width: `${(Number(avgAccuracy) / 4) * 100}%` }}
@@ -249,12 +249,12 @@ export function CodeQuizResultsPage() {
               </div>
             </div>
 
-            <div className="p-4 rounded-xl bg-[#F8F9FC] border border-slate-100/80">
+            <div className="p-4 rounded-xl bg-[#F8F9FC] dark:bg-slate-800/60 border border-slate-100/80 dark:border-slate-700/60">
               <div className="flex justify-between items-center mb-2">
-                <span className="text-xs font-bold text-[#1E293B]">Depth</span>
-                <span className="text-xs font-extrabold text-[#1935CA]">{avgDepth} / 3.0</span>
+                <span className="text-xs font-bold text-[#1E293B] dark:text-[#F8FAFC]">Depth</span>
+                <span className="text-xs font-extrabold text-[#1935CA] dark:text-[#38BDF8]">{avgDepth} / 3.0</span>
               </div>
-              <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+              <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
                 <div
                   className="bg-[#1935CA] h-2 rounded-full"
                   style={{ width: `${(Number(avgDepth) / 3) * 100}%` }}
@@ -262,12 +262,12 @@ export function CodeQuizResultsPage() {
               </div>
             </div>
 
-            <div className="p-4 rounded-xl bg-[#F8F9FC] border border-slate-100/80">
+            <div className="p-4 rounded-xl bg-[#F8F9FC] dark:bg-slate-800/60 border border-slate-100/80 dark:border-slate-700/60">
               <div className="flex justify-between items-center mb-2">
-                <span className="text-xs font-bold text-[#1E293B]">Completeness</span>
+                <span className="text-xs font-bold text-[#1E293B] dark:text-[#F8FAFC]">Completeness</span>
                 <span className="text-xs font-extrabold text-[#38BDF8]">{avgCompleteness} / 3.0</span>
               </div>
-              <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+              <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
                 <div
                   className="bg-[#38BDF8] h-2 rounded-full"
                   style={{ width: `${(Number(avgCompleteness) / 3) * 100}%` }}
@@ -279,28 +279,28 @@ export function CodeQuizResultsPage() {
 
         {/* Detailed Question Reviews */}
         <div className="space-y-5">
-          <h2 className="text-lg font-extrabold text-[#1935CA] flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-[#1935CA]" />
+          <h2 className="text-lg font-extrabold text-[#1935CA] dark:text-[#38BDF8] flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-[#1935CA] dark:text-[#38BDF8]" />
             <span>Question-by-Question Breakdown</span>
           </h2>
 
           {data.reviews.map((item, idx) => (
             <div
               key={item.questionId}
-              className="bg-white rounded-[20px] p-6 sm:p-7 shadow-[0_10px_30px_rgba(25,53,202,0.05)] border border-slate-100/80 space-y-4"
+              className="bg-white dark:bg-[#151C2C] rounded-[20px] p-6 sm:p-7 shadow-[0_10px_30px_rgba(25,53,202,0.05)] border border-slate-100/80 dark:border-slate-800 space-y-4 transition-colors duration-200"
             >
               {/* Question Header */}
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-center gap-2.5">
-                  <span className="w-7 h-7 rounded-lg bg-[#EEF2FF] text-[#1935CA] font-extrabold text-xs flex items-center justify-center shrink-0">
+                  <span className="w-7 h-7 rounded-lg bg-[#EEF2FF] dark:bg-slate-800 text-[#1935CA] dark:text-[#38BDF8] font-extrabold text-xs flex items-center justify-center shrink-0">
                     {idx + 1}
                   </span>
                   <div>
-                    <h3 className="font-bold text-sm text-[#1E293B]">
+                    <h3 className="font-bold text-sm text-[#1E293B] dark:text-[#F8FAFC]">
                       {item.questionText}
                     </h3>
-                    <div className="flex items-center gap-2 mt-1 text-[11px] font-mono text-[#696F79]">
-                      <FileCode className="w-3.5 h-3.5 text-[#1935CA]" />
+                    <div className="flex items-center gap-2 mt-1 text-[11px] font-mono text-[#696F79] dark:text-slate-400">
+                      <FileCode className="w-3.5 h-3.5 text-[#1935CA] dark:text-[#38BDF8]" />
                       <span>{item.codeSnippetPath}</span>
                     </div>
                   </div>
@@ -309,10 +309,10 @@ export function CodeQuizResultsPage() {
                 <span
                   className={`px-3 py-1 rounded-full text-xs font-extrabold shrink-0 ${
                     item.score >= 7
-                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                      ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
                       : item.score >= 4
-                      ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                      : 'bg-rose-50 text-rose-700 border border-rose-200'
+                      ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
+                      : 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800'
                   }`}
                 >
                   {item.score} / 10 pts
@@ -320,37 +320,37 @@ export function CodeQuizResultsPage() {
               </div>
 
               {/* User's Answer */}
-              <div className="p-4 rounded-xl bg-[#F8F9FC] border border-slate-100">
-                <span className="block text-[11px] font-bold text-[#696F79] uppercase tracking-wider mb-1">
+              <div className="p-4 rounded-xl bg-[#F8F9FC] dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60">
+                <span className="block text-[11px] font-bold text-[#696F79] dark:text-slate-400 uppercase tracking-wider mb-1">
                   Your Answer / Defense:
                 </span>
-                <p className="text-xs text-[#1E293B] font-medium leading-relaxed whitespace-pre-wrap">
+                <p className="text-xs text-[#1E293B] dark:text-[#F8FAFC] font-medium leading-relaxed whitespace-pre-wrap">
                   {item.userAnswer || 'No answer submitted.'}
                 </p>
               </div>
 
               {/* LLM Feedback & Identified/Missed Concepts */}
-              <div className="p-4 rounded-xl bg-[#EEF2FF]/60 border border-[#1935CA]/10 space-y-3">
+              <div className="p-4 rounded-xl bg-[#EEF2FF]/60 dark:bg-indigo-950/40 border border-[#1935CA]/10 dark:border-indigo-800/40 space-y-3">
                 <div>
-                  <span className="block text-[11px] font-bold text-[#1935CA] uppercase tracking-wider mb-1">
+                  <span className="block text-[11px] font-bold text-[#1935CA] dark:text-[#38BDF8] uppercase tracking-wider mb-1">
                     AI Rubric Feedback:
                   </span>
-                  <p className="text-xs text-[#475569] leading-relaxed font-medium">
+                  <p className="text-xs text-[#475569] dark:text-slate-300 leading-relaxed font-medium">
                     {item.feedback}
                   </p>
                 </div>
 
                 {/* Expected Concepts */}
                 {item.expectedConcepts && item.expectedConcepts.length > 0 && (
-                  <div className="pt-2 border-t border-slate-200/60">
-                    <span className="block text-[10px] font-bold text-[#696F79] uppercase tracking-wider mb-1.5">
+                  <div className="pt-2 border-t border-slate-200/60 dark:border-slate-700/60">
+                    <span className="block text-[10px] font-bold text-[#696F79] dark:text-slate-400 uppercase tracking-wider mb-1.5">
                       Key Concepts Evaluated:
                     </span>
                     <div className="flex flex-wrap gap-1.5">
                       {item.expectedConcepts.map((concept, cIdx) => (
                         <span
                           key={cIdx}
-                          className="px-2.5 py-0.5 rounded-full bg-white text-[#1935CA] border border-slate-200 text-[11px] font-semibold"
+                          className="px-2.5 py-0.5 rounded-full bg-white dark:bg-[#151C2C] text-[#1935CA] dark:text-[#38BDF8] border border-slate-200 dark:border-slate-700 text-[11px] font-semibold"
                         >
                           {concept}
                         </span>

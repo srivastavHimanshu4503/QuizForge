@@ -20,17 +20,17 @@ export function ProgressBar({
   const percentage = totalQuestions > 0 ? ((currentIndex + 1) / totalQuestions) * 100 : 0;
 
   const difficultyColors: Record<QuizDifficulty, string> = {
-    easy: 'text-emerald-700 bg-emerald-50 border-emerald-200',
-    medium: 'text-amber-700 bg-amber-50 border-amber-200',
-    hard: 'text-rose-700 bg-rose-50 border-rose-200',
-    mixed: 'text-[#1935CA] bg-[#EEF2FF] border-[#1935CA]/20',
+    easy: 'text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800',
+    medium: 'text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 border-amber-200 dark:border-amber-800',
+    hard: 'text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/60 border-rose-200 dark:border-rose-800',
+    mixed: 'text-[#1935CA] dark:text-[#38BDF8] bg-[#EEF2FF] dark:bg-slate-800 border-[#1935CA]/20 dark:border-slate-700',
   };
 
   return (
-    <div className="bg-white border border-slate-100 rounded-[20px] p-5 mb-6 shadow-[0_10px_30px_rgba(25,53,202,0.05)]">
+    <div className="bg-white dark:bg-[#151C2C] border border-slate-100 dark:border-slate-800 rounded-[20px] p-5 mb-6 shadow-[0_10px_30px_rgba(25,53,202,0.05)] transition-colors duration-200">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
         <div className="flex items-center gap-2.5">
-          <span className="text-base sm:text-lg font-bold text-[#1E293B] tracking-tight truncate max-w-xs sm:max-w-md">
+          <span className="text-base sm:text-lg font-bold text-[#1E293B] dark:text-[#F8FAFC] tracking-tight truncate max-w-xs sm:max-w-md">
             {topic}
           </span>
           <span
@@ -44,7 +44,7 @@ export function ProgressBar({
 
         <div className="flex items-center gap-3">
           {/* Autosave Indicator */}
-          <div className="flex items-center gap-1.5 text-xs text-[#696F79] font-medium">
+          <div className="flex items-center gap-1.5 text-xs text-[#696F79] dark:text-slate-400 font-medium">
             {autosaveStatus === 'saving' && (
               <>
                 <Loader2 className="w-3.5 h-3.5 text-amber-500 animate-spin" />
@@ -65,8 +65,8 @@ export function ProgressBar({
             )}
           </div>
 
-          <div className="flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-lg bg-[#EEF2FF] text-[#1935CA]">
-            <Sparkles className="w-3 h-3 text-[#1935CA]" />
+          <div className="flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-lg bg-[#EEF2FF] dark:bg-slate-800 text-[#1935CA] dark:text-[#38BDF8]">
+            <Sparkles className="w-3 h-3 text-[#1935CA] dark:text-[#38BDF8]" />
             <span>
               {currentIndex + 1} / {totalQuestions}
             </span>
@@ -75,7 +75,7 @@ export function ProgressBar({
       </div>
 
       {/* Progress Track */}
-      <div className="w-full bg-[#EEF2FF] h-2.5 rounded-full overflow-hidden">
+      <div className="w-full bg-[#EEF2FF] dark:bg-slate-800 h-2.5 rounded-full overflow-hidden">
         <div
           className="bg-gradient-to-r from-[#1935CA] to-[#38BDF8] h-full rounded-full transition-all duration-300 ease-out"
           style={{ width: `${percentage}%` }}

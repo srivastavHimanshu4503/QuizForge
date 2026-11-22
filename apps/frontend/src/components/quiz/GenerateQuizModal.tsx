@@ -122,19 +122,19 @@ export function GenerateQuizModal({ isOpen, onClose, onQuizCreated }: GenerateQu
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white rounded-[24px] max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-white dark:bg-[#151C2C] rounded-[24px] max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-slate-100 dark:border-slate-800 max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+        <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-[#1935CA] text-white flex items-center justify-center shadow-md">
               <Brain className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-xl font-extrabold text-[#1935CA] tracking-tight">
+              <h3 className="text-xl font-extrabold text-[#1935CA] dark:text-indigo-400 tracking-tight">
                 Create AI Topic Quiz
               </h3>
-              <p className="text-xs text-[#696F79] font-medium">
+              <p className="text-xs text-[#696F79] dark:text-slate-400 font-medium">
                 Multiple-choice questions generated and graded on demand
               </p>
             </div>
@@ -143,14 +143,14 @@ export function GenerateQuizModal({ isOpen, onClose, onQuizCreated }: GenerateQu
             type="button"
             onClick={onClose}
             disabled={isGenerating}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {error && (
-          <div className="mt-5 p-3.5 rounded-xl bg-[#FEF2F2] border border-rose-200 flex items-start gap-2.5 text-rose-700 text-xs font-medium">
+          <div className="mt-5 p-3.5 rounded-xl bg-[#FEF2F2] dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 flex items-start gap-2.5 text-rose-700 dark:text-rose-300 text-xs font-medium">
             <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
             <span>{error}</span>
           </div>
@@ -161,7 +161,7 @@ export function GenerateQuizModal({ isOpen, onClose, onQuizCreated }: GenerateQu
           <div>
             <label
               htmlFor="topic"
-              className="block text-xs font-bold text-[#1E293B] mb-1.5"
+              className="block text-xs font-bold text-[#1E293B] dark:text-[#F8FAFC] mb-1.5"
             >
               Quiz Topic *
             </label>
@@ -173,19 +173,19 @@ export function GenerateQuizModal({ isOpen, onClose, onQuizCreated }: GenerateQu
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
               placeholder="e.g. Distributed Consensus, Python Metaprogramming..."
-              className="w-full px-4 py-3 rounded-xl bg-[#F8F9FC] text-[#1E293B] placeholder-[#94A3B8] text-sm border border-slate-200/80 focus:ring-2 focus:ring-[#1935CA] focus:bg-white transition outline-none font-medium"
+              className="w-full px-4 py-3 rounded-xl bg-[#F8F9FC] dark:bg-[#1E293B] text-[#1E293B] dark:text-[#F8FAFC] placeholder-[#94A3B8] text-sm border border-slate-200/80 dark:border-slate-700 focus:ring-2 focus:ring-[#1935CA] focus:bg-white dark:focus:bg-[#151C2C] transition outline-none font-medium"
             />
 
             {/* Presets */}
             <div className="flex flex-wrap items-center gap-1.5 mt-2.5">
-              <span className="text-[11px] font-semibold text-[#696F79]">Presets:</span>
+              <span className="text-[11px] font-semibold text-[#696F79] dark:text-slate-400">Presets:</span>
               {TOPIC_PRESETS.map((t) => (
                 <button
                   key={t}
                   type="button"
                   disabled={isGenerating}
                   onClick={() => setTopic(t)}
-                  className="text-[11px] px-2.5 py-1 rounded-lg bg-[#F8F9FC] text-[#1E293B] hover:text-[#1935CA] hover:bg-[#EEF2FF] border border-slate-200/80 font-medium transition"
+                  className="text-[11px] px-2.5 py-1 rounded-lg bg-[#F8F9FC] dark:bg-[#1E293B] text-[#1E293B] dark:text-[#F8FAFC] hover:text-[#1935CA] dark:hover:text-indigo-300 hover:bg-[#EEF2FF] dark:hover:bg-indigo-950/40 border border-slate-200/80 dark:border-slate-700 font-medium transition"
                 >
                   {t}
                 </button>
@@ -195,8 +195,8 @@ export function GenerateQuizModal({ isOpen, onClose, onQuizCreated }: GenerateQu
 
           {/* Question Count */}
           <div>
-            <label className="block text-xs font-bold text-[#1E293B] mb-1.5">
-              Number of Questions: <strong className="text-[#1935CA]">{questionCount}</strong>
+            <label className="block text-xs font-bold text-[#1E293B] dark:text-[#F8FAFC] mb-1.5">
+              Number of Questions: <strong className="text-[#1935CA] dark:text-indigo-400">{questionCount}</strong>
             </label>
             <div className="grid grid-cols-4 gap-2.5">
               {COUNT_PRESETS.map((count) => (
@@ -208,7 +208,7 @@ export function GenerateQuizModal({ isOpen, onClose, onQuizCreated }: GenerateQu
                   className={`py-2 rounded-xl text-xs font-bold border transition ${
                     questionCount === count
                       ? 'bg-[#1935CA] text-white border-[#1935CA] shadow-sm'
-                      : 'bg-[#F8F9FC] text-[#696F79] border-slate-200/80 hover:bg-slate-100 hover:text-[#1E293B]'
+                      : 'bg-[#F8F9FC] dark:bg-[#1E293B] text-[#696F79] dark:text-slate-400 border-slate-200/80 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-[#1E293B] dark:hover:text-[#F8FAFC]'
                   }`}
                 >
                   {count} MCQs
@@ -219,7 +219,7 @@ export function GenerateQuizModal({ isOpen, onClose, onQuizCreated }: GenerateQu
 
           {/* Difficulty Level */}
           <div>
-            <label className="block text-xs font-bold text-[#1E293B] mb-1.5">
+            <label className="block text-xs font-bold text-[#1E293B] dark:text-[#F8FAFC] mb-1.5">
               Difficulty Tier
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
@@ -231,18 +231,18 @@ export function GenerateQuizModal({ isOpen, onClose, onQuizCreated }: GenerateQu
                   onClick={() => setDifficulty(d.id)}
                   className={`p-3 rounded-xl text-left border transition ${
                     difficulty === d.id
-                      ? 'bg-[#EEF2FF] border-[#1935CA] ring-1 ring-[#1935CA]'
-                      : 'bg-[#F8F9FC] border-slate-200/80 hover:bg-slate-100'
+                      ? 'bg-[#EEF2FF] dark:bg-indigo-950/40 border-[#1935CA] ring-1 ring-[#1935CA]'
+                      : 'bg-[#F8F9FC] dark:bg-[#1E293B] border-slate-200/80 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800'
                   }`}
                 >
                   <p
                     className={`text-xs font-bold ${
-                      difficulty === d.id ? 'text-[#1935CA]' : 'text-[#1E293B]'
+                      difficulty === d.id ? 'text-[#1935CA] dark:text-indigo-400' : 'text-[#1E293B] dark:text-[#F8FAFC]'
                     }`}
                   >
                     {d.label}
                   </p>
-                  <p className="text-[10px] text-[#696F79] mt-0.5 leading-tight">
+                  <p className="text-[10px] text-[#696F79] dark:text-slate-400 mt-0.5 leading-tight">
                     {d.desc}
                   </p>
                 </button>
@@ -252,9 +252,9 @@ export function GenerateQuizModal({ isOpen, onClose, onQuizCreated }: GenerateQu
 
           {/* AI Model Provider */}
           <div>
-            <label className="block text-xs font-bold text-[#1E293B] mb-1.5 flex items-center justify-between">
+            <label className="block text-xs font-bold text-[#1E293B] dark:text-[#F8FAFC] mb-1.5 flex items-center justify-between">
               <span>AI Engine / Model</span>
-              <span className="text-[10px] text-[#1935CA] font-mono font-semibold">Multi-LLM Registry</span>
+              <span className="text-[10px] text-[#1935CA] dark:text-indigo-400 font-mono font-semibold">Multi-LLM Registry</span>
             </label>
             {providers.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -268,27 +268,27 @@ export function GenerateQuizModal({ isOpen, onClose, onQuizCreated }: GenerateQu
                       onClick={() => setProvider(p.id)}
                       className={`p-3 rounded-xl text-left border transition ${
                         provider === p.id
-                          ? 'bg-[#EEF2FF] border-[#1935CA] ring-2 ring-[#1935CA]'
+                          ? 'bg-[#EEF2FF] dark:bg-indigo-950/40 border-[#1935CA] ring-2 ring-[#1935CA]'
                           : p.isAvailable
-                          ? 'bg-[#F8F9FC] border-slate-200/80 hover:bg-slate-100'
-                          : 'bg-slate-100 border-slate-200 opacity-50 cursor-not-allowed'
+                          ? 'bg-[#F8F9FC] dark:bg-[#1E293B] border-slate-200/80 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800'
+                          : 'bg-slate-100 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 opacity-50 cursor-not-allowed'
                       }`}
                     >
                       <div className="flex items-center justify-between">
-                        <span className={`text-xs font-bold truncate ${provider === p.id ? 'text-[#1935CA]' : 'text-[#1E293B]'}`}>
+                        <span className={`text-xs font-bold truncate ${provider === p.id ? 'text-[#1935CA] dark:text-indigo-400' : 'text-[#1E293B] dark:text-[#F8FAFC]'}`}>
                           {p.name.toUpperCase()}
                         </span>
                         <span
                           className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-bold ${
                             p.isAvailable
-                              ? 'bg-emerald-50 text-emerald-700'
-                              : 'bg-slate-200 text-slate-500'
+                              ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400'
+                              : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
                           }`}
                         >
                           {p.isAvailable ? 'Ready' : 'Offline'}
                         </span>
                       </div>
-                      <p className="text-[11px] font-semibold text-[#1E293B] mt-1 font-mono truncate" title={p.defaultModel}>
+                      <p className="text-[11px] font-semibold text-[#1E293B] dark:text-slate-300 mt-1 font-mono truncate" title={p.defaultModel}>
                         {cleanModelName}
                       </p>
                     </button>
@@ -296,7 +296,7 @@ export function GenerateQuizModal({ isOpen, onClose, onQuizCreated }: GenerateQu
                 })}
               </div>
             ) : (
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-500 font-medium">
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-500 dark:text-slate-400 font-medium">
                 Loading available models from environment...
               </div>
             )}

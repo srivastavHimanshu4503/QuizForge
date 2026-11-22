@@ -3,11 +3,16 @@
 @tailwind utilities;
 
 :root {
+  color-scheme: light dark;
+  accent-color: #1935CA;
+
   /* Surfaces */
   --bg-canvas: #F8F9FC;
   --bg-surface: #FFFFFF;
   --bg-surface-muted: #F1F5F9;
   --bg-code: #0F172A;
+  --border-subtle: #F1F5F9;
+  --border-card: rgba(226, 232, 240, 0.8);
 
   /* Brand Accent (Royal Blue from Template) */
   --brand-primary: #1935CA;
@@ -42,6 +47,50 @@
   --radius-card: 20px;
   --radius-control: 12px;
   --radius-pill: 9999px;
+
+  /* Scrollbars */
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: #CBD5E1;
+  --scrollbar-thumb-hover: #94A3B8;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+:root.dark,
+:root:has(> head > meta[name="color-scheme"][content="dark"]) {
+  color-scheme: dark;
+  accent-color: #38BDF8;
+
+  /* Surfaces in Dark Mode */
+  --bg-canvas: #0B0F19;
+  --bg-surface: #151C2C;
+  --bg-surface-muted: #1E293B;
+  --bg-code: #090D16;
+  --border-subtle: #1E293B;
+  --border-card: rgba(51, 65, 85, 0.6);
+
+  /* Typography in Dark Mode */
+  --text-primary: #F8FAFC;
+  --text-heading-brand: #38BDF8;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
+  --text-inverse: #0B0F19;
+
+  /* Elevation & Shadows in Dark Mode */
+  --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.4);
+  --shadow-card-hover: 0 16px 36px rgba(0, 0, 0, 0.55);
+  --shadow-input: 0 4px 16px rgba(0, 0, 0, 0.35);
+  --shadow-button: 0 8px 20px rgba(25, 53, 202, 0.35);
+
+  /* Scrollbars in Dark Mode */
+  --scrollbar-track: #0B0F19;
+  --scrollbar-thumb: #334155;
+  --scrollbar-thumb-hover: #475569;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+/* Component-specific override: code snippet views stay high-contrast dark */
+pre, code, .code-editor-container {
+  color-scheme: only dark;
 }
 
 body {
@@ -51,6 +100,7 @@ body {
   font-family: 'Plus Jakarta Sans', Poppins, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 /* Custom Scrollbars */
@@ -60,14 +110,14 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: var(--scrollbar-track);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #CBD5E1;
+  background: var(--scrollbar-thumb);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94A3B8;
+  background: var(--scrollbar-thumb-hover);
 }

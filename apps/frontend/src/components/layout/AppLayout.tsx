@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { CodeQuizModal } from '../code-quiz/CodeQuizModal';
 import { GenerateQuizModal } from '../quiz/GenerateQuizModal';
+import { ThemeToggle } from '../common/ThemeToggle';
 import {
   LayoutDashboard,
   Code2,
@@ -57,9 +58,9 @@ export function AppLayout({ children, activeNav }: AppLayoutProps) {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F9FC] flex flex-col lg:flex-row antialiased">
+    <div className="min-h-screen bg-[#F8F9FC] dark:bg-[#0B0F19] text-[#1E293B] dark:text-[#F8FAFC] flex flex-col lg:flex-row antialiased transition-colors duration-200">
       {/* ===================== DESKTOP SIDEBAR ===================== */}
-      <aside className="hidden lg:flex w-[240px] shrink-0 bg-white h-screen sticky top-0 flex-col justify-between p-5 border-r border-slate-100 z-30 shadow-[0_4px_24px_rgba(15,23,42,0.02)]">
+      <aside className="hidden lg:flex w-[240px] shrink-0 bg-white dark:bg-[#151C2C] h-screen sticky top-0 flex-col justify-between p-5 border-r border-slate-100 dark:border-slate-800 z-30 shadow-[0_4px_24px_rgba(15,23,42,0.02)] transition-colors duration-200">
         <div className="flex flex-col gap-6">
           {/* Brand Header */}
           <Link to="/" className="flex items-center gap-3 px-1 py-1 group">
@@ -67,10 +68,10 @@ export function AppLayout({ children, activeNav }: AppLayoutProps) {
               <Sparkles className="w-5 h-5 fill-white/20" />
             </div>
             <div>
-              <span className="font-extrabold text-xl tracking-tight text-[#1935CA] block leading-tight">
+              <span className="font-extrabold text-xl tracking-tight text-[#1935CA] dark:text-[#38BDF8] block leading-tight">
                 QuizForge
               </span>
-              <span className="text-[10px] font-semibold text-[#696F79] tracking-wider uppercase block">
+              <span className="text-[10px] font-semibold text-[#696F79] dark:text-slate-400 tracking-wider uppercase block">
                 AI Assessment
               </span>
             </div>
@@ -83,28 +84,28 @@ export function AppLayout({ children, activeNav }: AppLayoutProps) {
               className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
                 isDashboard
                   ? 'bg-[#1935CA] text-white shadow-[0_8px_20px_rgba(25,53,202,0.22)]'
-                  : 'text-[#696F79] hover:text-[#1935CA] hover:bg-[#F8F9FC]'
+                  : 'text-[#696F79] dark:text-slate-400 hover:text-[#1935CA] dark:hover:text-[#38BDF8] hover:bg-[#F8F9FC] dark:hover:bg-slate-800/60'
               }`}
             >
-              <LayoutDashboard className={`w-4 h-4 ${isDashboard ? 'text-white' : 'text-[#696F79]'}`} />
+              <LayoutDashboard className={`w-4 h-4 ${isDashboard ? 'text-white' : 'text-[#696F79] dark:text-slate-400'}`} />
               <span>Dashboard</span>
             </Link>
 
             <button
               type="button"
               onClick={() => setIsCodeModalOpen(true)}
-              className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-[#696F79] hover:text-[#1935CA] hover:bg-[#F8F9FC] transition-all text-left"
+              className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-[#696F79] dark:text-slate-400 hover:text-[#1935CA] dark:hover:text-[#38BDF8] hover:bg-[#F8F9FC] dark:hover:bg-slate-800/60 transition-all text-left"
             >
-              <Code2 className="w-4 h-4 text-[#696F79]" />
+              <Code2 className="w-4 h-4 text-[#696F79] dark:text-slate-400" />
               <span>GitHub Review</span>
             </button>
 
             <button
               type="button"
               onClick={() => setIsMcqModalOpen(true)}
-              className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-[#696F79] hover:text-[#1935CA] hover:bg-[#F8F9FC] transition-all text-left"
+              className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-[#696F79] dark:text-slate-400 hover:text-[#1935CA] dark:hover:text-[#38BDF8] hover:bg-[#F8F9FC] dark:hover:bg-slate-800/60 transition-all text-left"
             >
-              <FileQuestion className="w-4 h-4 text-[#696F79]" />
+              <FileQuestion className="w-4 h-4 text-[#696F79] dark:text-slate-400" />
               <span>MCQ Quizzes</span>
             </button>
 
@@ -113,10 +114,10 @@ export function AppLayout({ children, activeNav }: AppLayoutProps) {
               className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
                 isHistory
                   ? 'bg-[#1935CA] text-white shadow-[0_8px_20px_rgba(25,53,202,0.22)]'
-                  : 'text-[#696F79] hover:text-[#1935CA] hover:bg-[#F8F9FC]'
+                  : 'text-[#696F79] dark:text-slate-400 hover:text-[#1935CA] dark:hover:text-[#38BDF8] hover:bg-[#F8F9FC] dark:hover:bg-slate-800/60'
               }`}
             >
-              <History className={`w-4 h-4 ${isHistory ? 'text-white' : 'text-[#696F79]'}`} />
+              <History className={`w-4 h-4 ${isHistory ? 'text-white' : 'text-[#696F79] dark:text-slate-400'}`} />
               <span>Quiz History</span>
             </Link>
 
@@ -125,10 +126,10 @@ export function AppLayout({ children, activeNav }: AppLayoutProps) {
               className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
                 isClassrooms
                   ? 'bg-[#1935CA] text-white shadow-[0_8px_20px_rgba(25,53,202,0.22)]'
-                  : 'text-[#696F79] hover:text-[#1935CA] hover:bg-[#F8F9FC]'
+                  : 'text-[#696F79] dark:text-slate-400 hover:text-[#1935CA] dark:hover:text-[#38BDF8] hover:bg-[#F8F9FC] dark:hover:bg-slate-800/60'
               }`}
             >
-              <GraduationCap className={`w-4 h-4 ${isClassrooms ? 'text-white' : 'text-[#696F79]'}`} />
+              <GraduationCap className={`w-4 h-4 ${isClassrooms ? 'text-white' : 'text-[#696F79] dark:text-slate-400'}`} />
               <span>Classrooms</span>
             </Link>
 
@@ -138,10 +139,10 @@ export function AppLayout({ children, activeNav }: AppLayoutProps) {
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
                   isAssignments
                     ? 'bg-[#1935CA] text-white shadow-[0_8px_20px_rgba(25,53,202,0.22)]'
-                    : 'text-[#696F79] hover:text-[#1935CA] hover:bg-[#F8F9FC]'
+                    : 'text-[#696F79] dark:text-slate-400 hover:text-[#1935CA] dark:hover:text-[#38BDF8] hover:bg-[#F8F9FC] dark:hover:bg-slate-800/60'
                 }`}
               >
-                <BookOpen className={`w-4 h-4 ${isAssignments ? 'text-white' : 'text-[#696F79]'}`} />
+                <BookOpen className={`w-4 h-4 ${isAssignments ? 'text-white' : 'text-[#696F79] dark:text-slate-400'}`} />
                 <span>Assignments</span>
               </Link>
             )}
@@ -185,15 +186,16 @@ export function AppLayout({ children, activeNav }: AppLayoutProps) {
       </aside>
 
       {/* ===================== MOBILE TOP NAV (< 1024px) ===================== */}
-      <header className="lg:hidden sticky top-0 z-40 bg-white border-b border-slate-100 px-4 h-16 flex items-center justify-between shadow-sm">
+      <header className="lg:hidden sticky top-0 z-40 bg-white dark:bg-[#151C2C] border-b border-slate-100 dark:border-slate-800 px-4 h-16 flex items-center justify-between shadow-sm transition-colors duration-200">
         <Link to="/" className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-[#1935CA] flex items-center justify-center text-white">
             <Sparkles className="w-4 h-4 fill-white/20" />
           </div>
-          <span className="font-extrabold text-lg text-[#1935CA]">QuizForge</span>
+          <span className="font-extrabold text-lg text-[#1935CA] dark:text-[#38BDF8]">QuizForge</span>
         </Link>
 
         <div className="flex items-center gap-2">
+          <ThemeToggle />
           <button
             type="button"
             onClick={() => setIsMcqModalOpen(true)}
@@ -204,7 +206,7 @@ export function AppLayout({ children, activeNav }: AppLayoutProps) {
           <button
             type="button"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 rounded-lg text-[#1E293B] hover:bg-slate-100 transition"
+            className="p-2 rounded-lg text-[#1E293B] dark:text-[#F8FAFC] hover:bg-slate-100 dark:hover:bg-slate-800 transition"
             aria-label="Toggle navigation menu"
           >
             {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -215,19 +217,19 @@ export function AppLayout({ children, activeNav }: AppLayoutProps) {
       {/* Mobile Drawer */}
       {isMobileMenuOpen && (
         <div className="lg:hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex">
-          <div className="w-72 bg-white h-full p-5 flex flex-col justify-between shadow-2xl animate-in slide-in-from-left duration-200">
+          <div className="w-72 bg-white dark:bg-[#151C2C] h-full p-5 flex flex-col justify-between shadow-2xl animate-in slide-in-from-left duration-200 border-r border-slate-100 dark:border-slate-800">
             <div>
-              <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
+              <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-full bg-[#1935CA] flex items-center justify-center text-white">
                     <Sparkles className="w-4 h-4" />
                   </div>
-                  <span className="font-bold text-lg text-[#1935CA]">QuizForge</span>
+                  <span className="font-bold text-lg text-[#1935CA] dark:text-[#38BDF8]">QuizForge</span>
                 </div>
                 <button
                   type="button"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="p-1 rounded-md text-slate-400 hover:text-slate-600"
+                  className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -237,8 +239,10 @@ export function AppLayout({ children, activeNav }: AppLayoutProps) {
                 <Link
                   to="/"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold ${
-                    isDashboard ? 'bg-[#1935CA] text-white' : 'text-[#696F79]'
+                  className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition ${
+                    isDashboard
+                      ? 'bg-[#1935CA] text-white shadow-sm'
+                      : 'text-[#696F79] dark:text-slate-400 hover:text-[#1935CA] dark:hover:text-[#38BDF8] hover:bg-[#F8F9FC] dark:hover:bg-slate-800/60'
                   }`}
                 >
                   <LayoutDashboard className="w-4 h-4" />
@@ -250,7 +254,7 @@ export function AppLayout({ children, activeNav }: AppLayoutProps) {
                     setIsMobileMenuOpen(false);
                     setIsCodeModalOpen(true);
                   }}
-                  className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold text-[#696F79] text-left"
+                  className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold text-[#696F79] dark:text-slate-400 hover:text-[#1935CA] dark:hover:text-[#38BDF8] hover:bg-[#F8F9FC] dark:hover:bg-slate-800/60 transition text-left"
                 >
                   <Code2 className="w-4 h-4" />
                   <span>GitHub Review</span>
@@ -261,7 +265,7 @@ export function AppLayout({ children, activeNav }: AppLayoutProps) {
                     setIsMobileMenuOpen(false);
                     setIsMcqModalOpen(true);
                   }}
-                  className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold text-[#696F79] text-left"
+                  className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold text-[#696F79] dark:text-slate-400 hover:text-[#1935CA] dark:hover:text-[#38BDF8] hover:bg-[#F8F9FC] dark:hover:bg-slate-800/60 transition text-left"
                 >
                   <FileQuestion className="w-4 h-4" />
                   <span>MCQ Quizzes</span>
@@ -269,8 +273,10 @@ export function AppLayout({ children, activeNav }: AppLayoutProps) {
                 <Link
                   to="/history"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold ${
-                    isHistory ? 'bg-[#1935CA] text-white' : 'text-[#696F79]'
+                  className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition ${
+                    isHistory
+                      ? 'bg-[#1935CA] text-white shadow-sm'
+                      : 'text-[#696F79] dark:text-slate-400 hover:text-[#1935CA] dark:hover:text-[#38BDF8] hover:bg-[#F8F9FC] dark:hover:bg-slate-800/60'
                   }`}
                 >
                   <History className="w-4 h-4" />
@@ -279,21 +285,37 @@ export function AppLayout({ children, activeNav }: AppLayoutProps) {
                 <Link
                   to="/classrooms"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold ${
-                    isClassrooms ? 'bg-[#1935CA] text-white' : 'text-[#696F79]'
+                  className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition ${
+                    isClassrooms
+                      ? 'bg-[#1935CA] text-white shadow-sm'
+                      : 'text-[#696F79] dark:text-slate-400 hover:text-[#1935CA] dark:hover:text-[#38BDF8] hover:bg-[#F8F9FC] dark:hover:bg-slate-800/60'
                   }`}
                 >
                   <GraduationCap className="w-4 h-4" />
                   <span>Classrooms</span>
                 </Link>
+                {user?.role === 'student' && (
+                  <Link
+                    to="/assignments"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition ${
+                      isAssignments
+                        ? 'bg-[#1935CA] text-white shadow-sm'
+                        : 'text-[#696F79] dark:text-slate-400 hover:text-[#1935CA] dark:hover:text-[#38BDF8] hover:bg-[#F8F9FC] dark:hover:bg-slate-800/60'
+                    }`}
+                  >
+                    <BookOpen className="w-4 h-4" />
+                    <span>Assignments</span>
+                  </Link>
+                )}
               </nav>
             </div>
 
-            <div className="pt-4 border-t border-slate-100">
+            <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
               <button
                 type="button"
                 onClick={logout}
-                className="flex items-center gap-2 text-sm font-semibold text-rose-600 px-3 py-2 w-full text-left"
+                className="flex items-center gap-2 text-sm font-semibold text-rose-600 hover:text-rose-500 px-3 py-2 w-full text-left"
               >
                 <LogOut className="w-4 h-4" />
                 <span>Log Out</span>
@@ -307,23 +329,25 @@ export function AppLayout({ children, activeNav }: AppLayoutProps) {
       {/* ===================== MAIN CANVAS ===================== */}
       <div className="flex-1 min-w-0 flex flex-col">
         {/* Top Header Bar */}
-        <header className="h-20 px-6 sm:px-8 flex items-center justify-between sticky top-0 bg-[#F8F9FC]/90 backdrop-blur-md z-20 transition-all">
+        <header className="h-20 px-6 sm:px-8 flex items-center justify-between sticky top-0 bg-[#F8F9FC]/90 dark:bg-[#0B0F19]/90 backdrop-blur-md z-20 transition-all">
           {/* Borderless Soft-Shadow Search */}
           <form onSubmit={handleSearchSubmit} className="relative">
-            <div className="flex items-center bg-white rounded-xl shadow-[0_4px_16px_rgba(15,23,42,0.05)] px-4 py-2.5 w-64 sm:w-80 md:w-96 transition-shadow focus-within:shadow-[0_6px_20px_rgba(25,53,202,0.12)]">
-              <Search className="w-4 h-4 text-[#94A3B8] shrink-0 mr-2.5" />
+            <div className="flex items-center bg-white dark:bg-[#151C2C] border border-transparent dark:border-slate-800 rounded-xl shadow-[0_4px_16px_rgba(15,23,42,0.05)] px-4 py-2.5 w-64 sm:w-80 md:w-96 transition-all focus-within:shadow-[0_6px_20px_rgba(25,53,202,0.12)]">
+              <Search className="w-4 h-4 text-[#94A3B8] dark:text-slate-400 shrink-0 mr-2.5" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search quizzes, repos, or topics..."
-                className="w-full text-sm text-[#1E293B] placeholder-[#94A3B8] bg-transparent outline-none font-medium"
+                className="w-full text-sm text-[#1E293B] dark:text-[#F8FAFC] placeholder-[#94A3B8] dark:placeholder-slate-500 bg-transparent outline-none font-medium"
               />
             </div>
           </form>
 
           {/* Right Action Controls */}
           <div className="flex items-center gap-3 sm:gap-4">
+            <ThemeToggle showMenu />
+
             <button
               type="button"
               onClick={() => setIsMcqModalOpen(true)}
@@ -339,10 +363,10 @@ export function AppLayout({ children, activeNav }: AppLayoutProps) {
                 {userInitials}
               </div>
               <div className="hidden md:block text-left">
-                <span className="block text-xs font-bold text-[#1E293B] leading-tight">
+                <span className="block text-xs font-bold text-[#1E293B] dark:text-[#F8FAFC] leading-tight">
                   {user?.displayName || 'User'}
                 </span>
-                <span className="block text-[10px] font-semibold text-[#1935CA] uppercase tracking-wider">
+                <span className="block text-[10px] font-semibold text-[#1935CA] dark:text-[#38BDF8] uppercase tracking-wider">
                   {user?.role || 'Learner'}
                 </span>
               </div>
