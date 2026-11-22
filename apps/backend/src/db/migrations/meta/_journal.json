@@ -64,6 +64,13 @@
       "when": 1795368388311,
       "tag": "0008_far_toad_men",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1795369924218,
+      "tag": "0009_elite_random",
+      "breakpoints": true
     }
   ]
 }

@@ -24,7 +24,11 @@ import {
   Copy,
   Check,
   ChevronLeft,
+  Package,
+  BarChart3,
 } from 'lucide-react';
+import { ScormExportModal } from '../components/lms/ScormExportModal';
+import { InstitutionalPsychometricsModal } from '../components/lms/InstitutionalPsychometricsModal';
 
 export function QuizStudioPage() {
   const { quizId } = useParams<{ quizId: string }>();
@@ -39,6 +43,8 @@ export function QuizStudioPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
+  const [isScormModalOpen, setIsScormModalOpen] = useState(false);
+  const [isPsychometricsModalOpen, setIsPsychometricsModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [isDirty, setIsDirty] = useState(false);
@@ -291,6 +297,28 @@ export function QuizStudioPage() {
                 {quiz?.status === 'published' ? 'Published' : 'Draft'}
               </span>
 
+              {/* Institutional Psychometrics Button */}
+              <button
+                type="button"
+                onClick={() => setIsPsychometricsModalOpen(true)}
+                className="px-4 py-2 rounded-xl text-xs font-bold bg-indigo-50 dark:bg-indigo-950/50 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 text-[#1935CA] dark:text-[#38BDF8] border border-indigo-200 dark:border-indigo-800 transition flex items-center gap-1.5"
+                title="View Cronbach's Alpha and Item Point-Biserial Discrimination"
+              >
+                <BarChart3 className="w-3.5 h-3.5" />
+                <span>Psychometrics</span>
+              </button>
+
+              {/* Export SCORM Button */}
+              <button
+                type="button"
+                onClick={() => setIsScormModalOpen(true)}
+                className="px-4 py-2 rounded-xl text-xs font-bold bg-white dark:bg-[#151C2C] hover:bg-slate-50 dark:hover:bg-slate-800 text-[#1E293B] dark:text-[#F8FAFC] border border-slate-200 dark:border-slate-700 shadow-sm transition flex items-center gap-1.5"
+                title="Export SCORM 1.2 / 2004 / xAPI Package"
+              >
+                <Package className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                <span>Export SCORM</span>
+              </button>
+
               {/* Publish Toggle Button */}
               <button
                 type="button"
@@ -520,6 +548,22 @@ export function QuizStudioPage() {
           ))}
         </div>
       </div>
+
+      {quizId && (
+        <>
+          <ScormExportModal
+            isOpen={isScormModalOpen}
+            onClose={() => setIsScormModalOpen(false)}
+            quizId={quizId}
+            quizTitle={topic || 'Quiz'}
+          />
+          <InstitutionalPsychometricsModal
+            isOpen={isPsychometricsModalOpen}
+            onClose={() => setIsPsychometricsModalOpen(false)}
+            quizId={quizId}
+          />
+        </>
+      )}
     </AppLayout>
   );
 }

@@ -10,4 +10,5 @@ export * from './schemas/flashcards.schema.js';
 export * from './schemas/analytics.schema.js';
 export * from './schemas/audio-tutor.schema.js';
 export * from './schemas/cat.schema.js';
+export * from './schemas/lms.schema.js';
 export * from './types/index.js';

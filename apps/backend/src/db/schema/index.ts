@@ -14,4 +14,5 @@ export * from './quiz-assignments';
 export * from './certificates';
 export * from './arena';
 export * from './flashcards';
+export * from './lms';
 export * from './relations';
