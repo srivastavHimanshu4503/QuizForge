@@ -105,11 +105,12 @@ export function UrlQuizModal({ isOpen, onClose }: UrlQuizModalProps) {
         setIsGenerating(false);
         setError(err instanceof Error ? err.message : 'Failed to query job status.');
       }
-    }, 1000);
+    }, 2500);
   };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (isGenerating) return;
     setError(null);
 
     const trimmedUrl = url.trim();

@@ -41,6 +41,7 @@ export function GenerateQuizModal({ isOpen, onClose }: GenerateQuizModalProps) {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (isGenerating) return;
     setError(null);
 
     if (!topic.trim()) {

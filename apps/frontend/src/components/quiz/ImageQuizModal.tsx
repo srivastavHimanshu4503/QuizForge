@@ -19,6 +19,7 @@ interface ProviderOption {
   name: string;
   displayName: string;
   isAvailable: boolean;
+  supportsVision?: boolean;
 }
 
 interface ImageQuizModalProps {
@@ -58,11 +59,11 @@ export function ImageQuizModal({ isOpen, onClose }: ImageQuizModalProps) {
         .get<{ providers: ProviderOption[] }>('/api/llm/providers')
         .then((data) => {
           setProviders(data.providers);
-          const gemini = data.providers.find((p) => p.id === 'gemini' && p.isAvailable);
+          const gemini = data.providers.find((p) => p.id === 'gemini' && p.isAvailable && p.supportsVision !== false);
           if (gemini) {
             setProvider(gemini.id);
           } else {
-            const firstAvail = data.providers.find((p) => p.isAvailable);
+            const firstAvail = data.providers.find((p) => p.isAvailable && p.supportsVision !== false);
             if (firstAvail) setProvider(firstAvail.id);
           }
         })
@@ -143,11 +144,12 @@ export function ImageQuizModal({ isOpen, onClose }: ImageQuizModalProps) {
         setIsUploading(false);
         setError(err instanceof Error ? err.message : 'Failed to query job status.');
       }
-    }, 1000);
+    }, 2500);
   };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (isUploading) return;
     setError(null);
 
     if (!file) {
@@ -414,28 +416,36 @@ export function ImageQuizModal({ isOpen, onClose }: ImageQuizModalProps) {
                   <span>Multimodal Vision Engine</span>
                 </label>
                 <div className="grid grid-cols-3 gap-2">
-                  {providers.map((p) => (
-                    <button
-                      key={p.id}
-                      type="button"
-                      disabled={!p.isAvailable}
-                      onClick={() => setProvider(p.id)}
-                      className={`p-2.5 text-left rounded-xl border transition ${
-                        provider === p.id
-                          ? 'bg-[#EEF2FF] border-[#1935CA] ring-2 ring-[#1935CA]'
-                          : p.isAvailable
-                          ? 'bg-[#F8F9FC] border-slate-200/80 text-[#1E293B] hover:bg-slate-100'
-                          : 'bg-slate-100 border-slate-200 text-slate-400 opacity-50 cursor-not-allowed'
-                      }`}
-                    >
-                      <span className={`block text-xs font-bold truncate ${provider === p.id ? 'text-[#1935CA]' : 'text-[#1E293B]'}`}>
-                        {p.displayName}
-                      </span>
-                      <span className="block text-[10px] text-[#696F79]">
-                        {p.isAvailable ? 'Ready' : 'Not configured'}
-                      </span>
-                    </button>
-                  ))}
+                  {providers.map((p) => {
+                    const isVisionSupported = p.supportsVision !== false;
+                    const canSelect = p.isAvailable && isVisionSupported;
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        disabled={!canSelect}
+                        onClick={() => setProvider(p.id)}
+                        className={`p-2.5 text-left rounded-xl border transition ${
+                          provider === p.id
+                            ? 'bg-[#EEF2FF] border-[#1935CA] ring-2 ring-[#1935CA]'
+                            : canSelect
+                            ? 'bg-[#F8F9FC] border-slate-200/80 text-[#1E293B] hover:bg-slate-100'
+                            : 'bg-slate-100 border-slate-200 text-slate-400 opacity-50 cursor-not-allowed'
+                        }`}
+                      >
+                        <span className={`block text-xs font-bold truncate ${provider === p.id ? 'text-[#1935CA]' : 'text-[#1E293B]'}`}>
+                          {p.displayName}
+                        </span>
+                        <span className="block text-[10px] text-[#696F79]">
+                          {!p.isAvailable
+                            ? 'Not configured'
+                            : !isVisionSupported
+                            ? 'Text only'
+                            : 'Vision Ready'}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -443,7 +453,7 @@ export function ImageQuizModal({ isOpen, onClose }: ImageQuizModalProps) {
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={!file}
+              disabled={!file || isUploading}
               className="w-full py-3.5 rounded-xl bg-[#1935CA] hover:bg-[#142BA3] disabled:opacity-50 text-white font-bold text-sm shadow-xl shadow-[#1935CA]/20 transition flex items-center justify-center gap-2"
             >
               <span>Analyze Image & Generate Assessment</span>

@@ -107,8 +107,8 @@ export async function buildApp(): Promise<FastifyInstance> {
     });
   });
 
-  // Health Check Endpoint
-  app.get('/api/health', async () => {
+  // Health Check Endpoint (silent log level to prevent terminal clutter)
+  app.get('/api/health', { logLevel: 'silent' }, async () => {
     let dbStatus = 'healthy';
     let dbError: string | null = null;
 

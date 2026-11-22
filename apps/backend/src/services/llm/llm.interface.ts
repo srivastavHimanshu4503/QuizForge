@@ -29,6 +29,7 @@ export interface ILLMProvider {
   readonly name: string;
   readonly defaultModel: string;
   readonly isAvailable: boolean;
+  readonly supportsVision: boolean;
 
   chatCompletion(
     messages: ChatMessage[],

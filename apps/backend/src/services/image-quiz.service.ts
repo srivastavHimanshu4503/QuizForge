@@ -3,6 +3,7 @@ import { fileSecurityService } from './ingestion/file-security.service';
 import { imageIngestionAdapter } from './ingestion/image.adapter';
 import { jobQueueService } from './jobs/job-queue.service';
 import { aiService } from './ai/ai.service';
+import { providerRegistry } from './llm/provider-registry';
 import { db } from '../db/index';
 import { quizzes, questions, choices, quizAttempts } from '../db/schema/index';
 import { shuffleArray } from '../utils/shuffle';
@@ -31,6 +32,7 @@ export class ImageQuizService {
     setImmediate(() => {
       this.processImageJob(jobId, userId, buffer, filename, options).catch((err: unknown) => {
         const message = err instanceof Error ? err.message : String(err);
+        console.error(`[ImageQuiz] Job ${jobId} failed:`, message);
         jobQueueService.failJob(jobId, message);
       });
     });
@@ -59,11 +61,30 @@ export class ImageQuizService {
       const topic = options.topic?.trim() || document.title || 'Visual Assessment';
 
       // Stage 3: Question synthesis via Vision-Capable AI Provider
+      let providerName = options.provider;
+      if (env.NODE_ENV === 'test' && !providerName) {
+        providerName = 'mock';
+      } else if (providerName) {
+        try {
+          const p = providerRegistry.get(providerName);
+          if (!p.supportsVision) {
+            const visionP = providerRegistry.getVisionProvider();
+            providerName = visionP.name;
+          }
+        } catch {
+          const visionP = providerRegistry.getVisionProvider();
+          providerName = visionP.name;
+        }
+      } else {
+        const visionP = providerRegistry.getVisionProvider();
+        providerName = visionP.name;
+      }
+
       jobQueueService.updateProgress(
         jobId,
         'synthesizing_questions',
         75,
-        `Analyzing visual elements and synthesizing ${options.questionCount} grounded questions...`
+        `Analyzing visual elements with ${providerName.toUpperCase()} and synthesizing ${options.questionCount} grounded questions...`
       );
 
       const generatedQuestions = await aiService.generateQuizQuestions(
@@ -71,14 +92,14 @@ export class ImageQuizService {
           topic,
           questionCount: options.questionCount,
           difficulty: options.difficulty,
-          provider: options.provider,
+          provider: providerName,
           context: `Visual document: "${topic}" (${mimeType}). All questions must be grounded in this visual diagram/image.`,
           image: {
             base64,
             mimeType,
           },
         },
-        options.provider
+        providerName
       );
 
       // Stage 4: Database persistence

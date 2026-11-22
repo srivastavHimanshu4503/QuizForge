@@ -10,6 +10,7 @@ import {
 export class NvidiaProvider implements ILLMProvider {
   readonly name = 'nvidia';
   readonly defaultModel: string;
+  readonly supportsVision = true;
   private apiKey?: string;
   private baseUrl = 'https://integrate.api.nvidia.com/v1/chat/completions';
 
@@ -38,11 +39,41 @@ export class NvidiaProvider implements ILLMProvider {
     const model = options?.model || this.defaultModel;
     const temperature = options?.temperature ?? 0.3;
     const maxTokens = options?.maxTokens ?? 4096;
-    const timeoutMs = options?.timeoutMs ?? 45000;
+    // Vision and reasoning models benefit from 90s timeout
+    const timeoutMs = options?.timeoutMs ?? (options?.image ? 90000 : 45000);
+
+    // Format messages: OpenAI multimodal format if image is provided
+    let formattedMessages: unknown[] = messages;
+    if (options?.image) {
+      let lastUserIndex = -1;
+      for (let i = messages.length - 1; i >= 0; i--) {
+        if (messages[i]?.role === 'user') {
+          lastUserIndex = i;
+          break;
+        }
+      }
+      formattedMessages = messages.map((msg, index) => {
+        if (msg.role !== 'user' || index !== lastUserIndex) {
+          return msg;
+        }
+        return {
+          role: 'user',
+          content: [
+            { type: 'text', text: msg.content },
+            {
+              type: 'image_url',
+              image_url: {
+                url: `data:${options.image!.mimeType};base64,${options.image!.base64}`,
+              },
+            },
+          ],
+        };
+      });
+    }
 
     const body: Record<string, unknown> = {
       model,
-      messages,
+      messages: formattedMessages,
       temperature,
       max_tokens: maxTokens,
     };
@@ -51,19 +82,58 @@ export class NvidiaProvider implements ILLMProvider {
       body.response_format = { type: 'json_object' };
     }
 
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    const executeFetch = async (attempt = 1): Promise<Response> => {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+      try {
+        const response = await fetch(this.baseUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${this.apiKey}`,
+          },
+          body: JSON.stringify(body),
+          signal: controller.signal,
+        });
+        clearTimeout(timer);
+        return response;
+      } catch (err: unknown) {
+        clearTimeout(timer);
+        const isAbort =
+          err instanceof Error &&
+          (err.name === 'AbortError' ||
+            (err as any)?.cause?.name === 'AbortError' ||
+            controller.signal.aborted);
+
+        if (isAbort) {
+          throw new LLMProviderError(
+            `NVIDIA NIM API request timed out after ${timeoutMs}ms.`,
+            this.name,
+            'TIMEOUT',
+            504
+          );
+        }
+
+        // Retry on transient network/fetch failures
+        if (attempt <= 2) {
+          await new Promise((res) => setTimeout(res, 1200 * attempt));
+          return executeFetch(attempt + 1);
+        }
+
+        const causeMsg = (err as any)?.cause?.message ? ` (${(err as any).cause.message})` : '';
+        throw new LLMProviderError(
+          `Failed to reach NVIDIA NIM API: ${err instanceof Error ? err.message : String(err)}${causeMsg}`,
+          this.name,
+          'NETWORK_ERROR',
+          502,
+          err
+        );
+      }
+    };
 
     try {
-      const response = await fetch(this.baseUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${this.apiKey}`,
-        },
-        body: JSON.stringify(body),
-        signal: controller.signal,
-      });
+      const response = await executeFetch();
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -128,23 +198,14 @@ export class NvidiaProvider implements ILLMProvider {
       if (err instanceof LLMProviderError) {
         throw err;
       }
-      if (err instanceof Error && err.name === 'AbortError') {
-        throw new LLMProviderError(
-          `NVIDIA NIM API request timed out after ${timeoutMs}ms.`,
-          this.name,
-          'TIMEOUT',
-          504
-        );
-      }
+      const causeMsg = (err as any)?.cause?.message ? ` (${(err as any).cause.message})` : '';
       throw new LLMProviderError(
-        `Failed to reach NVIDIA NIM API: ${err instanceof Error ? err.message : String(err)}`,
+        `Failed to reach NVIDIA NIM API: ${err instanceof Error ? err.message : String(err)}${causeMsg}`,
         this.name,
         'NETWORK_ERROR',
         502,
         err
       );
-    } finally {
-      clearTimeout(timer);
     }
   }
 }

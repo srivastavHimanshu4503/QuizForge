@@ -44,4 +44,7 @@ coverage/
 
 # User assets & screenshots (local only)
 *.png
+*.jpg
+*.jpeg
+*.webp
 docs/screenshots/

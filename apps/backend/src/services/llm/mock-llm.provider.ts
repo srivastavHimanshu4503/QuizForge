@@ -9,6 +9,7 @@ export class MockLLMProvider implements ILLMProvider {
   readonly name: string;
   readonly defaultModel: string;
   readonly isAvailable = true;
+  readonly supportsVision = true;
   private customResponse?: string;
 
   constructor(name = 'mock', defaultModel = 'mock-model') {

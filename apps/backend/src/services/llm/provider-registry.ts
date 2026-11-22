@@ -11,6 +11,7 @@ export interface ProviderInfo {
   displayName: string;
   defaultModel: string;
   isAvailable: boolean;
+  supportsVision: boolean;
   description: string;
 }
 
@@ -80,9 +81,32 @@ export class LLMProviderRegistry {
         displayName: meta.displayName,
         defaultModel: p.defaultModel,
         isAvailable: p.isAvailable,
+        supportsVision: p.supportsVision,
         description: meta.description,
       };
     });
+  }
+
+  getVisionProvider(preferredName?: string): ILLMProvider {
+    if (preferredName) {
+      const p = this.providers.get(preferredName.toLowerCase());
+      if (p && p.isAvailable && p.supportsVision) {
+        return p;
+      }
+    }
+
+    // In test environment, prioritize mock provider
+    const priority = env.NODE_ENV === 'test'
+      ? ['mock', 'gemini', 'nvidia']
+      : ['gemini', 'nvidia', 'mock'];
+    for (const key of priority) {
+      const p = this.providers.get(key);
+      if (p && p.isAvailable && p.supportsVision) {
+        return p;
+      }
+    }
+
+    return this.getDefaultProvider();
   }
 
   getDefaultProvider(): ILLMProvider {

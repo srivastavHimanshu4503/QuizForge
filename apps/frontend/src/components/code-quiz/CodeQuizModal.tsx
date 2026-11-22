@@ -72,6 +72,7 @@ export function CodeQuizModal({ isOpen, onClose }: CodeQuizModalProps) {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (isGenerating) return;
     setError(null);
 
     if (!repoUrl.trim()) {

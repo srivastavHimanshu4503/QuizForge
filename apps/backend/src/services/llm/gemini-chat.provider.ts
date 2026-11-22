@@ -11,6 +11,7 @@ import {
 export class GeminiChatProvider implements ILLMProvider {
   readonly name = 'gemini';
   readonly defaultModel: string;
+  readonly supportsVision = true;
   private client: GoogleGenAI;
   private apiKey?: string;
 
@@ -37,7 +38,7 @@ export class GeminiChatProvider implements ILLMProvider {
     options?: LLMCompletionOptions
   ): Promise<LLMCompletionResult> {
     const model = options?.model || this.defaultModel;
-    const timeoutMs = options?.timeoutMs ?? 45000;
+    const timeoutMs = options?.timeoutMs ?? (options?.image ? 90000 : 45000);
 
     // Separate system message if present
     const systemMsg = messages.find((m) => m.role === 'system');
@@ -52,113 +53,212 @@ export class GeminiChatProvider implements ILLMProvider {
       prompt += `${msg.role.toUpperCase()}:\n${msg.content}\n\n`;
     }
 
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    const textContent = nonSystemMsgs.length > 0 ? nonSystemMsgs.map((m) => m.content).join('\n\n') : prompt;
 
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const config: any = {
-        temperature: options?.temperature ?? 0.3,
-        abortSignal: controller.signal,
-      };
-
-      if (options?.responseFormat?.type === 'json_object') {
-        config.responseMimeType = 'application/json';
-      }
-
-      if (systemMsg?.content) {
-        config.systemInstruction = systemMsg.content;
-      }
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let contents: any;
-      if (options?.image) {
-        const textContent = nonSystemMsgs.length > 0 ? nonSystemMsgs.map((m) => m.content).join('\n\n') : prompt;
-        contents = [
-          {
-            parts: [
-              { text: textContent },
-              {
-                inlineData: {
-                  mimeType: options.image.mimeType,
-                  data: options.image.base64,
-                },
+    // Build multimodal contents
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let contents: any;
+    if (options?.image) {
+      contents = [
+        {
+          parts: [
+            { text: textContent },
+            {
+              inlineData: {
+                mimeType: options.image.mimeType,
+                data: options.image.base64,
               },
-            ],
-          },
-        ];
-      } else {
-        contents = nonSystemMsgs.length > 0 ? nonSystemMsgs.map((m) => m.content).join('\n\n') : prompt;
-      }
-
-      const generatePromise = this.client.models.generateContent({
-        model,
-        contents,
-        config,
-      });
-
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        controller.signal.addEventListener('abort', () => {
-          reject(
-            new LLMProviderError(
-              `Gemini request timed out after ${timeoutMs}ms.`,
-              this.name,
-              'TIMEOUT',
-              504
-            )
-          );
-        });
-      });
-
-      const response = await Promise.race([generatePromise, timeoutPromise]);
-
-      const content = response.text;
-      if (typeof content !== 'string' || content.trim().length === 0) {
-        throw new LLMProviderError(
-          'Gemini returned an empty completion.',
-          this.name,
-          'INVALID_RESPONSE',
-          502
-        );
-      }
-
-      return {
-        content,
-        model,
-        provider: this.name,
-      };
-    } catch (err: unknown) {
-      if (err instanceof LLMProviderError) {
-        throw err;
-      }
-      const msg = err instanceof Error ? err.message : String(err);
-      if (msg.includes('429') || msg.toLowerCase().includes('rate limit')) {
-        throw new LLMProviderError(
-          'Gemini rate limit exceeded. Please wait a moment and retry.',
-          this.name,
-          'RATE_LIMIT',
-          429,
-          err
-        );
-      }
-      if (msg.includes('401') || msg.includes('403') || msg.toLowerCase().includes('api key')) {
-        throw new LLMProviderError(
-          'Invalid Gemini API key.',
-          this.name,
-          'AUTHENTICATION_ERROR',
-          401,
-          err
-        );
-      }
-      throw new LLMProviderError(
-        `Gemini API error: ${msg}`,
-        this.name,
-        'API_ERROR',
-        502,
-        err
-      );
-    } finally {
-      clearTimeout(timer);
+            },
+          ],
+        },
+      ];
+    } else {
+      contents = nonSystemMsgs.length > 0 ? nonSystemMsgs.map((m) => m.content).join('\n\n') : prompt;
     }
+
+    // Direct REST API fallback helper
+    const callDirectRestApi = async (): Promise<string> => {
+      const restUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${this.apiKey}`;
+      const restBody = {
+        contents: options?.image
+          ? [
+              {
+                parts: [
+                  { text: textContent },
+                  {
+                    inlineData: {
+                      mimeType: options.image.mimeType,
+                      data: options.image.base64,
+                    },
+                  },
+                ],
+              },
+            ]
+          : [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: options?.temperature ?? 0.3,
+          responseMimeType: options?.responseFormat?.type === 'json_object' ? 'application/json' : undefined,
+        },
+        systemInstruction: systemMsg?.content ? { parts: [{ text: systemMsg.content }] } : undefined,
+      };
+
+      const restController = new AbortController();
+      const restTimer = setTimeout(() => restController.abort(), timeoutMs);
+
+      try {
+        const res = await fetch(restUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(restBody),
+          signal: restController.signal,
+        });
+
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(`Direct REST error (${res.status}): ${errText}`);
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const json = (await res.json()) as any;
+        const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (typeof text !== 'string') {
+          throw new Error('Gemini REST API returned invalid response format.');
+        }
+        return text;
+      } finally {
+        clearTimeout(restTimer);
+      }
+    };
+
+    let lastError: unknown;
+
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const config: any = {
+          temperature: options?.temperature ?? 0.3,
+          abortSignal: controller.signal,
+        };
+
+        if (options?.responseFormat?.type === 'json_object') {
+          config.responseMimeType = 'application/json';
+        }
+
+        if (systemMsg?.content) {
+          config.systemInstruction = systemMsg.content;
+        }
+
+        const generatePromise = this.client.models.generateContent({
+          model,
+          contents,
+          config,
+        });
+
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          controller.signal.addEventListener('abort', () => {
+            reject(
+              new LLMProviderError(
+                `Gemini request timed out after ${timeoutMs}ms.`,
+                this.name,
+                'TIMEOUT',
+                504
+              )
+            );
+          });
+        });
+
+        const response = await Promise.race([generatePromise, timeoutPromise]);
+        clearTimeout(timer);
+
+        const content = response.text;
+        if (typeof content !== 'string' || content.trim().length === 0) {
+          throw new LLMProviderError(
+            'Gemini returned an empty completion.',
+            this.name,
+            'INVALID_RESPONSE',
+            502
+          );
+        }
+
+        return {
+          content,
+          model,
+          provider: this.name,
+        };
+      } catch (err: unknown) {
+        clearTimeout(timer);
+        lastError = err;
+
+        if (err instanceof LLMProviderError) {
+          throw err;
+        }
+
+        const msg = err instanceof Error ? err.message : String(err);
+        const isAbort =
+          err instanceof Error &&
+          (err.name === 'AbortError' ||
+            (err as any)?.cause?.name === 'AbortError' ||
+            controller.signal.aborted);
+
+        if (isAbort) {
+          throw new LLMProviderError(
+            `Gemini request timed out after ${timeoutMs}ms.`,
+            this.name,
+            'TIMEOUT',
+            504
+          );
+        }
+
+        // On transient network or fetch error, try fallback to direct REST API before throwing
+        if (msg.includes('fetch failed') || msg.includes('ECONNRESET')) {
+          try {
+            const restContent = await callDirectRestApi();
+            return {
+              content: restContent,
+              model,
+              provider: this.name,
+            };
+          } catch (restErr: unknown) {
+            lastError = restErr;
+          }
+        }
+
+        if (attempt === 1) {
+          await new Promise((res) => setTimeout(res, 1200));
+        }
+      }
+    }
+
+    const msg = lastError instanceof Error ? lastError.message : String(lastError);
+    if (msg.includes('429') || msg.toLowerCase().includes('rate limit')) {
+      throw new LLMProviderError(
+        'Gemini rate limit exceeded. Please wait a moment and retry.',
+        this.name,
+        'RATE_LIMIT',
+        429,
+        lastError
+      );
+    }
+    if (msg.includes('401') || msg.includes('403') || msg.toLowerCase().includes('api key')) {
+      throw new LLMProviderError(
+        'Invalid Gemini API key.',
+        this.name,
+        'AUTHENTICATION_ERROR',
+        401,
+        lastError
+      );
+    }
+
+    const causeMsg = (lastError as any)?.cause?.message ? ` (${(lastError as any).cause.message})` : '';
+    throw new LLMProviderError(
+      `Gemini API error: ${msg}${causeMsg}`,
+      this.name,
+      'API_ERROR',
+      502,
+      lastError
+    );
   }
 }

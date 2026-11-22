@@ -10,6 +10,7 @@ import {
 export class GroqProvider implements ILLMProvider {
   readonly name = 'groq';
   readonly defaultModel: string;
+  readonly supportsVision = false;
   private apiKey?: string;
   private baseUrl = 'https://api.groq.com/openai/v1/chat/completions';
 
@@ -35,6 +36,15 @@ export class GroqProvider implements ILLMProvider {
       );
     }
 
+    if (options?.image) {
+      throw new LLMProviderError(
+        'Groq model does not support image or multimodal vision inputs.',
+        this.name,
+        'MULTIMODAL_NOT_SUPPORTED',
+        400
+      );
+    }
+
     const model = options?.model || this.defaultModel;
     const temperature = options?.temperature ?? 0.3;
     const maxTokens = options?.maxTokens ?? 4096;
@@ -51,19 +61,57 @@ export class GroqProvider implements ILLMProvider {
       body.response_format = { type: 'json_object' };
     }
 
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    const executeFetch = async (attempt = 1): Promise<Response> => {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+      try {
+        const response = await fetch(this.baseUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${this.apiKey}`,
+          },
+          body: JSON.stringify(body),
+          signal: controller.signal,
+        });
+        clearTimeout(timer);
+        return response;
+      } catch (err: unknown) {
+        clearTimeout(timer);
+        const isAbort =
+          err instanceof Error &&
+          (err.name === 'AbortError' ||
+            (err as any)?.cause?.name === 'AbortError' ||
+            controller.signal.aborted);
+
+        if (isAbort) {
+          throw new LLMProviderError(
+            `Groq API request timed out after ${timeoutMs}ms.`,
+            this.name,
+            'TIMEOUT',
+            504
+          );
+        }
+
+        if (attempt <= 2) {
+          await new Promise((res) => setTimeout(res, 1000 * attempt));
+          return executeFetch(attempt + 1);
+        }
+
+        const causeMsg = (err as any)?.cause?.message ? ` (${(err as any).cause.message})` : '';
+        throw new LLMProviderError(
+          `Failed to reach Groq API: ${err instanceof Error ? err.message : String(err)}${causeMsg}`,
+          this.name,
+          'NETWORK_ERROR',
+          502,
+          err
+        );
+      }
+    };
 
     try {
-      const response = await fetch(this.baseUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${this.apiKey}`,
-        },
-        body: JSON.stringify(body),
-        signal: controller.signal,
-      });
+      const response = await executeFetch();
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -140,23 +188,14 @@ export class GroqProvider implements ILLMProvider {
       if (err instanceof LLMProviderError) {
         throw err;
       }
-      if (err instanceof Error && err.name === 'AbortError') {
-        throw new LLMProviderError(
-          `Groq API request timed out after ${timeoutMs}ms.`,
-          this.name,
-          'TIMEOUT',
-          504
-        );
-      }
+      const causeMsg = (err as any)?.cause?.message ? ` (${(err as any).cause.message})` : '';
       throw new LLMProviderError(
-        `Failed to reach Groq API: ${err instanceof Error ? err.message : String(err)}`,
+        `Failed to reach Groq API: ${err instanceof Error ? err.message : String(err)}${causeMsg}`,
         this.name,
         'NETWORK_ERROR',
         502,
         err
       );
-    } finally {
-      clearTimeout(timer);
     }
   }
 }

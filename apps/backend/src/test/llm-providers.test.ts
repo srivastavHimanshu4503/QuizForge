@@ -225,6 +225,7 @@ describe('LLM Providers & Registry', () => {
         name: 'failing-mock',
         defaultModel: 'model-fail',
         isAvailable: true,
+        supportsVision: false,
         async chatCompletion(): Promise<never> {
           throw new LLMProviderError('Groq rate limit exceeded', 'failing-mock', 'RATE_LIMIT', 429);
         },
@@ -257,6 +258,7 @@ describe('LLM Providers & Registry', () => {
         name: 'timeout-mock',
         defaultModel: 'model-timeout',
         isAvailable: true,
+        supportsVision: false,
         async chatCompletion(): Promise<never> {
           throw new LLMProviderError('Request timed out after 45000ms', 'timeout-mock', 'TIMEOUT', 504);
         },

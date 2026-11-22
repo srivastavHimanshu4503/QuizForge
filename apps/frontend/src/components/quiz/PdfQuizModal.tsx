@@ -118,11 +118,12 @@ export function PdfQuizModal({ isOpen, onClose }: PdfQuizModalProps) {
         setIsUploading(false);
         setError(err instanceof Error ? err.message : 'Failed to query job status.');
       }
-    }, 1000);
+    }, 2500);
   };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (isUploading) return;
     setError(null);
 
     if (!file) {
