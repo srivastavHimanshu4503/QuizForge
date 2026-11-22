@@ -1,0 +1,20 @@
+{
+  "name": "QuizForge AI Assessment & Spaced Repetition",
+  "short_name": "QuizForge",
+  "description": "AI-powered quiz generation, spaced repetition flashcards, and real-time multiplayer arena.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0B0F19",
+  "theme_color": "#1935CA",
+  "orientation": "any",
+  "categories": ["education", "productivity"],
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

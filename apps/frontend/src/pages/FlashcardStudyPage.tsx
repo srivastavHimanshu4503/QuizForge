@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { apiClient } from '../api/client';
+import { offlineDb } from '../lib/offline-db';
 import confetti from 'canvas-confetti';
 import type {
   FlashcardCardDto,
@@ -49,7 +50,18 @@ export function FlashcardStudyPage() {
       setIsFlipped(false);
       setIsComplete(cardsData.length === 0);
     } catch {
-      // ignore
+      // Offline fallback: load cards cached in IndexedDB
+      try {
+        const cachedCards = await offlineDb.getOfflineDeckCards(deckId);
+        if (cachedCards && cachedCards.length > 0) {
+          setCards(cachedCards as any);
+          setCurrentIndex(0);
+          setIsFlipped(false);
+          setIsComplete(false);
+        }
+      } catch {
+        // ignore
+      }
     } finally {
       setLoading(false);
     }
@@ -70,9 +82,16 @@ export function FlashcardStudyPage() {
 
     try {
       setSubmitting(true);
-      await apiClient.post<FlashcardReviewResultDto>(`/api/flashcards/cards/${currentCard.id}/review`, {
-        rating,
-      });
+      if (navigator.onLine) {
+        await apiClient.post<FlashcardReviewResultDto>(`/api/flashcards/cards/${currentCard.id}/review`, {
+          rating,
+        });
+      } else {
+        await offlineDb.enqueueSyncItem('card_review', {
+          cardId: currentCard.id,
+          rating,
+        });
+      }
 
       // Update counters
       setSessionResults((prev) => ({
@@ -96,7 +115,18 @@ export function FlashcardStudyPage() {
         });
       }
     } catch {
-      // review error
+      // Network failure fallback: queue review for sync
+      await offlineDb.enqueueSyncItem('card_review', {
+        cardId: currentCard.id,
+        rating,
+      });
+
+      if (currentIndex + 1 < cards.length) {
+        setIsFlipped(false);
+        setCurrentIndex((i) => i + 1);
+      } else {
+        setIsComplete(true);
+      }
     } finally {
       setSubmitting(false);
     }

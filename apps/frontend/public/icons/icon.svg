@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="qf-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2546F0" />
+      <stop offset="50%" stop-color="#1935CA" />
+      <stop offset="100%" stop-color="#0F2180" />
+    </linearGradient>
+    <linearGradient id="sparkle-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="100%" stop-color="#60A5FA" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#1935CA" flood-opacity="0.35" />
+    </filter>
+  </defs>
+
+  <!-- Base Rounded Container with Brand Gradient -->
+  <rect width="512" height="512" rx="128" fill="url(#qf-grad)" filter="url(#shadow)" />
+
+  <!-- Inner Subtle Accent Glow Ring -->
+  <rect x="24" y="24" width="464" height="464" rx="108" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="4" />
+
+  <!-- Stylized Monogram "Q" -->
+  <g fill="none" stroke="#FFFFFF" stroke-width="40" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Main O-ring -->
+    <circle cx="256" cy="236" r="110" />
+    <!-- Q Tail Slash -->
+    <path d="M296 280 L370 365" stroke="url(#sparkle-grad)" stroke-width="44" />
+  </g>
+
+  <!-- Dynamic Sparkles -->
+  <path d="M375 140 C375 155 385 165 400 165 C385 165 375 175 375 190 C375 175 365 165 350 165 C365 165 375 155 375 140 Z" fill="url(#sparkle-grad)" />
+  <path d="M140 320 C140 330 148 338 158 338 C148 338 140 346 140 356 C140 346 132 338 122 338 C132 338 140 330 140 320 Z" fill="#60A5FA" opacity="0.85" />
+</svg>

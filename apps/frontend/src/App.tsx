@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
+import { NetworkProvider } from './context/NetworkContext';
 import { ProtectedRoute } from './components/layout/ProtectedRoute';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
@@ -25,8 +26,9 @@ export function App() {
   return (
     <BrowserRouter>
       <ThemeProvider>
-        <AuthProvider>
-        <Routes>
+        <NetworkProvider>
+          <AuthProvider>
+            <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/verify/:code?" element={<VerifyCertificatePage />} />
@@ -140,7 +142,8 @@ export function App() {
           />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-      </AuthProvider>
+        </AuthProvider>
+      </NetworkProvider>
     </ThemeProvider>
   </BrowserRouter>
 );

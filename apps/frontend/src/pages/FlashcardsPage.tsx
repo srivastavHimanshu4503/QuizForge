@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '../components/layout/AppLayout';
 import { apiClient } from '../api/client';
+import { offlineDb } from '../lib/offline-db';
+import { useNetwork } from '../context/NetworkContext';
 import type {
   FlashcardDeckDto,
   FlashcardStatsDto,
@@ -19,12 +21,16 @@ import {
   Library,
   X,
   Zap,
+  Download,
+  Check,
 } from 'lucide-react';
 
 export function FlashcardsPage() {
   const navigate = useNavigate();
+  const { saveDeckForOffline } = useNetwork();
   const [stats, setStats] = useState<FlashcardStatsDto | null>(null);
   const [decks, setDecks] = useState<FlashcardDeckDto[]>([]);
+  const [offlineSavedDecks, setOfflineSavedDecks] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -53,8 +59,40 @@ export function FlashcardsPage() {
       ]);
       setStats(statsData);
       setDecks(decksData);
+
+      // Check which decks are saved offline
+      const offlineDecks = await offlineDb.getOfflineDecks();
+      setOfflineSavedDecks(new Set(offlineDecks.map((d) => d.id)));
     } catch (err: any) {
-      setMessage({ type: 'error', text: err.message || 'Failed to load flashcard decks.' });
+      // Offline fallback: load cached decks from IndexedDB
+      try {
+        const offlineDecks = await offlineDb.getOfflineDecks();
+        if (offlineDecks.length > 0) {
+          setDecks(
+            offlineDecks.map((d) => ({
+              id: d.id,
+              userId: '',
+              title: d.title,
+              description: d.description,
+              quizId: null,
+              quizTitle: d.quizTitle,
+              totalCards: d.totalCards,
+              dueCards: d.totalCards,
+              newCards: 0,
+              learningCards: 0,
+              reviewCards: 0,
+              masteredCards: 0,
+              createdAt: d.savedAt,
+              updatedAt: d.savedAt,
+            }))
+          );
+          setOfflineSavedDecks(new Set(offlineDecks.map((d) => d.id)));
+        } else {
+          setMessage({ type: 'error', text: err.message || 'Failed to load flashcard decks.' });
+        }
+      } catch {
+        setMessage({ type: 'error', text: err.message || 'Failed to load flashcard decks.' });
+      }
     } finally {
       setLoading(false);
     }
@@ -375,6 +413,27 @@ export function FlashcardsPage() {
                         )}
 
                         <div className="flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={async () => {
+                              const ok = await saveDeckForOffline(deck.id);
+                              if (ok) {
+                                setOfflineSavedDecks((prev) => new Set(prev).add(deck.id));
+                                setMessage({ type: 'success', text: `Deck "${deck.title}" saved for offline practice!` });
+                              }
+                            }}
+                            title={offlineSavedDecks.has(deck.id) ? 'Saved for offline' : 'Save for offline'}
+                            className={`p-1.5 rounded-lg transition-colors ${
+                              offlineSavedDecks.has(deck.id)
+                                ? 'text-emerald-500 bg-emerald-50 dark:bg-emerald-950/40'
+                                : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-emerald-600'
+                            }`}
+                          >
+                            {offlineSavedDecks.has(deck.id) ? (
+                              <Check className="w-4 h-4" />
+                            ) : (
+                              <Download className="w-4 h-4" />
+                            )}
+                          </button>
                           <button
                             onClick={() => {
                               setSelectedDeckForCard(deck.id);

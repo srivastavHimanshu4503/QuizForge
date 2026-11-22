@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { CodeQuizModal } from '../code-quiz/CodeQuizModal';
 import { GenerateQuizModal } from '../quiz/GenerateQuizModal';
 import { ThemeToggle } from '../common/ThemeToggle';
+import { NetworkStatusBar } from '../common/NetworkStatusBar';
 import {
   LayoutDashboard,
   Code2,
@@ -386,6 +387,7 @@ export function AppLayout({ children, activeNav }: AppLayoutProps) {
 
       {/* ===================== MAIN CANVAS ===================== */}
       <div className="flex-1 min-w-0 flex flex-col">
+        <NetworkStatusBar />
         {/* Top Header Bar */}
         <header className="h-20 px-6 sm:px-8 flex items-center justify-between sticky top-0 bg-[#F8F9FC]/90 dark:bg-[#0B0F19]/90 backdrop-blur-md z-20 transition-all">
           {/* Borderless Soft-Shadow Search */}
