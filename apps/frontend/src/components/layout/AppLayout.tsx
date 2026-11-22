@@ -346,7 +346,7 @@ export function AppLayout({ children, activeNav }: AppLayoutProps) {
 
           {/* Right Action Controls */}
           <div className="flex items-center gap-3 sm:gap-4">
-            <ThemeToggle showMenu />
+            <ThemeToggle />
 
             <button
               type="button"

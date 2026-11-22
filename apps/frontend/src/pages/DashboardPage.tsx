@@ -321,25 +321,44 @@ export function DashboardPage() {
               {/* Card 1: GitHub Code Review */}
               <div
                 onClick={() => setIsCodeModalOpen(true)}
-                className="group relative h-64 rounded-[20px] overflow-hidden cursor-pointer shadow-[0_10px_30px_rgba(25,53,202,0.06)] hover:shadow-[0_16px_36px_rgba(25,53,202,0.12)] transition-all hover:-translate-y-1 bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#1935CA] p-5 flex flex-col justify-between"
+                className="group relative h-64 rounded-[20px] overflow-hidden cursor-pointer shadow-[0_10px_30px_rgba(25,53,202,0.06)] hover:shadow-[0_16px_36px_rgba(25,53,202,0.18)] dark:shadow-[0_10px_30px_rgba(25,53,202,0.25)] transition-all hover:-translate-y-1 bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#1935CA] dark:from-[#131B38] dark:via-[#192A6B] dark:to-[#1E3A8A] border border-transparent dark:border-indigo-500/40 dark:hover:border-indigo-400/70 p-5 flex flex-col justify-between"
               >
+                {/* Luminous Ambient Glow (Visible in Dark Mode) */}
+                <div className="absolute -top-12 -right-12 w-40 h-40 bg-cyan-400/20 dark:bg-cyan-400/30 rounded-full blur-2xl pointer-events-none" />
+                <div className="absolute -bottom-10 -left-10 w-36 h-36 bg-[#1935CA]/20 dark:bg-indigo-500/30 rounded-full blur-2xl pointer-events-none" />
+
                 {/* Top-left pill badge */}
                 <div className="flex items-center justify-between z-10">
-                  <span className="px-3 py-1 rounded-full bg-white/90 dark:bg-[#151C2C]/90 backdrop-blur-md text-[#1935CA] dark:text-[#38BDF8] text-xs font-bold shadow-sm">
+                  <span className="px-3 py-1 rounded-full bg-white/90 dark:bg-[#151C2C]/90 backdrop-blur-md text-[#1935CA] dark:text-[#38BDF8] text-xs font-bold shadow-sm border border-transparent dark:border-slate-700/80">
                     Multi-LLM AI
                   </span>
-                  <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/80 group-hover:scale-110 transition-transform">
+                  <div className="w-8 h-8 rounded-full bg-white/10 dark:bg-white/15 flex items-center justify-center text-white/80 dark:text-cyan-200 group-hover:scale-110 transition-transform">
                     <Code2 className="w-4 h-4" />
                   </div>
                 </div>
 
-                {/* Decorative background visual */}
-                <div className="absolute inset-0 opacity-20 font-mono text-[10px] text-cyan-300 p-4 pointer-events-none select-none overflow-hidden">
-                  <code>{`async function reviewRepo(url) {\n  const tree = await github.getTree(url);\n  return ai.adversarialEval(tree);\n}`}</code>
+                {/* Decorative background visual - high contrast and vibrant in both themes */}
+                <div className="absolute inset-0 pt-14 px-5 font-mono text-[11px] leading-relaxed pointer-events-none select-none overflow-hidden opacity-35 dark:opacity-90 transition-opacity">
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-slate-500 dark:text-indigo-400/60 text-[10px] select-none">01</span>
+                    <span><span className="text-purple-400 dark:text-purple-300 font-bold">async function</span> <span className="text-cyan-300 dark:text-cyan-200 font-semibold">reviewRepo</span>(url) {'{'}</span>
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-slate-500 dark:text-indigo-400/60 text-[10px] select-none">02</span>
+                    <span className="pl-3"><span className="text-purple-400 dark:text-purple-300 font-bold">const</span> tree = <span className="text-purple-400 dark:text-purple-300">await</span> github.<span className="text-amber-300">getTree</span>(url);</span>
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-slate-500 dark:text-indigo-400/60 text-[10px] select-none">03</span>
+                    <span className="pl-3"><span className="text-purple-400 dark:text-purple-300 font-bold">return</span> ai.<span className="text-emerald-400 dark:text-emerald-300">adversarialAudit</span>(tree);</span>
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-slate-500 dark:text-indigo-400/60 text-[10px] select-none">04</span>
+                    <span>{'}'}</span>
+                  </div>
                 </div>
 
                 {/* Frosted Bottom Title Overlay */}
-                <div className="relative z-10 bg-white/95 dark:bg-[#151C2C]/95 backdrop-blur-md rounded-2xl p-4 shadow-md flex items-center justify-between border border-transparent dark:border-slate-800">
+                <div className="relative z-10 bg-white/95 dark:bg-[#151C2C]/95 backdrop-blur-md rounded-2xl p-4 shadow-md flex items-center justify-between border border-transparent dark:border-slate-700/60">
                   <div>
                     <h3 className="font-extrabold text-sm text-[#1E293B] dark:text-[#F8FAFC] group-hover:text-[#1935CA] dark:group-hover:text-[#38BDF8] transition-colors">
                       GitHub Code Review
@@ -357,11 +376,11 @@ export function DashboardPage() {
               {/* Card 2: Topic MCQ Quiz */}
               <div
                 onClick={() => setIsGenerateModalOpen(true)}
-                className="group relative h-64 rounded-[20px] overflow-hidden cursor-pointer shadow-[0_10px_30px_rgba(25,53,202,0.06)] hover:shadow-[0_16px_36px_rgba(25,53,202,0.12)] transition-all hover:-translate-y-1 bg-gradient-to-br from-[#1935CA] via-[#2546F0] to-[#38BDF8] p-5 flex flex-col justify-between"
+                className="group relative h-64 rounded-[20px] overflow-hidden cursor-pointer shadow-[0_10px_30px_rgba(25,53,202,0.06)] hover:shadow-[0_16px_36px_rgba(25,53,202,0.12)] transition-all hover:-translate-y-1 bg-gradient-to-br from-[#1935CA] via-[#2546F0] to-[#38BDF8] border border-transparent dark:border-cyan-500/30 p-5 flex flex-col justify-between"
               >
                 {/* Top-left pill badge */}
                 <div className="flex items-center justify-between z-10">
-                  <span className="px-3 py-1 rounded-full bg-white/90 dark:bg-[#151C2C]/90 backdrop-blur-md text-[#1935CA] dark:text-[#38BDF8] text-xs font-bold shadow-sm">
+                  <span className="px-3 py-1 rounded-full bg-white/90 dark:bg-[#151C2C]/90 backdrop-blur-md text-[#1935CA] dark:text-[#38BDF8] text-xs font-bold shadow-sm border border-transparent dark:border-slate-700/80">
                     Timed MCQ
                   </span>
                   <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white group-hover:scale-110 transition-transform">
@@ -375,7 +394,7 @@ export function DashboardPage() {
                 </div>
 
                 {/* Frosted Bottom Title Overlay */}
-                <div className="relative z-10 bg-white/95 dark:bg-[#151C2C]/95 backdrop-blur-md rounded-2xl p-4 shadow-md flex items-center justify-between border border-transparent dark:border-slate-800">
+                <div className="relative z-10 bg-white/95 dark:bg-[#151C2C]/95 backdrop-blur-md rounded-2xl p-4 shadow-md flex items-center justify-between border border-transparent dark:border-slate-700/60">
                   <div>
                     <h3 className="font-extrabold text-sm text-[#1E293B] dark:text-[#F8FAFC] group-hover:text-[#1935CA] dark:group-hover:text-[#38BDF8] transition-colors">
                       Topic MCQ Quiz
@@ -393,11 +412,11 @@ export function DashboardPage() {
               {/* Card 3: Quiz History */}
               <Link
                 to="/history"
-                className="group relative h-64 rounded-[20px] overflow-hidden cursor-pointer shadow-[0_10px_30px_rgba(25,53,202,0.06)] hover:shadow-[0_16px_36px_rgba(25,53,202,0.12)] transition-all hover:-translate-y-1 bg-gradient-to-br from-indigo-900 via-indigo-700 to-[#1935CA] p-5 flex flex-col justify-between"
+                className="group relative h-64 rounded-[20px] overflow-hidden cursor-pointer shadow-[0_10px_30px_rgba(25,53,202,0.06)] hover:shadow-[0_16px_36px_rgba(25,53,202,0.12)] transition-all hover:-translate-y-1 bg-gradient-to-br from-indigo-900 via-indigo-700 to-[#1935CA] border border-transparent dark:border-indigo-500/30 p-5 flex flex-col justify-between"
               >
                 {/* Top-left pill badge */}
                 <div className="flex items-center justify-between z-10">
-                  <span className="px-3 py-1 rounded-full bg-white/90 dark:bg-[#151C2C]/90 backdrop-blur-md text-[#1935CA] dark:text-[#38BDF8] text-xs font-bold shadow-sm">
+                  <span className="px-3 py-1 rounded-full bg-white/90 dark:bg-[#151C2C]/90 backdrop-blur-md text-[#1935CA] dark:text-[#38BDF8] text-xs font-bold shadow-sm border border-transparent dark:border-slate-700/80">
                     Review & Retake
                   </span>
                   <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white group-hover:scale-110 transition-transform">
@@ -411,7 +430,7 @@ export function DashboardPage() {
                 </div>
 
                 {/* Frosted Bottom Title Overlay */}
-                <div className="relative z-10 bg-white/95 dark:bg-[#151C2C]/95 backdrop-blur-md rounded-2xl p-4 shadow-md flex items-center justify-between border border-transparent dark:border-slate-800">
+                <div className="relative z-10 bg-white/95 dark:bg-[#151C2C]/95 backdrop-blur-md rounded-2xl p-4 shadow-md flex items-center justify-between border border-transparent dark:border-slate-700/60">
                   <div>
                     <h3 className="font-extrabold text-sm text-[#1E293B] dark:text-[#F8FAFC] group-hover:text-[#1935CA] dark:group-hover:text-[#38BDF8] transition-colors">
                       Quiz History & Archive

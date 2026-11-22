@@ -56,9 +56,9 @@ export function RegisterPage() {
 
   return (
     <div className="min-h-screen flex bg-[#F8F9FC] dark:bg-[#0B0F19] text-[#1E293B] dark:text-[#F8FAFC] relative transition-colors duration-200">
-      {/* Floating Theme Toggle in top-right */}
+      {/* Floating Theme Toggle Switch in top-right */}
       <div className="absolute top-4 right-4 z-50">
-        <ThemeToggle showMenu />
+        <ThemeToggle />
       </div>
 
       {/* ===================== LEFT HERO PANEL (Hidden on < 1024px) ===================== */}
