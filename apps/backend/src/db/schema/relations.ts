@@ -14,6 +14,7 @@ import { classroomMembers } from './classroom-members';
 import { quizAssignments } from './quiz-assignments';
 import { certificates } from './certificates';
 import { arenaSessions, arenaParticipants, arenaAnswers } from './arena';
+import { flashcardDecks, flashcardCards, flashcardReviews } from './flashcards';
 
 export const usersRelations = relations(users, ({ many }) => ({
   quizzes: many(quizzes),
@@ -197,5 +198,45 @@ export const arenaAnswersRelations = relations(arenaAnswers, ({ one }) => ({
     references: [questions.id],
   }),
 }));
+
+export const flashcardDecksRelations = relations(flashcardDecks, ({ one, many }) => ({
+  user: one(users, {
+    fields: [flashcardDecks.userId],
+    references: [users.id],
+  }),
+  quiz: one(quizzes, {
+    fields: [flashcardDecks.quizId],
+    references: [quizzes.id],
+  }),
+  cards: many(flashcardCards),
+}));
+
+export const flashcardCardsRelations = relations(flashcardCards, ({ one, many }) => ({
+  deck: one(flashcardDecks, {
+    fields: [flashcardCards.deckId],
+    references: [flashcardDecks.id],
+  }),
+  user: one(users, {
+    fields: [flashcardCards.userId],
+    references: [users.id],
+  }),
+  question: one(questions, {
+    fields: [flashcardCards.questionId],
+    references: [questions.id],
+  }),
+  reviews: many(flashcardReviews),
+}));
+
+export const flashcardReviewsRelations = relations(flashcardReviews, ({ one }) => ({
+  card: one(flashcardCards, {
+    fields: [flashcardReviews.cardId],
+    references: [flashcardCards.id],
+  }),
+  user: one(users, {
+    fields: [flashcardReviews.userId],
+    references: [users.id],
+  }),
+}));
+
 
 

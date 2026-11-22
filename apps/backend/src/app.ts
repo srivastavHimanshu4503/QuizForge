@@ -21,6 +21,7 @@ import { classroomRoutes } from './routes/classroom.routes';
 import { jobRoutes } from './routes/job.routes';
 import { certificateRoutes } from './routes/certificate.routes';
 import { arenaRoutes } from './routes/arena.routes';
+import { flashcardsRoutes } from './routes/flashcards.routes';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({
@@ -97,6 +98,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(jobRoutes, { prefix: '/api/jobs' });
   await app.register(certificateRoutes, { prefix: '/api/certificates' });
   await app.register(arenaRoutes, { prefix: '/api/arena' });
+  await app.register(flashcardsRoutes, { prefix: '/api/flashcards' });
 
   // Global Error Handler
   app.setErrorHandler((error: FastifyError | Error, request, reply) => {

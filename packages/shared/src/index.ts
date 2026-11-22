@@ -6,4 +6,5 @@ export * from './schemas/classroom.schema.js';
 export * from './schemas/document.schema.js';
 export * from './schemas/certificate.schema.js';
 export * from './schemas/arena.schema.js';
+export * from './schemas/flashcards.schema.js';
 export * from './types/index.js';

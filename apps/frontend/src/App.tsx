@@ -18,6 +18,8 @@ import { VerifyCertificatePage } from './pages/VerifyCertificatePage';
 import { ArenaJoinPage } from './pages/ArenaJoinPage';
 import { ArenaPlayerPage } from './pages/ArenaPlayerPage';
 import { ArenaHostPage } from './pages/ArenaHostPage';
+import { FlashcardsPage } from './pages/FlashcardsPage';
+import { FlashcardStudyPage } from './pages/FlashcardStudyPage';
 
 export function App() {
   return (
@@ -117,6 +119,22 @@ export function App() {
             element={
               <ProtectedRoute>
                 <SharedQuizLandingPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/flashcards"
+            element={
+              <ProtectedRoute>
+                <FlashcardsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/flashcards/study/:deckId"
+            element={
+              <ProtectedRoute>
+                <FlashcardStudyPage />
               </ProtectedRoute>
             }
           />

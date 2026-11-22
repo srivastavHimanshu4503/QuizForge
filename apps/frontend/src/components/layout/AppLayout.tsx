@@ -19,11 +19,12 @@ import {
   ChevronRight,
   BookOpen,
   Swords,
+  Layers,
 } from 'lucide-react';
 
 interface AppLayoutProps {
   children: ReactNode;
-  activeNav?: 'dashboard' | 'code-review' | 'mcq' | 'history' | 'classrooms' | 'assignments' | 'arena';
+  activeNav?: 'dashboard' | 'code-review' | 'mcq' | 'history' | 'classrooms' | 'assignments' | 'arena' | 'flashcards';
 }
 
 export function AppLayout({ children, activeNav }: AppLayoutProps) {
@@ -43,6 +44,7 @@ export function AppLayout({ children, activeNav }: AppLayoutProps) {
   const isClassrooms = activeNav === 'classrooms' || currentPath === '/classrooms';
   const isAssignments = activeNav === 'assignments' || currentPath === '/assignments';
   const isArena = activeNav === 'arena' || currentPath.startsWith('/arena');
+  const isFlashcards = activeNav === 'flashcards' || currentPath.startsWith('/flashcards');
 
   const userInitials = user?.displayName
     ? user.displayName
@@ -150,6 +152,18 @@ export function AppLayout({ children, activeNav }: AppLayoutProps) {
                   Live
                 </span>
               </span>
+            </Link>
+
+            <Link
+              to="/flashcards"
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+                isFlashcards
+                  ? 'bg-[#1935CA] text-white shadow-[0_8px_20px_rgba(25,53,202,0.22)]'
+                  : 'text-[#696F79] dark:text-slate-400 hover:text-[#1935CA] dark:hover:text-[#38BDF8] hover:bg-[#F8F9FC] dark:hover:bg-slate-800/60'
+              }`}
+            >
+              <Layers className={`w-4 h-4 ${isFlashcards ? 'text-white' : 'text-[#696F79] dark:text-slate-400'}`} />
+              <span>Flashcards</span>
             </Link>
 
             {user?.role === 'student' && (
@@ -325,6 +339,18 @@ export function AppLayout({ children, activeNav }: AppLayoutProps) {
                 >
                   <Swords className="w-4 h-4" />
                   <span>Live Arena</span>
+                </Link>
+                <Link
+                  to="/flashcards"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition ${
+                    isFlashcards
+                      ? 'bg-[#1935CA] text-white shadow-sm'
+                      : 'text-[#696F79] dark:text-slate-400 hover:text-[#1935CA] dark:hover:text-[#38BDF8] hover:bg-[#F8F9FC] dark:hover:bg-slate-800/60'
+                  }`}
+                >
+                  <Layers className="w-4 h-4" />
+                  <span>Flashcards</span>
                 </Link>
                 {user?.role === 'student' && (
                   <Link

@@ -1,6 +1,9 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { FastifyInstance } from 'fastify';
+import { eq } from 'drizzle-orm';
 import { buildApp } from '../app';
+import { db } from '../db';
+import { questions } from '../db/schema/questions';
 
 describe('Milestone 11: Real-Time Live Quiz Arena (Multiplayer Battles)', () => {
   let app: FastifyInstance;
@@ -66,19 +69,19 @@ describe('Milestone 11: Real-Time Live Quiz Arena (Multiplayer Battles)', () => 
     expect(quizRes.statusCode).toBe(201);
     const quizBody = JSON.parse(quizRes.payload);
     quizId = quizBody.data.quizId;
-    const initialAttemptId = quizBody.data.attemptId;
 
-    // Fetch quiz review to know correct answers for testing
-    const reviewRes = await app.inject({
-      method: 'POST',
-      url: `/api/attempts/${initialAttemptId}/submit`,
-      headers: { cookie: hostCookie },
-    });
-    const reviewBody = JSON.parse(reviewRes.payload);
-    question1Id = reviewBody.data.review[0].question_id;
-    q1CorrectChoice = reviewBody.data.review[0].correct_choice_id;
-    question2Id = reviewBody.data.review[1].question_id;
-    q2CorrectChoice = reviewBody.data.review[1].correct_choice_id;
+    // Query actual questions in questionOrder so arena sequence matches
+    const dbQuestions = db
+      .select()
+      .from(questions)
+      .where(eq(questions.quizId, quizId))
+      .orderBy(questions.questionOrder)
+      .all();
+
+    question1Id = dbQuestions[0]!.id;
+    q1CorrectChoice = dbQuestions[0]!.correctChoiceId;
+    question2Id = dbQuestions[1]!.id;
+    q2CorrectChoice = dbQuestions[1]!.correctChoiceId;
   });
 
   afterAll(async () => {
