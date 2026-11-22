@@ -62,16 +62,31 @@ export function CodeQuizPlayerPage() {
       const initialAnswers: Record<string, string> = {};
       const initialEvals: Record<string, AnswerEvaluation | null> = {};
 
+      let cachedEvals: Record<string, AnswerEvaluation> = {};
+      try {
+        const rawEvals = localStorage.getItem(`quizforge_code_evals_${attemptId}`);
+        if (rawEvals) cachedEvals = JSON.parse(rawEvals);
+      } catch {
+        // safe
+      }
+
       data.questions.forEach((q) => {
         if (q.userAnswer) {
           initialAnswers[q.id] = q.userAnswer;
         }
-        if (q.score !== null && q.score !== undefined && q.feedback) {
+        const cached = cachedEvals[q.id];
+        if (cached) {
+          initialEvals[q.id] = cached;
+        } else if (q.score !== null && q.score !== undefined && q.feedback) {
+          const s = q.score;
+          const computedAcc = Math.min(4, Math.max(0, Math.round((s / 10) * 4 * 10) / 10));
+          const computedDepth = Math.min(3, Math.max(0, Math.round((s / 10) * 3 * 10) / 10));
+          const computedComp = Math.min(3, Math.max(0, Math.round((s - computedAcc - computedDepth) * 10) / 10));
           initialEvals[q.id] = {
-            score: q.score,
-            accuracy_score: 0,
-            depth_score: 0,
-            completeness_score: 0,
+            score: s,
+            accuracy_score: computedAcc,
+            depth_score: computedDepth,
+            completeness_score: computedComp,
             feedback: q.feedback,
             key_concepts_identified: [],
             key_concepts_missed: [],
@@ -131,7 +146,7 @@ export function CodeQuizPlayerPage() {
 
     setIsEvaluating(true);
     try {
-      const evalResult = await apiClient.post<AnswerEvaluation>(
+      const res = await apiClient.post<any>(
         `/api/code-quizzes/attempts/${attemptId}/answers`,
         {
           questionId: currentQuestion.id,
@@ -139,16 +154,28 @@ export function CodeQuizPlayerPage() {
         }
       );
 
+      // Backend returns { success: true, data: { questionId, evaluation, evaluatedAt } }
+      const evalData: AnswerEvaluation = (res?.evaluation || res) as AnswerEvaluation;
+
       setEvaluations((prev) => ({
         ...prev,
-        [currentQuestion.id]: evalResult,
+        [currentQuestion.id]: evalData,
       }));
+
+      // Cache evaluations in localStorage for persistence across reloads
+      try {
+        const stored = JSON.parse(localStorage.getItem(`quizforge_code_evals_${attemptId}`) || '{}');
+        stored[currentQuestion.id] = evalData;
+        localStorage.setItem(`quizforge_code_evals_${attemptId}`, JSON.stringify(stored));
+      } catch {
+        // safe
+      }
 
       // Update question in local state
       if (attempt) {
         const updatedQuestions = attempt.questions.map((q) =>
           q.id === currentQuestion.id
-            ? { ...q, score: evalResult.score, feedback: evalResult.feedback, userAnswer: answerText }
+            ? { ...q, score: evalData.score, feedback: evalData.feedback, userAnswer: answerText }
             : q
         );
         const updatedAttempt = { ...attempt, questions: updatedQuestions };
@@ -176,6 +203,7 @@ export function CodeQuizPlayerPage() {
       try {
         localStorage.removeItem(storageKey);
         localStorage.removeItem(`quizforge_code_answers_${attemptId}`);
+        localStorage.removeItem(`quizforge_code_evals_${attemptId}`);
         localStorage.removeItem('quizforge_last_active_code_attempt');
       } catch {
         // safe
@@ -431,14 +459,14 @@ export function CodeQuizPlayerPage() {
                   </span>
                   <span
                     className={`px-3 py-1 rounded-full text-xs font-extrabold ${
-                      currentEval.score >= 7
+                      (currentEval.score ?? 0) >= 7
                         ? 'bg-emerald-100 text-emerald-700'
-                        : currentEval.score >= 4
+                        : (currentEval.score ?? 0) >= 4
                         ? 'bg-amber-100 text-amber-700'
                         : 'bg-rose-100 text-rose-700'
                     }`}
                   >
-                    {currentEval.score} / 10
+                    {currentEval.score ?? 0} / 10
                   </span>
                 </div>
 
@@ -447,13 +475,13 @@ export function CodeQuizPlayerPage() {
                   <div>
                     <div className="flex justify-between text-[11px] font-semibold text-[#696F79] mb-1">
                       <span>Accuracy</span>
-                      <span>{currentEval.accuracy_score || (currentEval.score >= 7 ? 4 : 2)} / 4</span>
+                      <span>{currentEval.accuracy_score ?? 0} / 4</span>
                     </div>
                     <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
                       <div
                         className="bg-emerald-500 h-1.5 rounded-full"
                         style={{
-                          width: `${((currentEval.accuracy_score || (currentEval.score >= 7 ? 4 : 2)) / 4) * 100}%`,
+                          width: `${Math.min(100, Math.max(0, ((currentEval.accuracy_score ?? 0) / 4) * 100))}%`,
                         }}
                       />
                     </div>
@@ -462,13 +490,13 @@ export function CodeQuizPlayerPage() {
                   <div>
                     <div className="flex justify-between text-[11px] font-semibold text-[#696F79] mb-1">
                       <span>Depth</span>
-                      <span>{currentEval.depth_score || (currentEval.score >= 7 ? 3 : 1)} / 3</span>
+                      <span>{currentEval.depth_score ?? 0} / 3</span>
                     </div>
                     <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
                       <div
                         className="bg-[#1935CA] h-1.5 rounded-full"
                         style={{
-                          width: `${((currentEval.depth_score || (currentEval.score >= 7 ? 3 : 1)) / 3) * 100}%`,
+                          width: `${Math.min(100, Math.max(0, ((currentEval.depth_score ?? 0) / 3) * 100))}%`,
                         }}
                       />
                     </div>
@@ -477,25 +505,71 @@ export function CodeQuizPlayerPage() {
                   <div>
                     <div className="flex justify-between text-[11px] font-semibold text-[#696F79] mb-1">
                       <span>Completeness</span>
-                      <span>{currentEval.completeness_score || (currentEval.score >= 7 ? 3 : 1)} / 3</span>
+                      <span>{currentEval.completeness_score ?? 0} / 3</span>
                     </div>
                     <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
                       <div
                         className="bg-[#38BDF8] h-1.5 rounded-full"
                         style={{
-                          width: `${((currentEval.completeness_score || (currentEval.score >= 7 ? 3 : 1)) / 3) * 100}%`,
+                          width: `${Math.min(100, Math.max(0, ((currentEval.completeness_score ?? 0) / 3) * 100))}%`,
                         }}
                       />
                     </div>
                   </div>
                 </div>
 
+                {/* Key Concepts Identified vs Missed */}
+                {((currentEval.key_concepts_identified && currentEval.key_concepts_identified.length > 0) ||
+                  (currentEval.key_concepts_missed && currentEval.key_concepts_missed.length > 0)) && (
+                  <div className="pt-2 border-t border-slate-200/60 space-y-2">
+                    {currentEval.key_concepts_identified && currentEval.key_concepts_identified.length > 0 && (
+                      <div>
+                        <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider block mb-1">
+                          Concepts Identified:
+                        </span>
+                        <div className="flex flex-wrap gap-1">
+                          {currentEval.key_concepts_identified.map((c, i) => (
+                            <span
+                              key={i}
+                              className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-medium"
+                            >
+                              {c}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {currentEval.key_concepts_missed && currentEval.key_concepts_missed.length > 0 && (
+                      <div>
+                        <span className="text-[10px] font-bold text-rose-700 uppercase tracking-wider block mb-1">
+                          Concepts Missed:
+                        </span>
+                        <div className="flex flex-wrap gap-1">
+                          {currentEval.key_concepts_missed.map((c, i) => (
+                            <span
+                              key={i}
+                              className="px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 text-[10px] font-medium"
+                            >
+                              {c}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Constructive LLM Feedback */}
-                <div className="pt-2 border-t border-slate-200/60">
-                  <p className="text-xs text-[#475569] leading-relaxed font-medium">
-                    {currentEval.feedback}
-                  </p>
-                </div>
+                {currentEval.feedback && (
+                  <div className="pt-2 border-t border-slate-200/60">
+                    <span className="text-[10px] font-bold text-[#696F79] uppercase tracking-wider block mb-1">
+                      Critique & Feedback:
+                    </span>
+                    <p className="text-xs text-[#475569] leading-relaxed font-medium">
+                      {currentEval.feedback}
+                    </p>
+                  </div>
+                )}
               </div>
             )}
           </div>

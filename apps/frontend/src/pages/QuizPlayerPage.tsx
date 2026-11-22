@@ -1,10 +1,12 @@
+import { useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { ChoiceId } from '@quiz-forge/shared';
 import { useQuizAttempt } from '../hooks/useQuizAttempt';
 import { ProgressBar } from '../components/quiz/ProgressBar';
 import { OptionCard } from '../components/quiz/OptionCard';
 import { QuestionPalette } from '../components/quiz/QuestionPalette';
 import { SubmitModal } from '../components/quiz/SubmitModal';
-import { ArrowLeft, ArrowRight, CheckCircle2, Loader2, AlertCircle, Home } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle2, Loader2, AlertCircle, Home, Keyboard } from 'lucide-react';
 
 export function QuizPlayerPage() {
   const { attemptId } = useParams<{ attemptId: string }>();
@@ -35,14 +37,105 @@ export function QuizPlayerPage() {
     refetch,
   } = useQuizAttempt(attemptId || '');
 
-  const handleConfirmSubmit = async () => {
+  const handleConfirmSubmit = useCallback(async () => {
     try {
       await submitQuiz();
       navigate(`/quiz/${attemptId}/results`);
     } catch {
       // Error handled in hook
     }
-  };
+  }, [submitQuiz, navigate, attemptId]);
+
+  // Keyboard engagement: A/B/C/D to select, Enter to advance/submit, Arrows to navigate, Esc to close modal
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+
+      // Submit modal interaction
+      if (isSubmitModalOpen) {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          closeSubmitModal();
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+          void handleConfirmSubmit();
+        }
+        return;
+      }
+
+      const key = e.key.toUpperCase();
+
+      // Choice selection: A, B, C, D (or 1, 2, 3, 4)
+      const choiceMapping: Record<string, ChoiceId> = {
+        A: 'A',
+        B: 'B',
+        C: 'C',
+        D: 'D',
+        '1': 'A',
+        '2': 'B',
+        '3': 'C',
+        '4': 'D',
+      };
+
+      if (choiceMapping[key] && currentQuestion) {
+        const targetChoice = choiceMapping[key];
+        const exists = currentQuestion.choices.some(
+          (c) => c.choice_id === targetChoice
+        );
+        if (exists) {
+          e.preventDefault();
+          selectOption(currentQuestion.question_id, targetChoice);
+        }
+        return;
+      }
+
+      // Enter advances to next question or opens review modal on last question
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (isLastQuestion) {
+          openSubmitModal();
+        } else {
+          nextQuestion();
+        }
+        return;
+      }
+
+      // Arrow navigation
+      if (e.key === 'ArrowRight' && !isLastQuestion) {
+        e.preventDefault();
+        nextQuestion();
+        return;
+      }
+
+      if (e.key === 'ArrowLeft' && !isFirstQuestion) {
+        e.preventDefault();
+        prevQuestion();
+        return;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [
+    isSubmitModalOpen,
+    currentQuestion,
+    isLastQuestion,
+    isFirstQuestion,
+    selectOption,
+    nextQuestion,
+    prevQuestion,
+    openSubmitModal,
+    closeSubmitModal,
+    handleConfirmSubmit,
+  ]);
 
   if (isLoading) {
     return (
@@ -165,36 +258,48 @@ export function QuizPlayerPage() {
             </div>
 
             {/* Navigation Buttons */}
-            <div className="flex items-center justify-between gap-4 pt-2">
-              <button
-                type="button"
-                onClick={prevQuestion}
-                disabled={isFirstQuestion}
-                className="flex items-center gap-2 px-5 py-3 rounded-2xl text-sm font-bold bg-white border border-slate-200 text-[#1E293B] hover:bg-slate-50 transition disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span>Previous</span>
-              </button>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={prevQuestion}
+                  disabled={isFirstQuestion}
+                  className="flex items-center gap-2 px-5 py-3 rounded-2xl text-sm font-bold bg-white border border-slate-200 text-[#1E293B] hover:bg-slate-50 transition disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>Previous</span>
+                </button>
 
-              {isLastQuestion ? (
-                <button
-                  type="button"
-                  onClick={openSubmitModal}
-                  className="flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/25 transition"
-                >
-                  <span>Review & Submit</span>
-                  <CheckCircle2 className="w-4 h-4" />
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={nextQuestion}
-                  className="flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-bold bg-[#1935CA] hover:bg-[#142BA3] text-white shadow-lg shadow-[#1935CA]/20 transition"
-                >
-                  <span>Next Question</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-              )}
+                {isLastQuestion ? (
+                  <button
+                    type="button"
+                    onClick={openSubmitModal}
+                    className="flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/25 transition"
+                  >
+                    <span>Review & Submit</span>
+                    <CheckCircle2 className="w-4 h-4" />
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={nextQuestion}
+                    className="flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-bold bg-[#1935CA] hover:bg-[#142BA3] text-white shadow-lg shadow-[#1935CA]/20 transition"
+                  >
+                    <span>Next Question</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+
+              {/* Keyboard Shortcut Hints */}
+              <div className="hidden md:flex items-center gap-2 text-xs text-[#696F79]">
+                <span className="flex items-center gap-1 font-mono text-[11px] bg-slate-100 px-2 py-1 rounded-lg border border-slate-200 text-[#1E293B]">
+                  <kbd className="font-bold text-[#1935CA]">A-D</kbd> select
+                </span>
+                <span className="flex items-center gap-1 font-mono text-[11px] bg-slate-100 px-2 py-1 rounded-lg border border-slate-200 text-[#1E293B]">
+                  <kbd className="font-bold text-[#1935CA]">↵</kbd> {isLastQuestion ? 'submit' : 'next'}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -207,11 +312,33 @@ export function QuizPlayerPage() {
               onSelectIndex={goToQuestion}
             />
 
-            <div className="bg-white border border-slate-100 rounded-[20px] p-5 text-xs text-[#696F79] shadow-[0_10px_30px_rgba(25,53,202,0.05)] space-y-2">
-              <p className="font-bold text-[#1E293B]">💡 Tip</p>
-              <p className="leading-relaxed font-medium">
-                Selections are automatically saved in real-time. You can jump to any question using the palette or navigate with the Previous and Next buttons.
-              </p>
+            <div className="bg-white border border-slate-100 rounded-[20px] p-5 text-xs text-[#696F79] shadow-[0_10px_30px_rgba(25,53,202,0.05)] space-y-3">
+              <div className="flex items-center gap-2 font-bold text-[#1E293B]">
+                <Keyboard className="w-4 h-4 text-[#1935CA]" />
+                <span>Keyboard Shortcuts</span>
+              </div>
+              <div className="space-y-2 font-medium">
+                <div className="flex items-center justify-between">
+                  <span>Select Choice</span>
+                  <div className="flex gap-1 font-mono text-[11px]">
+                    <kbd className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[#1935CA] font-bold">A</kbd>
+                    <kbd className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[#1935CA] font-bold">B</kbd>
+                    <kbd className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[#1935CA] font-bold">C</kbd>
+                    <kbd className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[#1935CA] font-bold">D</kbd>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Next / Submit</span>
+                  <kbd className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[#1935CA] font-mono font-bold text-[11px]">Enter ↵</kbd>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Prev / Next Question</span>
+                  <div className="flex gap-1 font-mono text-[11px]">
+                    <kbd className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[#1935CA] font-bold">←</kbd>
+                    <kbd className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[#1935CA] font-bold">→</kbd>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

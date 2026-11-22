@@ -46,6 +46,17 @@ export function OptionCard({
           {optionText}
         </p>
       </div>
+
+      <div
+        className={`hidden sm:flex items-center justify-center w-6 h-6 rounded-lg text-[11px] font-mono font-bold transition shrink-0 ${
+          isSelected
+            ? 'bg-[#1935CA]/10 text-[#1935CA]'
+            : 'bg-white text-slate-400 border border-slate-200 group-hover:border-[#1935CA]/40 group-hover:text-[#1935CA]'
+        }`}
+        title={`Press ${choiceId}`}
+      >
+        {choiceId}
+      </div>
     </button>
   );
 }
