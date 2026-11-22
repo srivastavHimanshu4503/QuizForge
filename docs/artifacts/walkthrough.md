@@ -1,6 +1,6 @@
-# Walkthrough: GitHub Code Review Quiz with Multi-LLM Providers
+# Walkthrough: QuizForge Full-Stack AI Assessment Platform
 
-We have implemented a **new assessment mode** in QuizForge that analyzes public GitHub repositories and creates an adversarial code-review interview. It tests whether candidates truly wrote and understand every line of code they produced, featuring open-ended answers evaluated by LLMs across **Groq**, **NVIDIA NIM**, and **Google Gemini**.
+QuizForge is an enterprise-ready, AI-powered assessment platform featuring 5 multi-modal ingestion engines, pluggable LLM providers (Groq GPT-OSS-120B, Google Gemini 2.5 Flash, NVIDIA NIM), an anti-cheat quiz player, classroom assignment management, an interactive quiz studio, and production Docker containerization.
 
 ---
 
@@ -8,129 +8,178 @@ We have implemented a **new assessment mode** in QuizForge that analyzes public 
 
 ```mermaid
 flowchart TD
-    subgraph UI ["Frontend (React 19 + Tailwind)"]
-        M["CodeQuizModal\n(Repo URL + Provider Selector)"]
-        P["CodeQuizPlayerPage\n(Snippet View + Textarea + Instant Eval)"]
-        R["CodeQuizResultsPage\n(Accuracy / Depth / Completeness Bars)"]
+    subgraph Client ["Frontend (React 19 + TypeScript + Vite + Tailwind CSS)"]
+        UI_DASH["Dashboard & History"]
+        UI_MCQ["MCQ Generator Modal (LLM Selector)"]
+        UI_CODE["GitHub Code Review Modal"]
+        UI_INGEST["Multi-Modal Ingestion (PDF / URL / Image)"]
+        UI_PLAYER["Anti-Cheat Quiz Player & Code Sandbox"]
+        UI_STUDIO["Quiz Studio & Publishing Draft Editor"]
+        UI_CLASS["Classrooms & Assignment Engine"]
     end
 
-    subgraph API ["Backend API (Fastify v5)"]
-        EP1["POST /api/code-quizzes/generate"]
-        EP2["GET /api/code-quizzes/attempts/:id"]
-        EP3["POST /api/code-quizzes/attempts/:id/answers"]
-        EP4["POST /api/code-quizzes/attempts/:id/submit"]
-        EP5["GET /api/code-quizzes/attempts/:id/results"]
-        EP6["GET /api/llm/providers"]
+    subgraph ReverseProxy ["Reverse Proxy (Nginx Port 80)"]
+        NGINX["Nginx SPA Router + API Proxy"]
     end
 
-    subgraph CoreServices ["Backend Engine"]
-        GH["GitHubService\n(Tree Fetch + Tiered Prioritization)"]
-        CQS["CodeQuizService\n(Prompts + DB Orchestration)"]
-        AES["AnswerEvaluationService\n(LLM Grading Rubric 0-10)"]
+    subgraph BackendAPI ["Fastify v5 Backend (Port 4000)"]
+        AUTH_R["/api/auth (JWT, Cookies, Roles)"]
+        QUIZ_R["/api/quizzes (MCQ, Lifecycle, Studio)"]
+        CODE_R["/api/code-quizzes (GitHub Trees, Open Eval)"]
+        INGEST_R["/api/ingest (PDF, URL, Image Jobs)"]
+        CLASS_R["/api/classrooms (RBAC, Assignments)"]
+        HEALTH_R["/api/health (Database, Memory, Uptime)"]
+        LLM_R["/api/llm/providers (Registry Discovery)"]
     end
 
-    subgraph LLMProviders ["Pluggable LLM Layer"]
+    subgraph IngestionQueue ["Ingestion & Security Engines"]
+        SSRF["SSRF Defense Guard (DNS Rebind, Loopback, Cloud IPs)"]
+        SIGN["Magic Byte File Validator (PDF, PNG, JPEG, WEBP)"]
+        QUEUE["Async Ingestion Job Queue & Polling Engine"]
+        EXTR["Cheerio Semantic HTML Parser & pdf-parse"]
+    end
+
+    subgraph LLMLayer ["Pluggable Multi-LLM Provider Layer"]
         REG["LLMProviderRegistry"]
-        GROQ["GroqProvider\n(Llama 3.3 70B Versatile)"]
-        NV["NvidiaProvider\n(NIM Llama 3.3 70B Instruct)"]
-        GEM["GeminiChatProvider\n(Gemini 2.5 Flash)"]
+        GROQ["Groq Provider\nopenai/gpt-oss-120b"]
+        GEMINI["Gemini Provider\ngemini-2.5-flash (Vision + Chat)"]
+        NVIDIA["NVIDIA NIM Provider\nmeta/llama-3.3-70b-instruct"]
+        PYDANTIC["Resilient Pydantic-Style Schema Normalizer"]
     end
 
-    subgraph DB ["SQLite Database (Drizzle ORM)"]
-        T1["code_quizzes"]
-        T2["code_questions"]
-        T3["code_attempts"]
-        T4["code_answers"]
+    subgraph Database ["SQLite Database (Drizzle ORM, WAL Mode)"]
+        DB_USERS["users (Roles: Teacher, Student)"]
+        DB_QUIZZES["quizzes & questions & choices"]
+        DB_ATTEMPTS["quiz_attempts & attempt_answers"]
+        DB_CODE["code_quizzes & code_attempts"]
+        DB_CLASS["classrooms & classroom_members & assignments"]
     end
 
-    M --> EP1
-    P --> EP2 & EP3 & EP4
-    R --> EP5
-    M --> EP6
+    Client --> NGINX
+    NGINX --> BackendAPI
 
-    EP1 --> GH & CQS
-    EP2 --> CQS
-    EP3 & EP4 & EP5 --> AES
-    EP6 --> REG
+    UI_MCQ & UI_CODE & UI_INGEST --> BackendAPI
+    UI_PLAYER & UI_STUDIO & UI_CLASS --> BackendAPI
 
-    CQS --> REG --> GROQ & NV & GEM
-    AES --> REG
+    INGEST_R --> SSRF & SIGN --> QUEUE --> EXTR
+    QUIZ_R & CODE_R & QUEUE --> REG
+    REG --> GROQ & GEMINI & NVIDIA
+    GROQ & GEMINI & NVIDIA --> PYDANTIC
 
-    CQS --> T1 & T2 & T3
-    AES --> T4 & T3
+    AUTH_R --> DB_USERS
+    QUIZ_R --> DB_QUIZZES & DB_ATTEMPTS
+    CODE_R --> DB_CODE
+    CLASS_R --> DB_CLASS
 ```
 
 ---
 
-## 2. Changes Made
+## 2. Ingestion Engines & Assessment Modes
 
-### A. Multi-LLM Provider Layer (`apps/backend/src/services/llm/`)
-- [`llm.interface.ts`](file:///E:/Personal%20projects/Quiz%20Application/apps/backend/src/services/llm/llm.interface.ts): Unified interface defining `chatCompletion(messages, options)` and standardized `LLMProviderError`.
-- [`groq.provider.ts`](file:///E:/Personal%20projects/Quiz%20Application/apps/backend/src/services/llm/groq.provider.ts): High-speed inference using native `fetch` against `https://api.groq.com/openai/v1/chat/completions` with JSON mode support and exponential retry.
-- [`nvidia.provider.ts`](file:///E:/Personal%20projects/Quiz%20Application/apps/backend/src/services/llm/nvidia.provider.ts): Native `fetch` against `https://integrate.api.nvidia.com/v1/chat/completions` using NVIDIA hosted models.
-- [`gemini-chat.provider.ts`](file:///E:/Personal%20projects/Quiz%20Application/apps/backend/src/services/llm/gemini-chat.provider.ts): Adapter wrapping `@google/genai` into the `ILLMProvider` interface.
-- [`provider-registry.ts`](file:///E:/Personal%20projects/Quiz%20Application/apps/backend/src/services/llm/provider-registry.ts): Dynamic registry discovering available providers from environment variables with metadata for UI dropdowns.
-- [`llm.routes.ts`](file:///E:/Personal%20projects/Quiz%20Application/apps/backend/src/routes/llm.routes.ts): Added `GET /api/llm/providers` endpoint.
+### A. Topic & Text MCQ Generator
+- **Multi-Model Selector:** Users choose between **Groq (GPT-OSS-120B)**, **Google Gemini 2.5 Flash**, and **NVIDIA NIM (Llama 3.3 70B)** from an interactive provider selector card UI in [`GenerateQuizModal.tsx`](file:///E:/Personal%20projects/Quiz%20Application/apps/frontend/src/components/quiz/GenerateQuizModal.tsx).
+- **Difficulty & Quantity Controls:** Parameterized prompt construction tailoring difficulty (easy, medium, hard) and question counts.
+- **Pydantic-Style Schema Preprocessing:** Uses `z.preprocess()` and `normalizeRawQuestion()` in [`quiz.schema.ts`](file:///E:/Personal%20projects/Quiz%20Application/packages/shared/src/schemas/quiz.schema.ts) to gracefully coerce unstructured LLM outputs (e.g., string choice arrays, letter mappings, alternative keys) into strict data models, preventing 502 Bad Gateway errors.
 
-### B. GitHub Fetcher & Smart Prioritization (`apps/backend/src/services/github.service.ts`)
-- **URL Parser:** Extracts owner, repo, optional branch, and optional subfolder.
-- **Recursive Tree Fetch:** Calls GitHub Git Trees API (`GET /repos/{owner}/{repo}/git/trees/{branch}?recursive=1`) with automatic fallback from `main` to `master`.
-- **Extension Filter:** Allowlist of 28+ code extensions; excludes binaries, dependencies (`node_modules`), and lockfiles.
-- **Tiered Priority Scoring Algorithm:**
-  - **Tier 10:** Entry points (`main.ts`, `server.ts`, `index.ts`, `app.py`)
+### B. GitHub Repository Code Review Quiz
+- **Repository Tree Ingestion:** In [`github.service.ts`](file:///E:/Personal%20projects/Quiz%20Application/apps/backend/src/services/github.service.ts), fetches file trees via GitHub Git Trees API with automatic fallback from `main` to `master`.
+- **Tiered Priority Scoring:**
+  - **Tier 10:** Core entry points (`main.ts`, `server.ts`, `index.ts`, `app.py`)
   - **Tier 8:** Core business logic (`services/`, `controllers/`, `domain/`)
   - **Tier 7:** Routes & Schemas (`routes/`, `db/`, `models/`)
   - **Tier 5:** Utilities (`utils/`, `helpers/`, `lib/`)
   - **Tier 3–4:** Config & Tests (`config.*`, `test/`)
-  - **Bonuses:** +2 for files with comments, +1 for medium size (50-500 lines), +1 for deep nesting (3+ folders deep).
-  - **Bias Guard:** Forcibly reserves at least 20% of slots for lower-tier files (utils, config, tests) so the quiz is not biased toward routes.
+  - **Bias Guard:** Forcibly reserves 20% of slots for utilities and configs.
+- **Interactive Code Review & Evaluation:** [`CodeQuizPlayerPage.tsx`](file:///E:/Personal%20projects/Quiz%20Application/apps/frontend/src/pages/CodeQuizPlayerPage.tsx) renders code snippets with line numbers, free-form text response fields, and instant AI grading on Accuracy (0–4), Depth (0–3), and Completeness (0–3).
 
-### C. Relational Database Schema (`apps/backend/src/db/schema/`)
-- Created 4 new tables with cascading foreign keys:
-  - `code_quizzes`: Repository metadata, target branch, chosen LLM provider/model, files analyzed.
-  - `code_questions`: Excerpted snippet, file path, line numbers, difficulty, and expected concepts.
-  - `code_attempts`: Overall attempt status, total score, max possible score, completion timestamps.
-  - `code_answers`: Free-text answer, LLM score (0–10), accuracy/depth/completeness breakdown, critique feedback.
-- Applied Drizzle migration (`0001_perpetual_anthem.sql`).
+### C. PDF Document Ingestion
+- **Cryptographic Magic Byte Validation:** Verifies `%PDF-` file signature in [`file-signature.validator.ts`](file:///E:/Personal%20projects/Quiz%20Application/apps/backend/src/utils/file-signature.validator.ts) before parsing, rejecting disguised binaries or empty files.
+- **Asynchronous Ingestion Job Queue:** Offloads heavy PDF text extraction and AI question generation to [`job-queue.service.ts`](file:///E:/Personal%20projects/Quiz%20Application/apps/backend/src/services/job-queue.service.ts), returning `202 Accepted` with a `jobId`.
+- **Streaming Progress UI:** [`PdfQuizModal.tsx`](file:///E:/Personal%20projects/Quiz%20Application/apps/frontend/src/components/quiz/PdfQuizModal.tsx) polls `GET /api/ingest/jobs/:jobId` displaying animated progress indicators.
 
-### D. Prompts & Evaluation Engine
-- [`code-quiz.prompt.ts`](file:///E:/Personal%20projects/Quiz%20Application/apps/backend/src/services/llm/prompts/code-quiz.prompt.ts): Instructs LLM to generate questions targeting author intent, comment meaning, edge cases, error handling, and architecture trade-offs.
-- [`answer-eval.prompt.ts`](file:///E:/Personal%20projects/Quiz%20Application/apps/backend/src/services/llm/prompts/answer-eval.prompt.ts): Rubric grading Accuracy (0–4), Depth (0–3), and Completeness (0–3), with constructive feedback.
-- [`code-quiz.service.ts`](file:///E:/Personal%20projects/Quiz%20Application/apps/backend/src/services/code-quiz.service.ts) & [`answer-eval.service.ts`](file:///E:/Personal%20projects/Quiz%20Application/apps/backend/src/services/answer-eval.service.ts): Full transactional execution.
+### D. URL-to-Quiz Ingestion & SSRF Defense Guard
+- **Deep SSRF Defense Engine:** In [`ssrf-defense.ts`](file:///E:/Personal%20projects/Quiz%20Application/apps/backend/src/utils/ssrf-defense.ts), validates target URLs against:
+  - IPv4/IPv6 loopback addresses (`127.0.0.1`, `::1`, `0.0.0.0`)
+  - Cloud provider metadata endpoints (`169.254.169.254`, `metadata.google.internal`)
+  - Private subnets (RFC 1918 Class A `10.0.0.0/8`, Class B `172.16.0.0/12`, Class C `192.168.0.0/16`)
+  - DNS Rebinding Attacks: Resolves hostnames via `dns.promises.lookup` and verifies IP targets before issuing requests.
+- **Semantic Article Extraction:** [`url-ingest.service.ts`](file:///E:/Personal%20projects/Quiz%20Application/apps/backend/src/services/url-ingest.service.ts) leverages Cheerio targeting semantic article tags (`<article>`, `<main>`, `.post-content`), stripping boilerplate navigation and scripts.
 
-### E. Frontend UI Experience
-- [`CodeQuizModal.tsx`](file:///E:/Personal%20projects/Quiz%20Application/apps/frontend/src/components/code-quiz/CodeQuizModal.tsx): Modal featuring provider dropdown, GitHub URL input with popular presets, question count slider, and optional subfolder/focus inputs.
-- [`CodeQuizPlayerPage.tsx`](file:///E:/Personal%20projects/Quiz%20Application/apps/frontend/src/pages/CodeQuizPlayerPage.tsx): Interactive player displaying the relevant code snippet with line numbers, question, expandable textarea, real-time "Evaluate with LLM" button, inline grading critique, and question matrix palette.
-- [`CodeQuizResultsPage.tsx`](file:///E:/Personal%20projects/Quiz%20Application/apps/frontend/src/pages/CodeQuizResultsPage.tsx): Results dashboard with total score, mastery badges, accuracy/depth/completeness progress bars, and identified vs missed concept badges.
-- [`DashboardPage.tsx`](file:///E:/Personal%20projects/Quiz%20Application/apps/frontend/src/pages/DashboardPage.tsx): Updated to 3-card layout (GitHub Code Review, Topic MCQ Quiz, Quiz History) plus in-progress code review recovery banner.
-
----
-
-## 3. Verification & Test Results
-
-### Automated Test Suites
-Vitest executed across **10 test suites** with **73/73 tests passing**:
-- [`llm-providers.test.ts`](file:///E:/Personal%20projects/Quiz%20Application/apps/backend/src/test/llm-providers.test.ts): 10 tests verifying Groq, NVIDIA NIM, and Gemini providers, error handling, and registry case-insensitivity.
-- [`github-service.test.ts`](file:///E:/Personal%20projects/Quiz%20Application/apps/backend/src/test/github-service.test.ts): 13 tests verifying URL parsing, code filtering, tiered priority scoring, and comment detection.
-- [`code-quiz.test.ts`](file:///E:/Personal%20projects/Quiz%20Application/apps/backend/src/test/code-quiz.test.ts): Integration tests verifying end-to-end generation, answer submission, LLM evaluation, and scoring.
-- Existing suites: [`auth.test.ts`](file:///E:/Personal%20projects/Quiz%20Application/apps/backend/src/test/auth.test.ts), [`quiz-engine.test.ts`](file:///E:/Personal%20projects/Quiz%20Application/apps/backend/src/test/quiz-engine.test.ts), [`security.test.ts`](file:///E:/Personal%20projects/Quiz%20Application/apps/backend/src/test/security.test.ts), [`e2e-lifecycle.test.ts`](file:///E:/Personal%20projects/Quiz%20Application/apps/backend/src/test/e2e-lifecycle.test.ts), [`db.test.ts`](file:///E:/Personal%20projects/Quiz%20Application/apps/backend/src/test/db.test.ts), [`ai.test.ts`](file:///E:/Personal%20projects/Quiz%20Application/apps/backend/src/test/ai.test.ts), [`health.test.ts`](file:///E:/Personal%20projects/Quiz%20Application/apps/backend/src/test/health.test.ts).
-
-### Monorepo Typechecking
-- `pnpm typecheck` passed with **0 errors** across `@quiz-forge/shared`, `@quiz-forge/backend`, and `@quiz-forge/frontend`.
-
-### Production Build
-- `pnpm build` completed with **0 errors** across all 3 workspace packages.
+### E. Image-to-Quiz Multimodal Vision Pipeline
+- **Magic Byte Validation:** Validates `image/png`, `image/jpeg`, and `image/webp` file signatures.
+- **Client-Side Canvas Pre-compression:** Automatically compresses oversized images while preserving text readability in [`image-compressor.ts`](file:///E:/Personal%20projects/Quiz%20Application/apps/frontend/src/utils/image-compressor.ts).
+- **Gemini 2.5 Flash Vision OCR:** In [`image-ingest.service.ts`](file:///E:/Personal%20projects/Quiz%20Application/apps/backend/src/services/image-ingest.service.ts), streams base64 image data to Google Gemini Vision to extract diagrams, text, and technical diagrams into structured assessment questions.
 
 ---
 
-## 4. Fixes & Enhancements: Rate Limit Loop & History Retakes
+## 3. Core Workflow Engines
 
-### A. Infinite Request Storm (Fastify 429 Rate Limit) Resolution
-- **Root Cause:** In [`CodeQuizPlayerPage.tsx`](file:///E:/Personal%20projects/Quiz%20Application/apps/frontend/src/pages/CodeQuizPlayerPage.tsx), `fetchAttempt` included `attempt` in its `useCallback` dependency array `[attemptId, storageKey, attempt]`. Inside `fetchAttempt` and `handleEvaluateCurrent`, `setAttempt(...)` was invoked, updating the state reference. This caused `useCallback` to regenerate `fetchAttempt` on every render, immediately triggering `useEffect(() => { fetchAttempt(); }, [fetchAttempt])` in a synchronous loop. In under 500ms, 50–100 requests hit Fastify, immediately exceeding the 120 req/min rate limit and returning `429 Rate limit exceeded`.
-- **Fix:** Introduced `attemptRef` and removed `attempt` from `fetchAttempt`'s dependencies. The callback is now rock-solid stable `[attemptId, storageKey]`, firing strictly once on mount/attemptId change, and evaluation submissions send only 1 single evaluation POST request.
+### A. Anti-Cheat Quiz Player & Shuffling Engine
+- **Per-Attempt Shuffling:** In [`quiz-engine.service.ts`](file:///E:/Personal%20projects/Quiz%20Application/apps/backend/src/services/quiz-engine.service.ts), questions and choices are independently shuffled per attempt using Fisher-Yates, ensuring answer IDs (`1`, `2`, `3`, `4`) cannot be shared across students.
+- **Anti-Cheat Detection:** [`QuizPlayerPage.tsx`](file:///E:/Personal%20projects/Quiz%20Application/apps/frontend/src/pages/QuizPlayerPage.tsx) monitors tab switching (`visibilitychange`), window blurring (`blur`), copy/paste attempts, and fullscreen exits, flagging suspicious events in the database.
+- **Zero-AI Retakes:** Both MCQ and GitHub Code Review quizzes can be restarted instantly using previously generated questions without triggering additional LLM costs.
 
-### B. Unified History Archive & Zero-AI Retakes for GitHub Quizzes
-- **Unified SQL View:** Updated [`attempt.service.ts`](file:///E:/Personal%20projects/Quiz%20Application/apps/backend/src/services/attempt.service.ts) and [`history.routes.ts`](file:///E:/Personal%20projects/Quiz%20Application/apps/backend/src/routes/history.routes.ts) to support `?type=all|mcq|code`. When queried with `all`, a SQL `UNION ALL` merges completed `quiz_attempts` and `code_attempts` sorted by `completedAt DESC`.
-- **Code Quiz Retake Endpoint:** Added `POST /api/code-quizzes/:quizId/restart` to [`code-quiz.service.ts`](file:///E:/Personal%20projects/Quiz%20Application/apps/backend/src/services/code-quiz.service.ts) and [`code-quiz.routes.ts`](file:///E:/Personal%20projects/Quiz%20Application/apps/backend/src/routes/code-quiz.routes.ts). Users can retake previous GitHub code reviews with a fresh attempt and clean answers without invoking any LLM generation calls.
-- **Frontend History Tabs:** Updated [`HistoryPage.tsx`](file:///E:/Personal%20projects/Quiz%20Application/apps/frontend/src/pages/HistoryPage.tsx) with three filtering tabs: "All Quizzes", "GitHub Code Reviews", and "MCQ Quizzes". Review links route directly to [`CodeQuizResultsPage.tsx`](file:///E:/Personal%20projects/Quiz%20Application/apps/frontend/src/pages/CodeQuizResultsPage.tsx) (`/code-quiz/:attemptId/results`), and Retake launches a clean attempt at `/code-quiz/:newAttemptId`.
-- **Results Page Navigation:** Enhanced [`CodeQuizResultsPage.tsx`](file:///E:/Personal%20projects/Quiz%20Application/apps/frontend/src/pages/CodeQuizResultsPage.tsx) with "Retake Code Review" and "All Quizzes" action buttons for fluid navigation.
+### B. RBAC & Classroom Assignment Engine
+- **Role-Based Access Control:** Strict role segregation (`teacher` vs `student`) enforced in [`classroom.service.ts`](file:///E:/Personal%20projects/Quiz%20Application/apps/backend/src/services/classroom.service.ts) and [`classroom.routes.ts`](file:///E:/Personal%20projects/Quiz%20Application/apps/backend/src/routes/classroom.routes.ts).
+- **6-Character Automated Join Codes:** Teachers generate classrooms with auto-generated collision-resistant alphanumeric codes. Students enroll via code.
+- **Timed Classroom Assignments:** Teachers assign published quizzes with due dates and `maxAttempts` limits. Students track pending and completed tasks on [`StudentAssignmentsPage.tsx`](file:///E:/Personal%20projects/Quiz%20Application/apps/frontend/src/pages/StudentAssignmentsPage.tsx).
+
+### C. Quiz Studio & Public Sharing
+- **Draft & Published Lifecycle:** Quizzes are created in `draft` mode. In [`QuizStudioPage.tsx`](file:///E:/Personal%20projects/Quiz%20Application/apps/frontend/src/pages/QuizStudioPage.tsx), creators can:
+  - Add, edit, and delete questions inline
+  - Modify choice text and designated correct answers
+  - Update topic and explanations
+  - Publish the quiz with unique slug generation
+- **Public Quiz Landing Page:** Unauthenticated or authenticated users can access published quizzes directly via [`SharedQuizLandingPage.tsx`](file:///E:/Personal%20projects/Quiz%20Application/apps/frontend/src/pages/SharedQuizLandingPage.tsx) (`/quiz/share/:slug`).
+
+---
+
+## 4. Production Hardening & CI/CD
+
+### A. Multi-Stage Dockerization
+- **Backend Container:** Multi-stage `node:22-slim` runner deploying isolated runtime dependencies assembled via `pnpm deploy --legacy` for minimal attack surface.
+- **Frontend Container:** Multi-stage `nginx:1.27-alpine` proxy serving production Vite static bundles and proxying `/api` requests to Fastify.
+- **Docker Compose:** Coordinated orchestration in [`docker-compose.yml`](file:///E:/Personal%20projects/Quiz%20Application/docker-compose.yml) with automatic health checking and volume persistence:
+  ```bash
+  docker compose up -d
+  ```
+
+### B. Automated Demo Seed Credentials
+Provisioned automatically on server start via [`seed.ts`](file:///E:/Personal%20projects/Quiz%20Application/apps/backend/src/db/seed.ts) with one-click quick-fill buttons on [`LoginPage.tsx`](file:///E:/Personal%20projects/Quiz%20Application/apps/frontend/src/pages/LoginPage.tsx):
+- **Teacher Account:** `teacher@quizforge.dev` / `QuizForge2026!`
+- **Student Account:** `student@quizforge.dev` / `QuizForge2026!`
+
+### C. GitHub Actions CI/CD Pipeline
+Fully automated CI pipeline configured in [`.github/workflows/ci.yml`](file:///E:/Personal%20projects/Quiz%20Application/.github/workflows/ci.yml) targeting the `main` branch:
+1. **Repository Checkout & Node 22 Setup**
+2. **Frozen Dependency Installation (`pnpm install --frozen-lockfile`)**
+3. **Shared Package Build (`pnpm --filter @quiz-forge/shared build`)**
+4. **Monorepo Strict Typechecking (`pnpm typecheck` with 0 errors)**
+5. **Database Migration Verification (`pnpm db:migrate` and Vitest `globalSetup`)**
+6. **Automated Test Suite (132/132 tests passing across 15 test suites)**
+7. **Production Bundle Compilation (`pnpm build`)**
+
+---
+
+## 5. Verification & Test Suite Summary
+
+Vitest runs **132 / 132 tests passing** across 15 test files:
+
+| Test Suite | File Path | Tests | Coverage Scope |
+| :--- | :--- | :---: | :--- |
+| **Classroom Engine** | [`classroom.test.ts`](file:///E:/Personal%20projects/Quiz%20Application/apps/backend/src/test/classroom.test.ts) | 17 | RBAC, join codes, timed assignments, max attempt constraints |
+| **LLM Providers** | [`llm-providers.test.ts`](file:///E:/Personal%20projects/Quiz%20Application/apps/backend/src/test/llm-providers.test.ts) | 14 | Groq (GPT-OSS-120B), NVIDIA NIM, Gemini, retries, registry |
+| **GitHub Service** | [`github-service.test.ts`](file:///E:/Personal%20projects/Quiz%20Application/apps/backend/src/test/github-service.test.ts) | 13 | URL parsing, tree fetching, scoring tiers, comment detection |
+| **URL-to-Quiz** | [`url-quiz.test.ts`](file:///E:/Personal%20projects/Quiz%20Application/apps/backend/src/test/url-quiz.test.ts) | 13 | SSRF defense (loopback, cloud metadata, rebinding), async queue |
+| **Authentication** | [`auth.test.ts`](file:///E:/Personal%20projects/Quiz%20Application/apps/backend/src/test/auth.test.ts) | 11 | Registration, login, password hashing, JWT cookies, roles |
+| **AI Generation** | [`ai.test.ts`](file:///E:/Personal%20projects/Quiz%20Application/apps/backend/src/test/ai.test.ts) | 9 | Pydantic schema normalization, choices coercion, fallback parsing |
+| **Quiz Studio** | [`quiz-studio.test.ts`](file:///E:/Personal%20projects/Quiz%20Application/apps/backend/src/test/quiz-studio.test.ts) | 9 | Draft creation, inline question edits, deletion, publishing, sharing |
+| **Quiz Engine** | [`quiz-engine.test.ts`](file:///E:/Personal%20projects/Quiz%20Application/apps/backend/src/test/quiz-engine.test.ts) | 8 | Shuffled choices, scoring algorithm, answer tracking |
+| **Image-to-Quiz** | [`image-quiz.test.ts`](file:///E:/Personal%20projects/Quiz%20Application/apps/backend/src/test/image-quiz.test.ts) | 8 | Magic byte validation, multimodal vision extraction, async queue |
+| **PDF-to-Quiz** | [`pdf-quiz.test.ts`](file:///E:/Personal%20projects/Quiz%20Application/apps/backend/src/test/pdf-quiz.test.ts) | 7 | PDF magic bytes, pdf-parse extraction, job polling, isolation |
+| **E2E Lifecycle** | [`e2e-lifecycle.test.ts`](file:///E:/Personal%20projects/Quiz%20Application/apps/backend/src/test/e2e-lifecycle.test.ts) | 7 | Full 10-requirement user journey (register, take, score, review, retake) |
+| **Security Audits** | [`security.test.ts`](file:///E:/Personal%20projects/Quiz%20Application/apps/backend/src/test/security.test.ts) | 7 | Helmet headers, tampered JWT rejection, multi-tenant isolation |
+| **Database Integrity**| [`db.test.ts`](file:///E:/Personal%20projects/Quiz%20Application/apps/backend/src/test/db.test.ts) | 6 | SQLite WAL mode, foreign key cascades, transaction atomicity |
+| **Code Review Quiz** | [`code-quiz.test.ts`](file:///E:/Personal%20projects/Quiz%20Application/apps/backend/src/test/code-quiz.test.ts) | 2 | End-to-end GitHub analysis, answer rubric scoring (0-10) |
+| **Health API** | [`health.test.ts`](file:///E:/Personal%20projects/Quiz%20Application/apps/backend/src/test/health.test.ts) | 1 | Database connection status, WAL verification, uptime |
+| **Total** | | **132** | **100% Passing** |
