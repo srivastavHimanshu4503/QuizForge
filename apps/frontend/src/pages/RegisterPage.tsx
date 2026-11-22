@@ -1,7 +1,7 @@
 import { useState, FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Sparkles, Lock, Mail, User, AlertCircle, Loader2 } from 'lucide-react';
+import { Sparkles, AlertCircle, Loader2, Quote, CheckCircle2 } from 'lucide-react';
 
 export function RegisterPage() {
   const [displayName, setDisplayName] = useState('');
@@ -54,155 +54,179 @@ export function RegisterPage() {
   const displayError = formError || error;
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="inline-flex p-3 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 mb-4">
-            <Sparkles className="w-7 h-7" />
+    <div className="min-h-screen flex bg-[#F8F9FC]">
+      {/* ===================== LEFT HERO PANEL (Hidden on < 1024px) ===================== */}
+      <div className="hidden lg:flex lg:w-1/2 bg-[#1935CA] text-white p-12 lg:p-16 flex-col justify-between relative overflow-hidden">
+        <div className="absolute top-8 left-8 w-12 h-12 border-t-2 border-l-2 border-white/20 pointer-events-none" />
+        <div className="absolute bottom-8 right-8 w-12 h-12 border-b-2 border-r-2 border-white/20 pointer-events-none" />
+        <div className="absolute top-1/4 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-10 left-10 w-80 h-80 bg-[#38BDF8]/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="flex items-center gap-3 relative z-10">
+          <div className="w-10 h-10 rounded-full bg-white text-[#1935CA] flex items-center justify-center font-black shadow-lg">
+            <Sparkles className="w-5 h-5 fill-[#1935CA]" />
           </div>
-          <h1 className="text-3xl font-extrabold text-white tracking-tight">
-            Create an Account
-          </h1>
-          <p className="mt-2 text-sm text-slate-400">
-            Join QuizForge to generate and attempt AI-powered quizzes
-          </p>
+          <div>
+            <span className="font-extrabold text-2xl tracking-tight text-white block">
+              QuizForge
+            </span>
+            <span className="text-xs font-semibold text-white/70 tracking-wider uppercase">
+              AI Code Review & Assessment
+            </span>
+          </div>
         </div>
 
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl">
+        <div className="relative z-10 my-auto py-12 max-w-lg">
+          <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-[#38BDF8] mb-6 shadow-inner">
+            <Quote className="w-6 h-6 fill-[#38BDF8]/20" />
+          </div>
+          <blockquote className="text-2xl sm:text-3xl font-bold text-white leading-snug tracking-tight mb-6">
+            "Accelerate your learning loop with real-time adversarial evaluations and deep conceptual mastery."
+          </blockquote>
+          <p className="text-sm font-semibold text-white/80 tracking-wide uppercase">
+            — QuizForge Learning Platform
+          </p>
+
+          <div className="mt-10 grid grid-cols-2 gap-4 pt-8 border-t border-white/10 text-xs">
+            <div className="flex items-center gap-2 text-white/90">
+              <CheckCircle2 className="w-4 h-4 text-[#38BDF8]" />
+              <span>Multi-LLM Inference</span>
+            </div>
+            <div className="flex items-center gap-2 text-white/90">
+              <CheckCircle2 className="w-4 h-4 text-[#38BDF8]" />
+              <span>Instant AI Rubrics</span>
+            </div>
+            <div className="flex items-center gap-2 text-white/90">
+              <CheckCircle2 className="w-4 h-4 text-[#38BDF8]" />
+              <span>Zero-AI Retakes</span>
+            </div>
+            <div className="flex items-center gap-2 text-white/90">
+              <CheckCircle2 className="w-4 h-4 text-[#38BDF8]" />
+              <span>Classroom Workflows</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="text-xs text-white/60 relative z-10">
+          © 2026 QuizForge Technologies. Enterprise Assessment Platform.
+        </div>
+      </div>
+
+      {/* ===================== RIGHT REGISTER FORM PANEL ===================== */}
+      <div className="w-full lg:w-1/2 flex flex-col justify-center items-center p-6 sm:p-12 min-h-screen">
+        <div className="w-full max-w-[420px] bg-white rounded-[20px] p-8 sm:p-10 shadow-[0_10px_30px_rgba(25,53,202,0.05)] border border-slate-100/80">
+          <div className="mb-6">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1935CA] tracking-tight">
+              Create an Account
+            </h1>
+            <p className="mt-2 text-xs sm:text-sm text-[#696F79] font-medium">
+              Join QuizForge to generate and attempt AI assessments.
+            </p>
+          </div>
+
           {displayError && (
-            <div className="mb-6 p-4 rounded-xl bg-rose-950/40 border border-rose-800/60 flex items-start gap-3 text-rose-300 text-sm">
-              <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
+            <div className="mb-5 p-3.5 rounded-xl bg-[#FEF2F2] border border-rose-200 flex items-start gap-2.5 text-rose-700 text-xs font-medium">
+              <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
               <span>{displayError}</span>
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Role Toggle */}
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">
-                I am registering as
+              <label className="block text-xs font-bold text-[#1E293B] mb-1.5">
+                I am registering as:
               </label>
-              <div className="grid grid-cols-2 gap-2 p-1 bg-slate-950/80 rounded-xl border border-slate-700/80">
+              <div className="grid grid-cols-2 gap-2 p-1 bg-[#F8F9FC] rounded-xl border border-slate-200/80">
                 <button
                   type="button"
                   onClick={() => setRole('student')}
-                  className={`py-2 text-xs font-semibold rounded-lg transition ${
+                  className={`py-2 text-xs font-bold rounded-lg transition ${
                     role === 'student'
-                      ? 'bg-indigo-600 text-white shadow-sm'
-                      : 'text-slate-400 hover:text-white'
+                      ? 'bg-[#1935CA] text-white shadow-sm'
+                      : 'text-[#696F79] hover:text-[#1E293B]'
                   }`}
                 >
-                  Student
+                  Student (Learner)
                 </button>
                 <button
                   type="button"
                   onClick={() => setRole('teacher')}
-                  className={`py-2 text-xs font-semibold rounded-lg transition ${
+                  className={`py-2 text-xs font-bold rounded-lg transition ${
                     role === 'teacher'
-                      ? 'bg-purple-600 text-white shadow-sm'
-                      : 'text-slate-400 hover:text-white'
+                      ? 'bg-[#1935CA] text-white shadow-sm'
+                      : 'text-[#696F79] hover:text-[#1E293B]'
                   }`}
                 >
-                  Teacher / Instructor
+                  Teacher (Instructor)
                 </button>
               </div>
             </div>
 
+            {/* Display Name */}
             <div>
-              <label
-                htmlFor="displayName"
-                className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2"
-              >
-                Full Name / Nickname
+              <label className="block text-xs font-bold text-[#1E293B] mb-1.5">
+                Full Name*
               </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
-                  <User className="w-4 h-4" />
-                </div>
-                <input
-                  id="displayName"
-                  type="text"
-                  required
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                  placeholder="Alex Mercer"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950/80 border border-slate-700/80 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
-                />
-              </div>
+              <input
+                type="text"
+                required
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                placeholder="e.g. Alex Mercer"
+                className="w-full px-4 py-3 rounded-xl bg-white text-[#1E293B] placeholder-[#94A3B8] text-sm shadow-[0_4px_16px_rgba(15,23,42,0.05)] border-0 focus:ring-2 focus:ring-[#1935CA] transition outline-none font-medium"
+              />
             </div>
 
+            {/* Email Address */}
             <div>
-              <label
-                htmlFor="email"
-                className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2"
-              >
-                Email Address
+              <label className="block text-xs font-bold text-[#1E293B] mb-1.5">
+                Email address*
               </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
-                  <Mail className="w-4 h-4" />
-                </div>
-                <input
-                  id="email"
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950/80 border border-slate-700/80 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
-                />
-              </div>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="name@company.com"
+                className="w-full px-4 py-3 rounded-xl bg-white text-[#1E293B] placeholder-[#94A3B8] text-sm shadow-[0_4px_16px_rgba(15,23,42,0.05)] border-0 focus:ring-2 focus:ring-[#1935CA] transition outline-none font-medium"
+              />
             </div>
 
+            {/* Password */}
             <div>
-              <label
-                htmlFor="password"
-                className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2"
-              >
-                Password (min 8 characters)
+              <label className="block text-xs font-bold text-[#1E293B] mb-1.5">
+                Password*
               </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
-                  <Lock className="w-4 h-4" />
-                </div>
-                <input
-                  id="password"
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950/80 border border-slate-700/80 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
-                />
-              </div>
+              <input
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Min 8 characters"
+                className="w-full px-4 py-3 rounded-xl bg-white text-[#1E293B] placeholder-[#94A3B8] text-sm shadow-[0_4px_16px_rgba(15,23,42,0.05)] border-0 focus:ring-2 focus:ring-[#1935CA] transition outline-none font-medium"
+              />
             </div>
 
+            {/* Confirm Password */}
             <div>
-              <label
-                htmlFor="confirmPassword"
-                className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2"
-              >
-                Confirm Password
+              <label className="block text-xs font-bold text-[#1E293B] mb-1.5">
+                Confirm Password*
               </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
-                  <Lock className="w-4 h-4" />
-                </div>
-                <input
-                  id="confirmPassword"
-                  type="password"
-                  required
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950/80 border border-slate-700/80 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
-                />
-              </div>
+              <input
+                type="password"
+                required
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Re-enter password"
+                className="w-full px-4 py-3 rounded-xl bg-white text-[#1E293B] placeholder-[#94A3B8] text-sm shadow-[0_4px_16px_rgba(15,23,42,0.05)] border-0 focus:ring-2 focus:ring-[#1935CA] transition outline-none font-medium"
+              />
             </div>
 
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full mt-2 py-3 px-4 rounded-xl font-semibold text-sm bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/20 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center gap-2"
+              className="w-full py-3.5 px-4 rounded-xl font-bold text-sm bg-[#1935CA] hover:bg-[#142BA3] text-white shadow-[0_8px_20px_rgba(25,53,202,0.22)] disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center gap-2 mt-4 active:scale-98"
             >
               {isSubmitting ? (
                 <>
@@ -215,13 +239,10 @@ export function RegisterPage() {
             </button>
           </form>
 
-          <div className="mt-6 pt-6 border-t border-slate-800 text-center">
-            <p className="text-xs text-slate-400">
+          <div className="mt-6 pt-6 border-t border-slate-100 text-center">
+            <p className="text-xs font-medium text-[#696F79]">
               Already have an account?{' '}
-              <Link
-                to="/login"
-                className="font-medium text-indigo-400 hover:text-indigo-300 transition"
-              >
+              <Link to="/login" className="font-bold text-[#1935CA] hover:underline">
                 Sign in
               </Link>
             </p>

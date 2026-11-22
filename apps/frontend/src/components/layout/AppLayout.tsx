@@ -1,0 +1,364 @@
+import { useState, ReactNode } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import { CodeQuizModal } from '../code-quiz/CodeQuizModal';
+import { GenerateQuizModal } from '../quiz/GenerateQuizModal';
+import {
+  LayoutDashboard,
+  Code2,
+  FileQuestion,
+  History,
+  GraduationCap,
+  LogOut,
+  Search,
+  Sparkles,
+  Menu,
+  X,
+  Play,
+  ChevronRight,
+  BookOpen,
+} from 'lucide-react';
+
+interface AppLayoutProps {
+  children: ReactNode;
+  activeNav?: 'dashboard' | 'code-review' | 'mcq' | 'history' | 'classrooms' | 'assignments';
+}
+
+export function AppLayout({ children, activeNav }: AppLayoutProps) {
+  const { user, logout } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isCodeModalOpen, setIsCodeModalOpen] = useState(false);
+  const [isMcqModalOpen, setIsMcqModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Determine active item from prop or pathname
+  const currentPath = location.pathname;
+  const isDashboard = activeNav === 'dashboard' || currentPath === '/';
+  const isHistory = activeNav === 'history' || currentPath === '/history';
+  const isClassrooms = activeNav === 'classrooms' || currentPath === '/classrooms';
+  const isAssignments = activeNav === 'assignments' || currentPath === '/assignments';
+
+  const userInitials = user?.displayName
+    ? user.displayName
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2)
+    : 'QF';
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+    navigate(`/history?q=${encodeURIComponent(searchQuery.trim())}`);
+  };
+
+  return (
+    <div className="min-h-screen bg-[#F8F9FC] flex flex-col lg:flex-row antialiased">
+      {/* ===================== DESKTOP SIDEBAR ===================== */}
+      <aside className="hidden lg:flex w-[240px] shrink-0 bg-white h-screen sticky top-0 flex-col justify-between p-5 border-r border-slate-100 z-30 shadow-[0_4px_24px_rgba(15,23,42,0.02)]">
+        <div className="flex flex-col gap-6">
+          {/* Brand Header */}
+          <Link to="/" className="flex items-center gap-3 px-1 py-1 group">
+            <div className="w-10 h-10 rounded-full bg-[#1935CA] flex items-center justify-center text-white shadow-[0_6px_16px_rgba(25,53,202,0.3)] transition-transform group-hover:scale-105">
+              <Sparkles className="w-5 h-5 fill-white/20" />
+            </div>
+            <div>
+              <span className="font-extrabold text-xl tracking-tight text-[#1935CA] block leading-tight">
+                QuizForge
+              </span>
+              <span className="text-[10px] font-semibold text-[#696F79] tracking-wider uppercase block">
+                AI Assessment
+              </span>
+            </div>
+          </Link>
+
+          {/* Navigation Links */}
+          <nav className="flex flex-col gap-1.5 pt-2">
+            <Link
+              to="/"
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+                isDashboard
+                  ? 'bg-[#1935CA] text-white shadow-[0_8px_20px_rgba(25,53,202,0.22)]'
+                  : 'text-[#696F79] hover:text-[#1935CA] hover:bg-[#F8F9FC]'
+              }`}
+            >
+              <LayoutDashboard className={`w-4 h-4 ${isDashboard ? 'text-white' : 'text-[#696F79]'}`} />
+              <span>Dashboard</span>
+            </Link>
+
+            <button
+              type="button"
+              onClick={() => setIsCodeModalOpen(true)}
+              className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-[#696F79] hover:text-[#1935CA] hover:bg-[#F8F9FC] transition-all text-left"
+            >
+              <Code2 className="w-4 h-4 text-[#696F79]" />
+              <span>GitHub Review</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsMcqModalOpen(true)}
+              className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-[#696F79] hover:text-[#1935CA] hover:bg-[#F8F9FC] transition-all text-left"
+            >
+              <FileQuestion className="w-4 h-4 text-[#696F79]" />
+              <span>MCQ Quizzes</span>
+            </button>
+
+            <Link
+              to="/history"
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+                isHistory
+                  ? 'bg-[#1935CA] text-white shadow-[0_8px_20px_rgba(25,53,202,0.22)]'
+                  : 'text-[#696F79] hover:text-[#1935CA] hover:bg-[#F8F9FC]'
+              }`}
+            >
+              <History className={`w-4 h-4 ${isHistory ? 'text-white' : 'text-[#696F79]'}`} />
+              <span>Quiz History</span>
+            </Link>
+
+            <Link
+              to="/classrooms"
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+                isClassrooms
+                  ? 'bg-[#1935CA] text-white shadow-[0_8px_20px_rgba(25,53,202,0.22)]'
+                  : 'text-[#696F79] hover:text-[#1935CA] hover:bg-[#F8F9FC]'
+              }`}
+            >
+              <GraduationCap className={`w-4 h-4 ${isClassrooms ? 'text-white' : 'text-[#696F79]'}`} />
+              <span>Classrooms</span>
+            </Link>
+
+            {user?.role === 'student' && (
+              <Link
+                to="/assignments"
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+                  isAssignments
+                    ? 'bg-[#1935CA] text-white shadow-[0_8px_20px_rgba(25,53,202,0.22)]'
+                    : 'text-[#696F79] hover:text-[#1935CA] hover:bg-[#F8F9FC]'
+                }`}
+              >
+                <BookOpen className={`w-4 h-4 ${isAssignments ? 'text-white' : 'text-[#696F79]'}`} />
+                <span>Assignments</span>
+              </Link>
+            )}
+          </nav>
+        </div>
+
+        {/* Bottom Section */}
+        <div className="flex flex-col gap-4">
+          {/* Quick-Launch Card (Adapted from Cyberverdict Support Card) */}
+          <div className="bg-gradient-to-br from-[#1935CA] via-[#1F3ED4] to-[#2546F0] rounded-2xl p-4 text-white shadow-[0_10px_25px_rgba(25,53,202,0.25)] relative overflow-hidden group">
+            <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-xl pointer-events-none" />
+            <div className="flex items-center gap-2 mb-2">
+              <span className="p-1 rounded-md bg-white/20">
+                <Code2 className="w-3.5 h-3.5 text-white" />
+              </span>
+              <h4 className="font-bold text-sm tracking-tight">Code Review AI</h4>
+            </div>
+            <p className="text-xs text-white/80 leading-relaxed mb-3">
+              Analyze any public GitHub repo with open-ended LLM evaluation.
+            </p>
+            <button
+              type="button"
+              onClick={() => setIsCodeModalOpen(true)}
+              className="w-full py-2 px-3 rounded-xl bg-white text-[#1935CA] hover:bg-slate-50 font-bold text-xs shadow-md transition-all flex items-center justify-center gap-1.5 active:scale-98"
+            >
+              <span>Start</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {/* Pinned Logout */}
+          <button
+            type="button"
+            onClick={logout}
+            className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-[#696F79] hover:text-rose-600 hover:bg-rose-50 transition text-left"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Log Out</span>
+          </button>
+        </div>
+      </aside>
+
+      {/* ===================== MOBILE TOP NAV (< 1024px) ===================== */}
+      <header className="lg:hidden sticky top-0 z-40 bg-white border-b border-slate-100 px-4 h-16 flex items-center justify-between shadow-sm">
+        <Link to="/" className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-full bg-[#1935CA] flex items-center justify-center text-white">
+            <Sparkles className="w-4 h-4 fill-white/20" />
+          </div>
+          <span className="font-extrabold text-lg text-[#1935CA]">QuizForge</span>
+        </Link>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setIsMcqModalOpen(true)}
+            className="px-3 py-1.5 rounded-lg bg-[#1935CA] text-white text-xs font-semibold shadow-sm"
+          >
+            Start Quiz
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="p-2 rounded-lg text-[#1E293B] hover:bg-slate-100 transition"
+            aria-label="Toggle navigation menu"
+          >
+            {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+        </div>
+      </header>
+
+      {/* Mobile Drawer */}
+      {isMobileMenuOpen && (
+        <div className="lg:hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex">
+          <div className="w-72 bg-white h-full p-5 flex flex-col justify-between shadow-2xl animate-in slide-in-from-left duration-200">
+            <div>
+              <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-[#1935CA] flex items-center justify-center text-white">
+                    <Sparkles className="w-4 h-4" />
+                  </div>
+                  <span className="font-bold text-lg text-[#1935CA]">QuizForge</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="p-1 rounded-md text-slate-400 hover:text-slate-600"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <nav className="flex flex-col gap-1.5">
+                <Link
+                  to="/"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold ${
+                    isDashboard ? 'bg-[#1935CA] text-white' : 'text-[#696F79]'
+                  }`}
+                >
+                  <LayoutDashboard className="w-4 h-4" />
+                  <span>Dashboard</span>
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    setIsCodeModalOpen(true);
+                  }}
+                  className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold text-[#696F79] text-left"
+                >
+                  <Code2 className="w-4 h-4" />
+                  <span>GitHub Review</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    setIsMcqModalOpen(true);
+                  }}
+                  className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold text-[#696F79] text-left"
+                >
+                  <FileQuestion className="w-4 h-4" />
+                  <span>MCQ Quizzes</span>
+                </button>
+                <Link
+                  to="/history"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold ${
+                    isHistory ? 'bg-[#1935CA] text-white' : 'text-[#696F79]'
+                  }`}
+                >
+                  <History className="w-4 h-4" />
+                  <span>Quiz History</span>
+                </Link>
+                <Link
+                  to="/classrooms"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold ${
+                    isClassrooms ? 'bg-[#1935CA] text-white' : 'text-[#696F79]'
+                  }`}
+                >
+                  <GraduationCap className="w-4 h-4" />
+                  <span>Classrooms</span>
+                </Link>
+              </nav>
+            </div>
+
+            <div className="pt-4 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={logout}
+                className="flex items-center gap-2 text-sm font-semibold text-rose-600 px-3 py-2 w-full text-left"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Log Out</span>
+              </button>
+            </div>
+          </div>
+          <div className="flex-1" onClick={() => setIsMobileMenuOpen(false)} />
+        </div>
+      )}
+
+      {/* ===================== MAIN CANVAS ===================== */}
+      <div className="flex-1 min-w-0 flex flex-col">
+        {/* Top Header Bar */}
+        <header className="h-20 px-6 sm:px-8 flex items-center justify-between sticky top-0 bg-[#F8F9FC]/90 backdrop-blur-md z-20 transition-all">
+          {/* Borderless Soft-Shadow Search */}
+          <form onSubmit={handleSearchSubmit} className="relative">
+            <div className="flex items-center bg-white rounded-xl shadow-[0_4px_16px_rgba(15,23,42,0.05)] px-4 py-2.5 w-64 sm:w-80 md:w-96 transition-shadow focus-within:shadow-[0_6px_20px_rgba(25,53,202,0.12)]">
+              <Search className="w-4 h-4 text-[#94A3B8] shrink-0 mr-2.5" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search quizzes, repos, or topics..."
+                className="w-full text-sm text-[#1E293B] placeholder-[#94A3B8] bg-transparent outline-none font-medium"
+              />
+            </div>
+          </form>
+
+          {/* Right Action Controls */}
+          <div className="flex items-center gap-3 sm:gap-4">
+            <button
+              type="button"
+              onClick={() => setIsMcqModalOpen(true)}
+              className="hidden sm:inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#1935CA] hover:bg-[#142BA3] text-white text-sm font-semibold shadow-[0_8px_20px_rgba(25,53,202,0.22)] transition-all active:scale-98"
+            >
+              <Play className="w-3.5 h-3.5 fill-white" />
+              <span>Start Quiz</span>
+            </button>
+
+            {/* User Profile Badge */}
+            <div className="flex items-center gap-3 pl-2">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#1935CA] to-[#38BDF8] flex items-center justify-center text-white font-bold text-sm shadow-md">
+                {userInitials}
+              </div>
+              <div className="hidden md:block text-left">
+                <span className="block text-xs font-bold text-[#1E293B] leading-tight">
+                  {user?.displayName || 'User'}
+                </span>
+                <span className="block text-[10px] font-semibold text-[#1935CA] uppercase tracking-wider">
+                  {user?.role || 'Learner'}
+                </span>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Viewport Content */}
+        <main className="flex-1 px-6 sm:px-8 pb-10">
+          {children}
+        </main>
+      </div>
+
+      {/* Shared Global Modals */}
+      <CodeQuizModal isOpen={isCodeModalOpen} onClose={() => setIsCodeModalOpen(false)} />
+      <GenerateQuizModal isOpen={isMcqModalOpen} onClose={() => setIsMcqModalOpen(false)} />
+    </div>
+  );
+}

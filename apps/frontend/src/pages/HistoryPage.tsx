@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { HistoryItem, HistoryResponse } from '@quiz-forge/shared';
 import { apiClient, ApiError } from '../api/client';
-import { Navbar } from '../components/layout/Navbar';
+import { AppLayout } from '../components/layout/AppLayout';
 import { GenerateQuizModal } from '../components/quiz/GenerateQuizModal';
 import { CodeQuizModal } from '../components/code-quiz/CodeQuizModal';
 import {
@@ -11,18 +11,19 @@ import {
   Sparkles,
   ArrowRight,
   Loader2,
-  Calendar,
   ChevronLeft,
   ChevronRight,
   BookOpen,
   Code2,
   Brain,
-  ExternalLink,
   Layers,
-  SlidersHorizontal,
+  Clock,
 } from 'lucide-react';
 
 export function HistoryPage() {
+  const [searchParams] = useSearchParams();
+  const searchFilter = searchParams.get('q') || '';
+
   const [history, setHistory] = useState<HistoryResponse | null>(null);
   const [page, setPage] = useState<number>(1);
   const [filterType, setFilterType] = useState<'all' | 'mcq' | 'code'>('all');
@@ -96,23 +97,30 @@ export function HistoryPage() {
 
   const totalPages = history ? Math.ceil(history.total / history.pageSize) : 1;
 
-  return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
-      <Navbar />
+  // Filter items by query if search parameter is present
+  const displayedItems = history?.items.filter((item) => {
+    if (!searchFilter.trim()) return true;
+    const query = searchFilter.toLowerCase();
+    const titleMatch = (item.topic || item.repoName || '').toLowerCase().includes(query);
+    const repoMatch = (item.repoUrl || '').toLowerCase().includes(query);
+    return titleMatch || repoMatch;
+  }) || [];
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  return (
+    <AppLayout activeNav="history">
+      <div className="space-y-6">
         {/* Header */}
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+        <div className="bg-white rounded-[20px] p-6 shadow-[0_10px_30px_rgba(25,53,202,0.05)] border border-slate-100/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-cyan-400 mb-1">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EEF2FF] text-[#1935CA] text-xs font-bold mb-2">
               <History className="w-3.5 h-3.5" />
-              <span>Performance Archive</span>
+              <span>Unified Performance Archive</span>
             </div>
-            <h1 className="text-3xl font-extrabold text-white sm:text-4xl">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1935CA] tracking-tight">
               Quiz History & Retakes
             </h1>
-            <p className="mt-1 text-slate-400 text-sm">
-              Review your past MCQ quiz and GitHub code review performances, examine evaluations, and retake question sets with zero AI calls.
+            <p className="mt-1 text-xs sm:text-sm text-[#696F79]">
+              Review past MCQ quizzes and GitHub code reviews. Retake question sets anytime with zero AI calls.
             </p>
           </div>
 
@@ -120,7 +128,7 @@ export function HistoryPage() {
             <button
               type="button"
               onClick={() => setIsCodeQuizModalOpen(true)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-lg shadow-amber-500/20 transition"
+              className="px-4 py-2.5 rounded-xl text-xs font-bold bg-[#EEF2FF] hover:bg-[#1935CA]/10 text-[#1935CA] transition flex items-center gap-1.5"
             >
               <Code2 className="w-3.5 h-3.5" />
               <span>Review GitHub Repo</span>
@@ -128,115 +136,116 @@ export function HistoryPage() {
             <button
               type="button"
               onClick={() => setIsGenerateModalOpen(true)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/20 transition"
+              className="px-4 py-2.5 rounded-xl text-xs font-bold bg-[#1935CA] hover:bg-[#142BA3] text-white shadow-[0_8px_20px_rgba(25,53,202,0.22)] transition flex items-center gap-1.5"
             >
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Generate MCQ Quiz</span>
+              <span>Generate MCQ</span>
             </button>
           </div>
         </div>
 
-        {/* Filter Tabs */}
-        <div className="flex items-center gap-2 mb-6 border-b border-slate-800 pb-4">
-          <button
-            type="button"
-            onClick={() => handleFilterChange('all')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition ${
-              filterType === 'all'
-                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
-                : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800 hover:border-slate-700'
-            }`}
-          >
-            <Layers className="w-3.5 h-3.5" />
-            <span>All Quizzes</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => handleFilterChange('code')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition ${
-              filterType === 'code'
-                ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-                : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800 hover:border-slate-700'
-            }`}
-          >
-            <Code2 className="w-3.5 h-3.5" />
-            <span>GitHub Code Reviews</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => handleFilterChange('mcq')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition ${
-              filterType === 'mcq'
-                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
-                : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800 hover:border-slate-700'
-            }`}
-          >
-            <Brain className="w-3.5 h-3.5" />
-            <span>MCQ Quizzes</span>
-          </button>
-        </div>
-
-        {/* Loading State */}
-        {isLoading && (
-          <div className="p-16 flex flex-col items-center justify-center">
-            <Loader2 className="w-8 h-8 text-indigo-500 animate-spin mb-3" />
-            <p className="text-xs text-slate-400">Loading your history records...</p>
-          </div>
-        )}
-
-        {/* Error State */}
-        {!isLoading && error && (
-          <div className="p-6 rounded-2xl bg-rose-950/40 border border-rose-800 text-center text-rose-300 text-sm mb-6">
-            <p>{error}</p>
+        {/* Elevated History Card Container */}
+        <div className="bg-white rounded-[20px] p-6 shadow-[0_10px_30px_rgba(25,53,202,0.05)] border border-slate-100/80 space-y-6">
+          {/* 3 Filter Tabs (Synced with ?type=all|code|mcq) */}
+          <div className="flex items-center gap-2 border-b border-slate-100 pb-4 flex-wrap">
             <button
-              onClick={() => fetchHistory(page, filterType)}
-              className="mt-3 px-3.5 py-1.5 rounded-lg bg-rose-900/60 hover:bg-rose-900 text-xs font-semibold text-rose-200 transition"
+              type="button"
+              onClick={() => handleFilterChange('all')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition ${
+                filterType === 'all'
+                  ? 'bg-[#1935CA] text-white shadow-[0_8px_20px_rgba(25,53,202,0.22)]'
+                  : 'bg-[#F8F9FC] text-[#696F79] hover:text-[#1E293B]'
+              }`}
             >
-              Retry
+              <Layers className="w-3.5 h-3.5" />
+              <span>All Quizzes</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleFilterChange('code')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition ${
+                filterType === 'code'
+                  ? 'bg-[#1935CA] text-white shadow-[0_8px_20px_rgba(25,53,202,0.22)]'
+                  : 'bg-[#F8F9FC] text-[#696F79] hover:text-[#1E293B]'
+              }`}
+            >
+              <Code2 className="w-3.5 h-3.5" />
+              <span>GitHub Code Reviews</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleFilterChange('mcq')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition ${
+                filterType === 'mcq'
+                  ? 'bg-[#1935CA] text-white shadow-[0_8px_20px_rgba(25,53,202,0.22)]'
+                  : 'bg-[#F8F9FC] text-[#696F79] hover:text-[#1E293B]'
+              }`}
+            >
+              <Brain className="w-3.5 h-3.5" />
+              <span>MCQ Quizzes</span>
             </button>
           </div>
-        )}
 
-        {/* Empty State */}
-        {!isLoading && history && history.items.length === 0 && (
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-12 text-center max-w-lg mx-auto shadow-xl">
-            <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center mx-auto mb-4">
-              <BookOpen className="w-7 h-7" />
+          {/* Loading State */}
+          {isLoading && (
+            <div className="py-16 flex flex-col items-center justify-center">
+              <Loader2 className="w-8 h-8 text-[#1935CA] animate-spin mb-3" />
+              <p className="text-xs text-[#696F79]">Loading your history records...</p>
             </div>
-            <h3 className="text-xl font-bold text-white mb-2">No Quizzes Completed Yet</h3>
-            <p className="text-sm text-slate-400 mb-6">
-              {filterType === 'code'
-                ? "You haven't completed any GitHub repository code reviews yet. Input any public GitHub repo to get started!"
-                : filterType === 'mcq'
-                ? "You haven't completed any topic MCQ quizzes yet. Generate your first quiz on any topic you want to learn!"
-                : "You haven't completed any quizzes yet. Create your first MCQ quiz or review a GitHub repo!"}
-            </p>
-            <div className="flex items-center justify-center gap-3">
+          )}
+
+          {/* Error State */}
+          {!isLoading && error && (
+            <div className="p-4 rounded-xl bg-[#FEF2F2] border border-rose-200 text-center text-rose-700 text-xs font-medium">
+              <p>{error}</p>
               <button
-                type="button"
-                onClick={() => setIsCodeQuizModalOpen(true)}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-md shadow-amber-500/20 transition"
+                onClick={() => fetchHistory(page, filterType)}
+                className="mt-2.5 px-3 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold transition"
               >
-                <Code2 className="w-3.5 h-3.5" />
-                <span>Review GitHub Repo</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsGenerateModalOpen(true)}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/20 transition"
-              >
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>Create Topic Quiz</span>
+                Retry
               </button>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* History Grid */}
-        {!isLoading && history && history.items.length > 0 && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 gap-4">
-              {history.items.map((item: HistoryItem) => {
+          {/* Empty State */}
+          {!isLoading && history && displayedItems.length === 0 && (
+            <div className="py-12 text-center max-w-md mx-auto">
+              <div className="w-12 h-12 rounded-2xl bg-[#EEF2FF] text-[#1935CA] flex items-center justify-center mx-auto mb-3">
+                <BookOpen className="w-6 h-6" />
+              </div>
+              <h3 className="text-lg font-bold text-[#1E293B] mb-1">No Completed Quizzes Found</h3>
+              <p className="text-xs text-[#696F79] mb-5">
+                {filterType === 'code'
+                  ? "You haven't completed any GitHub code reviews yet. Analyze any public repo to get started!"
+                  : filterType === 'mcq'
+                  ? "You haven't completed any MCQ quizzes yet. Generate your first topic assessment!"
+                  : "No completed attempts match your current view. Create an assessment to begin!"}
+              </p>
+              <div className="flex items-center justify-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsCodeQuizModalOpen(true)}
+                  className="px-4 py-2 rounded-xl text-xs font-bold bg-[#EEF2FF] text-[#1935CA] hover:bg-[#1935CA]/10 transition"
+                >
+                  Review Repo
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsGenerateModalOpen(true)}
+                  className="px-4 py-2 rounded-xl text-xs font-bold bg-[#1935CA] text-white hover:bg-[#142BA3] transition shadow-md"
+                >
+                  Generate Quiz
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* History Scannable Rows */}
+          {!isLoading && history && displayedItems.length > 0 && (
+            <div className="space-y-3">
+              {displayedItems.map((item: HistoryItem) => {
                 const isCodeReview = item.type === 'code_review';
                 const dateFormatted = new Date(item.completedAt).toLocaleDateString(
                   undefined,
@@ -249,120 +258,97 @@ export function HistoryPage() {
                   }
                 );
 
-                const isRestartingThis = restartingQuizId === item.quizId;
+                const title = isCodeReview
+                  ? item.repoName || item.topic || 'Code Review'
+                  : item.topic || 'MCQ Quiz';
+
+                const scorePercent = item.accuracyPercentage;
 
                 return (
                   <div
                     key={item.attemptId}
-                    className="bg-slate-900 border border-slate-800 rounded-2xl p-5 sm:p-6 shadow-md hover:border-slate-700 transition flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                    className="p-4 sm:p-5 rounded-xl bg-[#F8F9FC] border border-slate-100 hover:border-slate-200 transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
                   >
-                    <div className="space-y-2">
-                      <div className="flex flex-wrap items-center gap-2">
-                        {isCodeReview ? (
-                          <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center gap-1">
-                            <Code2 className="w-3 h-3" />
-                            <span>Code Review</span>
-                          </span>
-                        ) : (
-                          <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center gap-1">
-                            <Brain className="w-3 h-3" />
-                            <span>MCQ Quiz</span>
-                          </span>
-                        )}
-
-                        <span className="text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700">
-                          {item.difficulty}
-                        </span>
-
-                        <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-800/80 text-slate-400 border border-slate-700/80">
-                          Attempt #{item.attemptNumber}
-                        </span>
-
-                        <span className="text-xs text-slate-400 flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
-                          {dateFormatted}
-                        </span>
+                    {/* Left: Mode Badge & Title */}
+                    <div className="flex items-start sm:items-center gap-3.5">
+                      <div
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm ${
+                          isCodeReview
+                            ? 'bg-[#1935CA] text-white'
+                            : 'bg-[#EEF2FF] text-[#1935CA]'
+                        }`}
+                      >
+                        {isCodeReview ? <Code2 className="w-5 h-5" /> : <Brain className="w-5 h-5" />}
                       </div>
 
-                      <div className="flex items-center gap-2">
-                        <h2 className="text-lg font-bold text-white tracking-tight">
-                          {item.topic}
-                        </h2>
-                        {isCodeReview && item.repoUrl && (
-                          <a
-                            href={item.repoUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-slate-400 hover:text-white transition"
-                            title="View repository on GitHub"
+                      <div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                              isCodeReview
+                                ? 'bg-blue-100 text-[#1935CA]'
+                                : 'bg-indigo-100 text-indigo-700'
+                            }`}
                           >
-                            <ExternalLink className="w-3.5 h-3.5" />
-                          </a>
-                        )}
-                      </div>
+                            {isCodeReview ? 'GitHub Review' : 'MCQ Quiz'}
+                          </span>
+                          <span className="text-xs text-[#94A3B8]">•</span>
+                          <span className="text-xs text-[#696F79] font-medium flex items-center gap-1">
+                            <Clock className="w-3 h-3 text-[#94A3B8]" />
+                            <span>{dateFormatted}</span>
+                          </span>
+                        </div>
 
-                      <div className="flex items-center gap-4 text-xs text-slate-400">
-                        <span>{item.totalQuestions} Questions</span>
-                        <span>&bull;</span>
-                        <span>
-                          Score:{' '}
-                          <strong className="text-white font-semibold">
-                            {isCodeReview
-                              ? `${typeof item.score === 'number' ? item.score.toFixed(1) : item.score} / ${item.maxScore ?? (item.totalQuestions * 10)} pts`
-                              : `${item.score} / ${item.totalQuestions}`}
-                          </strong>
-                        </span>
-                        <span>&bull;</span>
-                        <span className="text-cyan-400 font-semibold">
-                          {item.accuracyPercentage}% Accuracy
-                        </span>
+                        <h4 className="text-sm font-bold text-[#1E293B] mt-1 break-all">
+                          {title}
+                        </h4>
                       </div>
                     </div>
 
-                    {/* Actions */}
-                    <div className="flex items-center gap-2.5 pt-2 sm:pt-0 shrink-0">
-                      {!isCodeReview && (
-                        <Link
-                          to={`/studio/${item.quizId}`}
-                          className="px-3 py-2 rounded-xl text-xs font-semibold bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 transition flex items-center gap-1.5"
-                          title="Open Quiz Studio to review, edit questions, publish, or copy share link"
-                        >
-                          <SlidersHorizontal className="w-3.5 h-3.5" />
-                          <span>Studio</span>
-                        </Link>
-                      )}
+                    {/* Middle: Score Bar */}
+                    <div className="w-full md:w-48 shrink-0">
+                      <div className="flex justify-between items-center text-xs font-semibold mb-1">
+                        <span className="text-[#696F79]">Score</span>
+                        <span className="font-extrabold text-[#1E293B]">{scorePercent}%</span>
+                      </div>
+                      <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                        <div
+                          className={`h-2 rounded-full ${
+                            scorePercent >= 80
+                              ? 'bg-emerald-500'
+                              : scorePercent >= 50
+                              ? 'bg-[#1935CA]'
+                              : 'bg-rose-500'
+                          }`}
+                          style={{ width: `${Math.min(100, Math.max(0, scorePercent))}%` }}
+                        />
+                      </div>
+                    </div>
 
+                    {/* Right: Actions */}
+                    <div className="flex items-center gap-2 self-end md:self-auto shrink-0">
                       <Link
                         to={
                           isCodeReview
                             ? `/code-quiz/${item.attemptId}/results`
                             : `/quiz/${item.attemptId}/results`
                         }
-                        className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1.5"
+                        className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-[#1935CA] bg-white hover:bg-[#EEF2FF] border border-slate-200 transition flex items-center gap-1"
                       >
                         <span>Review</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
+                        <ArrowRight className="w-3 h-3" />
                       </Link>
 
                       <button
                         type="button"
                         onClick={() => handleRetake(item)}
-                        disabled={isRestartingThis}
-                        className={`px-3.5 py-2 rounded-xl text-xs font-semibold shadow-md transition flex items-center gap-1.5 disabled:opacity-50 ${
-                          isCodeReview
-                            ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-amber-500/20'
-                            : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20'
-                        }`}
-                        title={
-                          isCodeReview
-                            ? 'Retake this code review quiz with a clean attempt (Zero AI generation calls)'
-                            : 'Retake this question set in a shuffled order (Zero AI calls)'
-                        }
+                        disabled={restartingQuizId === item.quizId}
+                        className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-[#1935CA] hover:bg-[#142BA3] shadow-sm transition flex items-center gap-1 disabled:opacity-50"
                       >
-                        {isRestartingThis ? (
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        {restartingQuizId === item.quizId ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
                         ) : (
-                          <RotateCcw className="w-3.5 h-3.5" />
+                          <RotateCcw className="w-3 h-3" />
                         )}
                         <span>Retake</span>
                       </button>
@@ -371,48 +357,41 @@ export function HistoryPage() {
                 );
               })}
             </div>
+          )}
 
-            {/* Pagination Controls */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between pt-6 border-t border-slate-800 text-xs text-slate-400">
-                <span>
-                  Showing page <strong className="text-white">{page}</strong> of{' '}
-                  <strong className="text-white">{totalPages}</strong> ({history.total} total attempts)
-                </span>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    disabled={page === 1}
-                    className="p-2 rounded-lg bg-slate-900 border border-slate-800 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition"
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                    disabled={page >= totalPages}
-                    className="p-2 rounded-lg bg-slate-900 border border-slate-800 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition"
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
-                </div>
+          {/* Pagination */}
+          {!isLoading && totalPages > 1 && (
+            <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-[#696F79]">
+              <span>
+                Page {page} of {totalPages}
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="px-3 py-1.5 rounded-lg bg-[#F8F9FC] text-[#1E293B] hover:bg-slate-200 disabled:opacity-40 transition flex items-center gap-1"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>Previous</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                  className="px-3 py-1.5 rounded-lg bg-[#F8F9FC] text-[#1E293B] hover:bg-slate-200 disabled:opacity-40 transition flex items-center gap-1"
+                >
+                  <span>Next</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
               </div>
-            )}
-          </div>
-        )}
-      </main>
+            </div>
+          )}
+        </div>
+      </div>
 
-      <GenerateQuizModal
-        isOpen={isGenerateModalOpen}
-        onClose={() => setIsGenerateModalOpen(false)}
-      />
-
-      <CodeQuizModal
-        isOpen={isCodeQuizModalOpen}
-        onClose={() => setIsCodeQuizModalOpen(false)}
-      />
-    </div>
+      <CodeQuizModal isOpen={isCodeQuizModalOpen} onClose={() => setIsCodeQuizModalOpen(false)} />
+      <GenerateQuizModal isOpen={isGenerateModalOpen} onClose={() => setIsGenerateModalOpen(false)} />
+    </AppLayout>
   );
 }

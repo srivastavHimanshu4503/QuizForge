@@ -1,13 +1,29 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Navbar } from '../components/layout/Navbar';
+import { AppLayout } from '../components/layout/AppLayout';
 import { GenerateQuizModal } from '../components/quiz/GenerateQuizModal';
 import { PdfQuizModal } from '../components/quiz/PdfQuizModal';
 import { UrlQuizModal } from '../components/quiz/UrlQuizModal';
 import { ImageQuizModal } from '../components/quiz/ImageQuizModal';
 import { CodeQuizModal } from '../components/code-quiz/CodeQuizModal';
-import { Sparkles, ShieldCheck, Brain, History, ArrowRight, Code2, Cpu, GraduationCap, FileText, Globe, Image as ImageIcon } from 'lucide-react';
+import { apiClient } from '../api/client';
+import {
+  Sparkles,
+  Brain,
+  History,
+  ArrowRight,
+  Code2,
+  FileText,
+  Globe,
+  Image as ImageIcon,
+  Trophy,
+  Target,
+  Zap,
+  Award,
+  Play,
+  RotateCcw,
+} from 'lucide-react';
 
 interface ActiveDraft {
   attemptId: string;
@@ -23,15 +39,27 @@ interface ActiveCodeDraft {
   updatedAt: number;
 }
 
+interface ProviderStatus {
+  id: string;
+  name: string;
+  displayName: string;
+  defaultModel: string;
+  isAvailable: boolean;
+  description: string;
+}
+
 export function DashboardPage() {
   const { user } = useAuth();
+
   const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
   const [isUrlModalOpen, setIsUrlModalOpen] = useState(false);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [isCodeModalOpen, setIsCodeModalOpen] = useState(false);
+
   const [activeDraft, setActiveDraft] = useState<ActiveDraft | null>(null);
   const [activeCodeDraft, setActiveCodeDraft] = useState<ActiveCodeDraft | null>(null);
+  const [providers, setProviders] = useState<ProviderStatus[]>([]);
 
   useEffect(() => {
     try {
@@ -46,6 +74,21 @@ export function DashboardPage() {
     } catch {
       // safe
     }
+
+    // Fetch active LLM providers
+    apiClient
+      .get<{ providers: ProviderStatus[] }>('/api/llm/providers')
+      .then((res) => {
+        setProviders(res.providers || []);
+      })
+      .catch(() => {
+        // Fallback default list
+        setProviders([
+          { id: 'groq', name: 'groq', displayName: 'Groq (GPT-OSS-120B)', defaultModel: 'openai/gpt-oss-120b', isAvailable: true, description: 'Ultra-low latency' },
+          { id: 'gemini', name: 'gemini', displayName: 'Google Gemini', defaultModel: 'gemini-2.5-flash', isAvailable: true, description: 'Multimodal vision & reasoning' },
+          { id: 'nvidia', name: 'nvidia', displayName: 'NVIDIA NIM', defaultModel: 'meta/llama-3.3-70b-instruct', isAvailable: false, description: 'High-throughput enterprise' },
+        ]);
+      });
   }, []);
 
   const handleDiscardDraft = () => {
@@ -73,381 +116,489 @@ export function DashboardPage() {
     }
   };
 
+  const userInitials = user?.displayName
+    ? user.displayName
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2)
+    : 'QF';
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
-      <Navbar />
-
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <header className="mb-8">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold mb-3">
-            <ShieldCheck className="w-3.5 h-3.5" />
-            <span>Authenticated Session Active</span>
-          </div>
-          <h1 className="text-3xl font-extrabold text-white sm:text-4xl">
-            Welcome back, {user?.displayName}!
-          </h1>
-          <p className="mt-2 text-slate-400 text-sm max-w-2xl">
-            Generate topic-based MCQ quizzes or analyze public GitHub repositories with open-ended LLM-evaluated code reviews.
-          </p>
-        </header>
-
-        {/* Resilient MCQ In-Progress Draft Banner */}
-        {activeDraft && (
-          <div className="mb-6 p-5 rounded-2xl bg-indigo-950/40 border border-indigo-500/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl animate-in fade-in duration-200">
-            <div className="flex items-center gap-3.5">
-              <div className="p-3 rounded-xl bg-indigo-500/20 text-indigo-400 shrink-0">
-                <Sparkles className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-indigo-400">
-                    Unsaved MCQ Quiz in Progress
-                  </span>
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+    <AppLayout activeNav="dashboard">
+      <div className="flex flex-col xl:flex-row gap-6">
+        {/* ===================== CENTER MAIN REGION ===================== */}
+        <div className="flex-1 min-w-0 space-y-6">
+          {/* User Profile & Progress Hero Card (Dashboard.png Reference) */}
+          <div className="bg-white rounded-[20px] p-6 sm:p-7 shadow-[0_10px_30px_rgba(25,53,202,0.05)] border border-slate-100/80">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 mb-6">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#1935CA] to-[#38BDF8] flex items-center justify-center text-white text-2xl font-black shadow-md">
+                  {userInitials}
                 </div>
-                <p className="text-base font-bold text-white mt-0.5">
-                  {activeDraft.topic} ({activeDraft.totalQuestions} Questions)
-                </p>
-                <p className="text-xs text-slate-400">
-                  Preserved in browser storage — resume anytime without re-calling AI.
-                </p>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h1 className="text-xl sm:text-2xl font-extrabold text-[#1935CA] tracking-tight">
+                      {user?.displayName || 'Developer'}
+                    </h1>
+                    <span className="px-2.5 py-0.5 rounded-full bg-[#EEF2FF] text-[#1935CA] font-bold text-[11px] uppercase tracking-wider">
+                      {user?.role === 'teacher' ? 'Instructor' : 'Level 12'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#696F79] font-medium mt-1">
+                    Code Review Mastery • 72% Completed
+                  </p>
+                </div>
+              </div>
+
+              {/* Start Quiz Action */}
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsCodeModalOpen(true)}
+                  className="px-4 py-2.5 rounded-xl bg-[#EEF2FF] hover:bg-[#1935CA]/10 text-[#1935CA] font-bold text-xs transition flex items-center gap-1.5"
+                >
+                  <Code2 className="w-3.5 h-3.5" />
+                  <span>Review Repo</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsGenerateModalOpen(true)}
+                  className="px-5 py-2.5 rounded-xl bg-[#1935CA] hover:bg-[#142BA3] text-white font-bold text-xs shadow-[0_8px_20px_rgba(25,53,202,0.22)] transition flex items-center gap-1.5"
+                >
+                  <Play className="w-3.5 h-3.5 fill-white" />
+                  <span>Start Quiz</span>
+                </button>
               </div>
             </div>
-            <div className="flex items-center gap-3 self-end sm:self-auto shrink-0">
-              <button
-                type="button"
-                onClick={handleDiscardDraft}
-                className="px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-rose-400 hover:bg-rose-950/30 transition"
+
+            {/* Horizontal Mastery Progress Bar */}
+            <div className="w-full bg-[#F1F5F9] rounded-full h-2.5 overflow-hidden mb-6">
+              <div
+                className="bg-[#1935CA] h-2.5 rounded-full transition-all duration-500 shadow-sm"
+                style={{ width: '72%' }}
+              />
+            </div>
+
+            {/* 3 Square-Icon Stat Tiles (Dashboard.png Reference) */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+              <div className="p-4 rounded-xl bg-[#F8F9FC] flex items-center gap-3.5 border border-slate-100/60">
+                <div className="w-12 h-12 rounded-xl bg-white shadow-[0_4px_16px_rgba(15,23,42,0.05)] flex items-center justify-center text-[#1935CA] shrink-0">
+                  <Trophy className="w-6 h-6" />
+                </div>
+                <div>
+                  <span className="block text-xl font-extrabold text-[#1E293B] leading-tight">
+                    24
+                  </span>
+                  <span className="block text-xs font-semibold text-[#696F79]">
+                    Quizzes Passed
+                  </span>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-xl bg-[#F8F9FC] flex items-center gap-3.5 border border-slate-100/60">
+                <div className="w-12 h-12 rounded-xl bg-white shadow-[0_4px_16px_rgba(15,23,42,0.05)] flex items-center justify-center text-[#1935CA] shrink-0">
+                  <Target className="w-6 h-6" />
+                </div>
+                <div>
+                  <span className="block text-xl font-extrabold text-[#1E293B] leading-tight">
+                    8.8 / 10
+                  </span>
+                  <span className="block text-xs font-semibold text-[#696F79]">
+                    Avg Rubric Score
+                  </span>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-xl bg-[#F8F9FC] flex items-center gap-3.5 border border-slate-100/60">
+                <div className="w-12 h-12 rounded-xl bg-white shadow-[0_4px_16px_rgba(15,23,42,0.05)] flex items-center justify-center text-[#1935CA] shrink-0">
+                  <Sparkles className="w-6 h-6" />
+                </div>
+                <div>
+                  <span className="block text-xl font-extrabold text-[#1E293B] leading-tight">
+                    142
+                  </span>
+                  <span className="block text-xs font-semibold text-[#696F79]">
+                    Questions Graded
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Conditional In-Progress Code Review Recovery Banner */}
+          {activeCodeDraft && (
+            <div className="p-5 rounded-[20px] bg-[#EEF2FF] border border-[#1935CA]/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm animate-in fade-in">
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-xl bg-[#1935CA] text-white flex items-center justify-center shrink-0 shadow-md">
+                  <Code2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#1935CA]">
+                      Active Code Review Session
+                    </span>
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  </div>
+                  <h4 className="text-sm font-bold text-[#1E293B] mt-0.5">
+                    {activeCodeDraft.repoUrl.replace('https://github.com/', '')} ({activeCodeDraft.totalQuestions} Questions)
+                  </h4>
+                  <p className="text-xs text-[#696F79]">
+                    Your code answers are cached safely in local storage.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2.5 self-end sm:self-auto shrink-0">
+                <button
+                  type="button"
+                  onClick={handleDiscardCodeDraft}
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold text-[#696F79] hover:text-rose-600 transition"
+                >
+                  Discard
+                </button>
+                <Link
+                  to={`/code-quiz/${activeCodeDraft.attemptId}`}
+                  className="px-4 py-2 rounded-xl text-xs font-bold bg-[#1935CA] hover:bg-[#142BA3] text-white shadow-md transition flex items-center gap-1.5"
+                >
+                  <span>Resume Review</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+            </div>
+          )}
+
+          {/* Conditional In-Progress MCQ Recovery Banner */}
+          {activeDraft && (
+            <div className="p-5 rounded-[20px] bg-white border border-slate-200/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-[0_10px_30px_rgba(25,53,202,0.05)] animate-in fade-in">
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 text-white flex items-center justify-center shrink-0">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <div>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-600">
+                    Unsaved MCQ Quiz
+                  </span>
+                  <h4 className="text-sm font-bold text-[#1E293B] mt-0.5">
+                    {activeDraft.topic} ({activeDraft.totalQuestions} Questions)
+                  </h4>
+                  <p className="text-xs text-[#696F79]">
+                    Preserved locally — resume without re-calling AI.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2.5 self-end sm:self-auto shrink-0">
+                <button
+                  type="button"
+                  onClick={handleDiscardDraft}
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold text-[#696F79] hover:text-rose-600 transition"
+                >
+                  Discard
+                </button>
+                <Link
+                  to={`/quiz/${activeDraft.attemptId}`}
+                  className="px-4 py-2 rounded-xl text-xs font-bold bg-[#1935CA] hover:bg-[#142BA3] text-white shadow-md transition flex items-center gap-1.5"
+                >
+                  <span>Resume Quiz</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+            </div>
+          )}
+
+          {/* ===================== 3-CARD ASSESSMENT GRID (Dashboard.png Reference) ===================== */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-extrabold text-[#1935CA] tracking-tight">
+                Featured Assessments
+              </h2>
+              <span className="text-xs text-[#696F79] font-medium">
+                Choose an assessment mode to begin
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {/* Card 1: GitHub Code Review */}
+              <div
+                onClick={() => setIsCodeModalOpen(true)}
+                className="group relative h-64 rounded-[20px] overflow-hidden cursor-pointer shadow-[0_10px_30px_rgba(25,53,202,0.06)] hover:shadow-[0_16px_36px_rgba(25,53,202,0.12)] transition-all hover:-translate-y-1 bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#1935CA] p-5 flex flex-col justify-between"
               >
-                Discard
-              </button>
+                {/* Top-left pill badge */}
+                <div className="flex items-center justify-between z-10">
+                  <span className="px-3 py-1 rounded-full bg-white/90 backdrop-blur-md text-[#1935CA] text-xs font-bold shadow-sm">
+                    Multi-LLM AI
+                  </span>
+                  <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/80 group-hover:scale-110 transition-transform">
+                    <Code2 className="w-4 h-4" />
+                  </div>
+                </div>
+
+                {/* Decorative background visual */}
+                <div className="absolute inset-0 opacity-20 font-mono text-[10px] text-cyan-300 p-4 pointer-events-none select-none overflow-hidden">
+                  <code>{`async function reviewRepo(url) {\n  const tree = await github.getTree(url);\n  return ai.adversarialEval(tree);\n}`}</code>
+                </div>
+
+                {/* Frosted Bottom Title Overlay */}
+                <div className="relative z-10 bg-white/95 backdrop-blur-md rounded-2xl p-4 shadow-md flex items-center justify-between">
+                  <div>
+                    <h3 className="font-extrabold text-sm text-[#1E293B] group-hover:text-[#1935CA] transition-colors">
+                      GitHub Code Review
+                    </h3>
+                    <p className="text-[11px] text-[#696F79] font-medium mt-0.5">
+                      Adversarial line-by-line review
+                    </p>
+                  </div>
+                  <div className="w-8 h-8 rounded-xl bg-[#1935CA] text-white flex items-center justify-center shadow-md group-hover:scale-105 transition-transform">
+                    <ArrowRight className="w-4 h-4" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 2: Topic MCQ Quiz */}
+              <div
+                onClick={() => setIsGenerateModalOpen(true)}
+                className="group relative h-64 rounded-[20px] overflow-hidden cursor-pointer shadow-[0_10px_30px_rgba(25,53,202,0.06)] hover:shadow-[0_16px_36px_rgba(25,53,202,0.12)] transition-all hover:-translate-y-1 bg-gradient-to-br from-[#1935CA] via-[#2546F0] to-[#38BDF8] p-5 flex flex-col justify-between"
+              >
+                {/* Top-left pill badge */}
+                <div className="flex items-center justify-between z-10">
+                  <span className="px-3 py-1 rounded-full bg-white/90 backdrop-blur-md text-[#1935CA] text-xs font-bold shadow-sm">
+                    Timed MCQ
+                  </span>
+                  <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white group-hover:scale-110 transition-transform">
+                    <Sparkles className="w-4 h-4" />
+                  </div>
+                </div>
+
+                {/* Decorative background visual */}
+                <div className="absolute inset-0 flex items-center justify-center opacity-15 pointer-events-none select-none">
+                  <Brain className="w-32 h-32 text-white" />
+                </div>
+
+                {/* Frosted Bottom Title Overlay */}
+                <div className="relative z-10 bg-white/95 backdrop-blur-md rounded-2xl p-4 shadow-md flex items-center justify-between">
+                  <div>
+                    <h3 className="font-extrabold text-sm text-[#1E293B] group-hover:text-[#1935CA] transition-colors">
+                      Topic MCQ Quiz
+                    </h3>
+                    <p className="text-[11px] text-[#696F79] font-medium mt-0.5">
+                      Personalized AI questions & scoring
+                    </p>
+                  </div>
+                  <div className="w-8 h-8 rounded-xl bg-[#1935CA] text-white flex items-center justify-center shadow-md group-hover:scale-105 transition-transform">
+                    <ArrowRight className="w-4 h-4" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 3: Quiz History */}
               <Link
-                to={`/quiz/${activeDraft.attemptId}`}
-                className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 shadow-md shadow-indigo-600/20 transition flex items-center gap-2"
+                to="/history"
+                className="group relative h-64 rounded-[20px] overflow-hidden cursor-pointer shadow-[0_10px_30px_rgba(25,53,202,0.06)] hover:shadow-[0_16px_36px_rgba(25,53,202,0.12)] transition-all hover:-translate-y-1 bg-gradient-to-br from-indigo-900 via-indigo-700 to-[#1935CA] p-5 flex flex-col justify-between"
               >
-                <span>Resume Quiz</span>
-                <ArrowRight className="w-3.5 h-3.5" />
+                {/* Top-left pill badge */}
+                <div className="flex items-center justify-between z-10">
+                  <span className="px-3 py-1 rounded-full bg-white/90 backdrop-blur-md text-[#1935CA] text-xs font-bold shadow-sm">
+                    Review & Retake
+                  </span>
+                  <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white group-hover:scale-110 transition-transform">
+                    <History className="w-4 h-4" />
+                  </div>
+                </div>
+
+                {/* Decorative background visual */}
+                <div className="absolute inset-0 flex items-center justify-center opacity-15 pointer-events-none select-none">
+                  <RotateCcw className="w-32 h-32 text-white" />
+                </div>
+
+                {/* Frosted Bottom Title Overlay */}
+                <div className="relative z-10 bg-white/95 backdrop-blur-md rounded-2xl p-4 shadow-md flex items-center justify-between">
+                  <div>
+                    <h3 className="font-extrabold text-sm text-[#1E293B] group-hover:text-[#1935CA] transition-colors">
+                      Quiz History & Archive
+                    </h3>
+                    <p className="text-[11px] text-[#696F79] font-medium mt-0.5">
+                      Zero-AI retakes & performance logs
+                    </p>
+                  </div>
+                  <div className="w-8 h-8 rounded-xl bg-[#1935CA] text-white flex items-center justify-center shadow-md group-hover:scale-105 transition-transform">
+                    <ArrowRight className="w-4 h-4" />
+                  </div>
+                </div>
               </Link>
             </div>
           </div>
-        )}
 
-        {/* Resilient Code Review In-Progress Draft Banner */}
-        {activeCodeDraft && (
-          <div className="mb-8 p-5 rounded-2xl bg-amber-950/40 border border-amber-500/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl animate-in fade-in duration-200">
-            <div className="flex items-center gap-3.5">
-              <div className="p-3 rounded-xl bg-amber-500/20 text-amber-400 shrink-0">
-                <Code2 className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-amber-400">
-                    Unsaved Code Review in Progress
-                  </span>
-                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+          {/* Multi-Modal Ingestion Quick Strip */}
+          <div className="bg-white rounded-[20px] p-5 shadow-[0_10px_30px_rgba(25,53,202,0.05)] border border-slate-100/80">
+            <div className="flex items-center justify-between mb-3.5">
+              <h3 className="text-xs font-bold text-[#1E293B] uppercase tracking-wider">
+                Multi-Modal Ingestion Engines
+              </h3>
+              <span className="text-[11px] font-semibold text-[#1935CA]">
+                Async Queue Supported
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <button
+                type="button"
+                onClick={() => setIsPdfModalOpen(true)}
+                className="flex items-center gap-3 p-3 rounded-xl bg-[#F8F9FC] hover:bg-[#EEF2FF] border border-slate-100 hover:border-[#1935CA]/30 text-left transition group"
+              >
+                <div className="w-9 h-9 rounded-lg bg-white shadow-sm flex items-center justify-center text-rose-600 group-hover:scale-105 transition">
+                  <FileText className="w-4 h-4" />
                 </div>
-                <p className="text-base font-bold text-white mt-0.5">
-                  {activeCodeDraft.repoUrl.replace('https://github.com/', '')} ({activeCodeDraft.totalQuestions} Questions)
-                </p>
-                <p className="text-xs text-slate-400">
-                  Code answers and evaluations safely cached locally.
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 self-end sm:self-auto shrink-0">
-              <button
-                type="button"
-                onClick={handleDiscardCodeDraft}
-                className="px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-rose-400 hover:bg-rose-950/30 transition"
-              >
-                Discard
+                <div>
+                  <h4 className="text-xs font-bold text-[#1E293B] group-hover:text-[#1935CA] transition">
+                    PDF Document
+                  </h4>
+                  <p className="text-[10px] text-[#696F79]">Notes & Slides</p>
+                </div>
               </button>
-              <Link
-                to={`/code-quiz/${activeCodeDraft.attemptId}`}
-                className="px-4 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-md shadow-amber-500/20 transition flex items-center gap-2"
-              >
-                <span>Resume Code Review</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-          </div>
-        )}
 
-        {/* 6-Card Interactive Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-          {/* Card 1: GitHub Code Review Quiz (Highlighted) */}
-          <div
-            onClick={() => setIsCodeModalOpen(true)}
-            className="group bg-gradient-to-b from-slate-900 to-slate-900/90 border border-amber-500/30 hover:border-amber-400 rounded-3xl p-5 transition-all duration-200 cursor-pointer flex flex-col justify-between shadow-xl hover:shadow-amber-500/10 hover:-translate-y-0.5 relative overflow-hidden"
-          >
-            <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-2xl pointer-events-none" />
-            <div>
-              <div className="w-11 h-11 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                <Code2 className="w-5 h-5" />
-              </div>
-              <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 text-[10px] font-bold uppercase tracking-wider mb-2">
-                <Sparkles className="w-3 h-3" />
-                <span>Code Review</span>
-              </div>
-              <h2 className="text-lg font-bold text-white mb-1.5 group-hover:text-amber-300 transition-colors">
-                GitHub Review
-              </h2>
-              <p className="text-xs text-slate-400 mb-5 leading-relaxed">
-                Analyze public GitHub repositories. Tests line-by-line understanding with open-ended LLM evaluation.
-              </p>
-            </div>
-            <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
-              <span className="text-[11px] text-amber-400 font-semibold flex items-center gap-1">
-                <Cpu className="w-3 h-3" />
-                Multi-LLM
-              </span>
               <button
                 type="button"
-                className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-950 bg-amber-500 group-hover:bg-amber-400 px-3 py-1.5 rounded-xl shadow-md transition"
+                onClick={() => setIsUrlModalOpen(true)}
+                className="flex items-center gap-3 p-3 rounded-xl bg-[#F8F9FC] hover:bg-[#EEF2FF] border border-slate-100 hover:border-[#1935CA]/30 text-left transition group"
               >
-                <span>Review</span>
-                <ArrowRight className="w-3 h-3" />
+                <div className="w-9 h-9 rounded-lg bg-white shadow-sm flex items-center justify-center text-teal-600 group-hover:scale-105 transition">
+                  <Globe className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-[#1E293B] group-hover:text-[#1935CA] transition">
+                    URL Article
+                  </h4>
+                  <p className="text-[10px] text-[#696F79]">SSRF Guarded</p>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsImageModalOpen(true)}
+                className="flex items-center gap-3 p-3 rounded-xl bg-[#F8F9FC] hover:bg-[#EEF2FF] border border-slate-100 hover:border-[#1935CA]/30 text-left transition group"
+              >
+                <div className="w-9 h-9 rounded-lg bg-white shadow-sm flex items-center justify-center text-indigo-600 group-hover:scale-105 transition">
+                  <ImageIcon className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-[#1E293B] group-hover:text-[#1935CA] transition">
+                    Image & Diagram
+                  </h4>
+                  <p className="text-[10px] text-[#696F79]">Gemini 2.5 Vision</p>
+                </div>
               </button>
             </div>
           </div>
-
-          {/* Card 2: PDF Document to Quiz */}
-          <div
-            onClick={() => setIsPdfModalOpen(true)}
-            className="group bg-gradient-to-b from-slate-900 to-slate-900/90 border border-rose-500/30 hover:border-rose-400 rounded-3xl p-5 transition-all duration-200 cursor-pointer flex flex-col justify-between shadow-xl hover:shadow-rose-500/10 hover:-translate-y-0.5 relative overflow-hidden"
-          >
-            <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/5 rounded-full blur-2xl pointer-events-none" />
-            <div>
-              <div className="w-11 h-11 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                <FileText className="w-5 h-5" />
-              </div>
-              <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-300 text-[10px] font-bold uppercase tracking-wider mb-2">
-                <Sparkles className="w-3 h-3" />
-                <span>PDF Ingest</span>
-              </div>
-              <h2 className="text-lg font-bold text-white mb-1.5 group-hover:text-rose-300 transition-colors">
-                PDF to Quiz
-              </h2>
-              <p className="text-xs text-slate-400 mb-5 leading-relaxed">
-                Upload notes, textbook chapters, or slides (up to 15 MB). Extracts text with live async progress.
-              </p>
-            </div>
-            <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
-              <span className="text-[11px] text-rose-400 font-semibold flex items-center gap-1">
-                <Cpu className="w-3 h-3" />
-                Async Ingest
-              </span>
-              <button
-                type="button"
-                className="inline-flex items-center gap-1 text-[11px] font-bold text-white bg-rose-600 group-hover:bg-rose-500 px-3 py-1.5 rounded-xl shadow-md transition"
-              >
-                <span>Upload</span>
-                <ArrowRight className="w-3 h-3" />
-              </button>
-            </div>
-          </div>
-
-          {/* Card 3: URL Web Page to Quiz */}
-          <div
-            onClick={() => setIsUrlModalOpen(true)}
-            className="group bg-gradient-to-b from-slate-900 to-slate-900/90 border border-teal-500/30 hover:border-teal-400 rounded-3xl p-5 transition-all duration-200 cursor-pointer flex flex-col justify-between shadow-xl hover:shadow-teal-500/10 hover:-translate-y-0.5 relative overflow-hidden"
-          >
-            <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/5 rounded-full blur-2xl pointer-events-none" />
-            <div>
-              <div className="w-11 h-11 rounded-2xl bg-teal-500/10 border border-teal-500/20 text-teal-400 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                <Globe className="w-5 h-5" />
-              </div>
-              <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-300 text-[10px] font-bold uppercase tracking-wider mb-2">
-                <Sparkles className="w-3 h-3" />
-                <span>URL Ingest</span>
-              </div>
-              <h2 className="text-lg font-bold text-white mb-1.5 group-hover:text-teal-300 transition-colors">
-                URL to Quiz
-              </h2>
-              <p className="text-xs text-slate-400 mb-5 leading-relaxed">
-                Provide any article or documentation URL. SSRF-defended with automatic article text extraction.
-              </p>
-            </div>
-            <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
-              <span className="text-[11px] text-teal-400 font-semibold flex items-center gap-1">
-                <ShieldCheck className="w-3 h-3" />
-                SSRF-Safe
-              </span>
-              <button
-                type="button"
-                className="inline-flex items-center gap-1 text-[11px] font-bold text-white bg-teal-600 group-hover:bg-teal-500 px-3 py-1.5 rounded-xl shadow-md transition"
-              >
-                <span>Add URL</span>
-                <ArrowRight className="w-3 h-3" />
-              </button>
-            </div>
-          </div>
-
-          {/* Card 4: Image to Quiz (Vision AI) */}
-          <div
-            onClick={() => setIsImageModalOpen(true)}
-            className="group bg-gradient-to-b from-slate-900 to-slate-900/90 border border-violet-500/30 hover:border-violet-400 rounded-3xl p-5 transition-all duration-200 cursor-pointer flex flex-col justify-between shadow-xl hover:shadow-violet-500/10 hover:-translate-y-0.5 relative overflow-hidden"
-          >
-            <div className="absolute top-0 right-0 w-32 h-32 bg-violet-500/5 rounded-full blur-2xl pointer-events-none" />
-            <div>
-              <div className="w-11 h-11 rounded-2xl bg-violet-500/10 border border-violet-500/20 text-violet-400 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                <ImageIcon className="w-5 h-5" />
-              </div>
-              <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-300 text-[10px] font-bold uppercase tracking-wider mb-2">
-                <Sparkles className="w-3 h-3" />
-                <span>Vision AI</span>
-              </div>
-              <h2 className="text-lg font-bold text-white mb-1.5 group-hover:text-violet-300 transition-colors">
-                Image to Quiz
-              </h2>
-              <p className="text-xs text-slate-400 mb-5 leading-relaxed">
-                Upload architecture diagrams, whiteboard notes, or slides. Multimodal AI extracts visual concepts into quizzes.
-              </p>
-            </div>
-            <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
-              <span className="text-[11px] text-violet-400 font-semibold flex items-center gap-1">
-                <Cpu className="w-3 h-3" />
-                Multimodal
-              </span>
-              <button
-                type="button"
-                className="inline-flex items-center gap-1 text-[11px] font-bold text-white bg-violet-600 group-hover:bg-violet-500 px-3 py-1.5 rounded-xl shadow-md transition"
-              >
-                <span>Upload</span>
-                <ArrowRight className="w-3 h-3" />
-              </button>
-            </div>
-          </div>
-
-          {/* Card 4: Topic MCQ Quiz */}
-          <div
-            onClick={() => setIsGenerateModalOpen(true)}
-            className="group bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-7 hover:border-indigo-500/60 transition-all duration-200 cursor-pointer flex flex-col justify-between shadow-xl hover:shadow-indigo-500/5 hover:-translate-y-0.5"
-          >
-            <div>
-              <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <Brain className="w-6 h-6" />
-              </div>
-              <h2 className="text-xl font-bold text-white mb-2 group-hover:text-indigo-300 transition-colors">
-                Topic MCQ Quiz
-              </h2>
-              <p className="text-xs text-slate-400 mb-6 leading-relaxed">
-                Choose any technical topic, question count (3 to 20 MCQs), and difficulty. Generates custom multiple-choice questions with Fisher-Yates retakes.
-              </p>
-            </div>
-            <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
-              <span className="text-xs text-indigo-400 font-semibold flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5" />
-                Gemini 2.5 Flash Engine
-              </span>
-              <button
-                type="button"
-                className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-indigo-600 group-hover:bg-indigo-500 px-3.5 py-2 rounded-xl shadow-md shadow-indigo-600/20 transition"
-              >
-                <span>Generate</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-
-          {/* Card 3: Classrooms & Assigned Tasks */}
-          <Link
-            to={user?.role === 'teacher' ? '/classrooms' : '/assignments'}
-            className="group bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-7 hover:border-purple-500/60 transition-all duration-200 cursor-pointer flex flex-col justify-between shadow-xl hover:shadow-purple-500/5 hover:-translate-y-0.5"
-          >
-            <div>
-              <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <GraduationCap className="w-6 h-6" />
-              </div>
-              <h2 className="text-xl font-bold text-white mb-2 group-hover:text-purple-300 transition-colors">
-                {user?.role === 'teacher' ? 'Classrooms Studio' : 'Assigned Quizzes'}
-              </h2>
-              <p className="text-xs text-slate-400 mb-6 leading-relaxed">
-                {user?.role === 'teacher'
-                  ? 'Create student cohorts, generate join codes, assign quizzes with deadlines, and view gradebook analytics.'
-                  : 'View authorized tasks assigned by instructors, attempt quizzes before due dates, and track your best scores.'}
-              </p>
-            </div>
-            <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
-              <span className="text-xs text-purple-400 font-semibold">
-                {user?.role === 'teacher' ? 'Manage Classrooms' : 'View Tasks'}
-              </span>
-              <div className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-slate-800 group-hover:bg-purple-600 px-3.5 py-2 rounded-xl transition">
-                <span>Open</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </div>
-            </div>
-          </Link>
-
-          {/* Card 4: Past Quizzes & History */}
-          <Link
-            to="/history"
-            className="group bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-7 hover:border-cyan-500/60 transition-all duration-200 cursor-pointer flex flex-col justify-between shadow-xl hover:shadow-cyan-500/5 hover:-translate-y-0.5"
-          >
-            <div>
-              <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <History className="w-6 h-6" />
-              </div>
-              <h2 className="text-xl font-bold text-white mb-2 group-hover:text-cyan-300 transition-colors">
-                Quiz History & Review
-              </h2>
-              <p className="text-xs text-slate-400 mb-6 leading-relaxed">
-                Review your completed quiz scores, examine detailed answer explanations, and retake previous quizzes with freshly shuffled sequences.
-              </p>
-            </div>
-            <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
-              <span className="text-xs text-cyan-400 font-semibold">
-                History & Review
-              </span>
-              <div className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-slate-800 group-hover:bg-cyan-600 px-3.5 py-2 rounded-xl transition">
-                <span>View History</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </div>
-            </div>
-          </Link>
         </div>
 
-        {/* Security & Multi-tenancy status banner */}
-        <div className="mt-8 p-4 rounded-2xl bg-slate-900/60 border border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-400">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-indigo-400 shrink-0" />
-            <span>
-              Multi-Tenant Data Isolation Active: User ID: <code className="text-slate-300 font-mono">{user?.id}</code>
-            </span>
+        {/* ===================== RIGHT RAIL REGION (Dashboard.png Reference) ===================== */}
+        <div className="w-full xl:w-[290px] shrink-0 space-y-6">
+          <div className="bg-white rounded-[20px] p-5 shadow-[0_10px_30px_rgba(25,53,202,0.05)] border border-slate-100/80 space-y-6">
+            {/* Live LLM Providers (Replaces 'Other Users Online') */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-xs font-bold text-[#1E293B] uppercase tracking-wider">
+                  Active LLM Providers
+                </h3>
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              </div>
+
+              <div className="space-y-2.5">
+                {providers.map((p) => (
+                  <div
+                    key={p.id}
+                    className="p-3 rounded-xl bg-[#F8F9FC] flex items-center justify-between text-xs"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                      <div>
+                        <span className="font-bold text-[#1E293B] block leading-tight">
+                          {p.displayName}
+                        </span>
+                        <span className="text-[10px] text-[#696F79] font-mono block">
+                          {p.defaultModel.replace('openai/', '').replace('meta/', '')}
+                        </span>
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-bold text-[#1935CA] bg-[#EEF2FF] px-2 py-0.5 rounded-full">
+                      Ready
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Mastery Badges (Replaces 'Achievements') */}
+            <div className="pt-4 border-t border-slate-100">
+              <h3 className="text-xs font-bold text-[#1E293B] uppercase tracking-wider mb-3">
+                Mastery Badges
+              </h3>
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div className="p-2.5 rounded-xl bg-[#F8F9FC] flex flex-col items-center">
+                  <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mb-1 text-xs">
+                    <Trophy className="w-4 h-4" />
+                  </div>
+                  <span className="text-[10px] font-bold text-[#1E293B] leading-tight">
+                    Deep Review
+                  </span>
+                </div>
+
+                <div className="p-2.5 rounded-xl bg-[#F8F9FC] flex flex-col items-center">
+                  <div className="w-8 h-8 rounded-full bg-blue-100 text-[#1935CA] flex items-center justify-center mb-1 text-xs">
+                    <Zap className="w-4 h-4" />
+                  </div>
+                  <span className="text-[10px] font-bold text-[#1E293B] leading-tight">
+                    Zero Misses
+                  </span>
+                </div>
+
+                <div className="p-2.5 rounded-xl bg-[#F8F9FC] flex flex-col items-center">
+                  <div className="w-8 h-8 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mb-1 text-xs">
+                    <Award className="w-4 h-4" />
+                  </div>
+                  <span className="text-[10px] font-bold text-[#1E293B] leading-tight">
+                    7-Day Streak
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Actions / Reminders */}
+            <div className="pt-4 border-t border-slate-100">
+              <h3 className="text-xs font-bold text-[#1E293B] uppercase tracking-wider mb-3">
+                Quick Retakes & Links
+              </h3>
+              <div className="space-y-2 text-xs">
+                <Link
+                  to="/history"
+                  className="p-2.5 rounded-xl bg-[#F8F9FC] hover:bg-[#EEF2FF] flex items-center justify-between text-[#1E293B] font-semibold transition group"
+                >
+                  <span className="group-hover:text-[#1935CA] transition">
+                    View Completed Attempts
+                  </span>
+                  <ArrowRight className="w-3.5 h-3.5 text-[#696F79] group-hover:text-[#1935CA]" />
+                </Link>
+                <Link
+                  to="/classrooms"
+                  className="p-2.5 rounded-xl bg-[#F8F9FC] hover:bg-[#EEF2FF] flex items-center justify-between text-[#1E293B] font-semibold transition group"
+                >
+                  <span className="group-hover:text-[#1935CA] transition">
+                    Manage Classrooms
+                  </span>
+                  <ArrowRight className="w-3.5 h-3.5 text-[#696F79] group-hover:text-[#1935CA]" />
+                </Link>
+              </div>
+            </div>
           </div>
-          <span className="text-emerald-400 font-medium">HTTP-Only Cookie Authenticated</span>
         </div>
-      </main>
+      </div>
 
-      {/* MCQ Generation Modal */}
-      <GenerateQuizModal
-        isOpen={isGenerateModalOpen}
-        onClose={() => setIsGenerateModalOpen(false)}
-      />
-
-      {/* Code Review Quiz Generation Modal */}
-      <CodeQuizModal
-        isOpen={isCodeModalOpen}
-        onClose={() => setIsCodeModalOpen(false)}
-      />
-
-      {/* PDF Document to Quiz Modal */}
-      <PdfQuizModal
-        isOpen={isPdfModalOpen}
-        onClose={() => setIsPdfModalOpen(false)}
-      />
-
-      {/* URL / Web Page to Quiz Modal */}
-      <UrlQuizModal
-        isOpen={isUrlModalOpen}
-        onClose={() => setIsUrlModalOpen(false)}
-      />
-
-      {/* Image / Vision Document to Quiz Modal */}
-      <ImageQuizModal
-        isOpen={isImageModalOpen}
-        onClose={() => setIsImageModalOpen(false)}
-      />
-    </div>
+      {/* Modals */}
+      <CodeQuizModal isOpen={isCodeModalOpen} onClose={() => setIsCodeModalOpen(false)} />
+      <GenerateQuizModal isOpen={isGenerateModalOpen} onClose={() => setIsGenerateModalOpen(false)} />
+      <PdfQuizModal isOpen={isPdfModalOpen} onClose={() => setIsPdfModalOpen(false)} />
+      <UrlQuizModal isOpen={isUrlModalOpen} onClose={() => setIsUrlModalOpen(false)} />
+      <ImageQuizModal isOpen={isImageModalOpen} onClose={() => setIsImageModalOpen(false)} />
+    </AppLayout>
   );
 }

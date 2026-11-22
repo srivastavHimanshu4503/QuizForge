@@ -58,34 +58,27 @@ export function PdfQuizModal({ isOpen, onClose }: PdfQuizModalProps) {
         .then((data) => {
           setProviders(data.providers);
           const firstAvail = data.providers.find((p) => p.isAvailable);
-          if (firstAvail) {
-            setProvider(firstAvail.id);
-          }
+          if (firstAvail) setProvider(firstAvail.id);
         })
-        .catch(() => {
-          // ignore provider fetch failure
-        });
+        .catch(() => {});
     }
-
     return () => {
-      if (pollingTimerRef.current) {
-        clearInterval(pollingTimerRef.current);
-      }
+      if (pollingTimerRef.current) clearInterval(pollingTimerRef.current);
     };
   }, [isOpen]);
 
   if (!isOpen) return null;
 
   const handleFileSelect = (selectedFile: File) => {
-    setError(null);
-    if (!selectedFile.name.toLowerCase().endsWith('.pdf')) {
-      setError('Only PDF documents (.pdf) are supported.');
+    if (selectedFile.type !== 'application/pdf') {
+      setError('Please upload a valid PDF document.');
       return;
     }
     if (selectedFile.size > 15 * 1024 * 1024) {
-      setError('File size exceeds the 15 MB limit.');
+      setError('File size must be within 15 MB.');
       return;
     }
+    setError(null);
     setFile(selectedFile);
     if (!topic.trim()) {
       setTopic(selectedFile.name.replace(/\.pdf$/i, ''));
@@ -165,91 +158,89 @@ export function PdfQuizModal({ isOpen, onClose }: PdfQuizModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="relative w-full max-w-xl bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="relative w-full max-w-xl bg-white border border-slate-100 rounded-[24px] shadow-2xl p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
         <button
           type="button"
           onClick={onClose}
           disabled={isUploading}
-          className="absolute top-6 right-6 p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition disabled:opacity-50"
+          className="absolute top-6 right-6 p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition disabled:opacity-50"
         >
           <X className="w-5 h-5" />
         </button>
 
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-3 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400">
+        <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
+          <div className="p-3 rounded-2xl bg-[#EEF2FF] text-[#1935CA]">
             <FileText className="w-6 h-6" />
           </div>
           <div>
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-300 text-[11px] font-bold uppercase tracking-wider mb-1">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#EEF2FF] text-[#1935CA] text-[11px] font-bold uppercase tracking-wider mb-1">
               <Sparkles className="w-3 h-3" />
               <span>Multi-Source Ingestion</span>
             </div>
-            <h2 className="text-xl font-bold text-white">PDF Document to Quiz</h2>
+            <h2 className="text-xl font-extrabold text-[#1E293B]">PDF Document to Quiz</h2>
           </div>
         </div>
 
         {error && (
-          <div className="mb-6 p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-            <span className="text-sm font-medium">{error}</span>
+          <div className="mb-6 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5 text-rose-600" />
+            <span className="text-xs font-semibold">{error}</span>
           </div>
         )}
 
         {isUploading || activeJob ? (
-          /* Live Job Tracking Stepper */
           <div className="py-8 space-y-6 text-center animate-in fade-in duration-300">
             <div className="relative w-20 h-20 mx-auto flex items-center justify-center">
               {activeJob?.status === 'completed' ? (
-                <div className="w-16 h-16 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center animate-bounce">
+                <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center animate-bounce">
                   <CheckCircle2 className="w-8 h-8" />
                 </div>
               ) : (
                 <>
-                  <div className="absolute inset-0 rounded-full border-4 border-rose-500/20 animate-pulse" />
-                  <Loader2 className="w-10 h-10 text-rose-500 animate-spin" />
+                  <div className="absolute inset-0 rounded-full border-4 border-[#1935CA]/20 animate-pulse" />
+                  <Loader2 className="w-10 h-10 text-[#1935CA] animate-spin" />
                 </>
               )}
             </div>
 
             <div>
-              <h3 className="text-lg font-bold text-white">
+              <h3 className="text-lg font-bold text-[#1E293B]">
                 {activeJob?.status === 'completed'
                   ? 'Assessment Ready!'
                   : 'Processing PDF Document...'}
               </h3>
-              <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+              <p className="text-xs text-[#696F79] mt-1 max-w-sm mx-auto font-medium">
                 {activeJob?.message || 'Extracting text and synthesizing grounded questions...'}
               </p>
             </div>
 
             {/* Progress Bar */}
             <div className="w-full max-w-md mx-auto space-y-2">
-              <div className="flex justify-between text-xs font-semibold text-slate-400">
+              <div className="flex justify-between text-xs font-bold text-[#696F79]">
                 <span className="capitalize">{activeJob?.stage?.replace('_', ' ') || 'Queued'}</span>
                 <span>{activeJob?.progress ?? 5}%</span>
               </div>
-              <div className="h-2.5 w-full bg-slate-800 rounded-full overflow-hidden p-0.5 border border-slate-700/50">
+              <div className="h-2.5 w-full bg-[#EEF2FF] rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-rose-500 via-pink-500 to-indigo-500 rounded-full transition-all duration-500"
+                  className="h-full bg-gradient-to-r from-[#1935CA] to-[#38BDF8] rounded-full transition-all duration-500"
                   style={{ width: `${Math.max(5, activeJob?.progress ?? 5)}%` }}
                 />
               </div>
             </div>
 
             {activeJob?.status === 'completed' && (
-              <p className="text-xs text-emerald-400 font-semibold animate-pulse">
+              <p className="text-xs text-emerald-600 font-bold animate-pulse">
                 Redirecting to assessment room...
               </p>
             )}
           </div>
         ) : (
-          /* Configuration & File Form */
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-5">
             {/* File Dropzone */}
             <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                Document Upload (Max 15 MB)
+              <label className="block text-xs font-bold text-[#1E293B] mb-1.5">
+                Document Upload (Max 15 MB) *
               </label>
               <div
                 onDragOver={(e) => {
@@ -261,10 +252,10 @@ export function PdfQuizModal({ isOpen, onClose }: PdfQuizModalProps) {
                 onClick={() => fileInputRef.current?.click()}
                 className={`border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all ${
                   isDragOver
-                    ? 'border-rose-500 bg-rose-500/10'
+                    ? 'border-[#1935CA] bg-[#EEF2FF]/60'
                     : file
-                    ? 'border-rose-500/50 bg-rose-500/5'
-                    : 'border-slate-800 hover:border-slate-700 bg-slate-950/40'
+                    ? 'border-[#1935CA]/60 bg-[#EEF2FF]/30'
+                    : 'border-slate-200 hover:border-[#1935CA]/50 bg-[#F8F9FC]'
                 }`}
               >
                 <input
@@ -282,12 +273,12 @@ export function PdfQuizModal({ isOpen, onClose }: PdfQuizModalProps) {
                 {file ? (
                   <div className="flex items-center justify-between gap-3 text-left">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="p-3 rounded-xl bg-rose-500/20 text-rose-400 shrink-0">
+                      <div className="p-3 rounded-xl bg-[#EEF2FF] text-[#1935CA] shrink-0">
                         <FileText className="w-5 h-5" />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-bold text-white truncate">{file.name}</p>
-                        <p className="text-xs text-slate-400">
+                        <p className="text-sm font-bold text-[#1E293B] truncate">{file.name}</p>
+                        <p className="text-xs text-[#696F79]">
                           {(file.size / (1024 * 1024)).toFixed(2)} MB • PDF Verified
                         </p>
                       </div>
@@ -298,20 +289,20 @@ export function PdfQuizModal({ isOpen, onClose }: PdfQuizModalProps) {
                         e.stopPropagation();
                         setFile(null);
                       }}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition shrink-0"
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-slate-100 transition shrink-0"
                     >
                       <X className="w-4 h-4" />
                     </button>
                   </div>
                 ) : (
                   <div>
-                    <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center mx-auto mb-3">
+                    <div className="w-12 h-12 rounded-2xl bg-[#EEF2FF] text-[#1935CA] flex items-center justify-center mx-auto mb-3">
                       <FileUp className="w-6 h-6" />
                     </div>
-                    <p className="text-sm font-semibold text-white">
+                    <p className="text-sm font-bold text-[#1E293B]">
                       Click to browse or drop your PDF here
                     </p>
-                    <p className="text-xs text-slate-400 mt-1">
+                    <p className="text-xs text-[#696F79] mt-1 font-medium">
                       Lecture slides, research articles, book chapters, syllabi
                     </p>
                   </div>
@@ -321,7 +312,7 @@ export function PdfQuizModal({ isOpen, onClose }: PdfQuizModalProps) {
 
             {/* Topic Override */}
             <div>
-              <label htmlFor="pdf-topic" className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+              <label htmlFor="pdf-topic" className="block text-xs font-bold text-[#1E293B] mb-1.5">
                 Quiz Title / Topic Name
               </label>
               <input
@@ -330,13 +321,13 @@ export function PdfQuizModal({ isOpen, onClose }: PdfQuizModalProps) {
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
                 placeholder="e.g. Distributed Consensus in Raft"
-                className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 text-sm text-white placeholder-slate-600 transition outline-none"
+                className="w-full px-4 py-3 rounded-xl bg-[#F8F9FC] border border-slate-200/80 focus:ring-2 focus:ring-[#1935CA] focus:bg-white text-sm text-[#1E293B] placeholder-[#94A3B8] transition outline-none font-medium"
               />
             </div>
 
             {/* Question Count Selector */}
             <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+              <label className="block text-xs font-bold text-[#1E293B] mb-1.5">
                 Number of Questions
               </label>
               <div className="grid grid-cols-4 gap-2">
@@ -347,8 +338,8 @@ export function PdfQuizModal({ isOpen, onClose }: PdfQuizModalProps) {
                     onClick={() => setQuestionCount(count)}
                     className={`py-2 rounded-xl text-xs font-bold border transition ${
                       questionCount === count
-                        ? 'bg-rose-500/20 border-rose-500 text-rose-300'
-                        : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
+                        ? 'bg-[#1935CA] text-white border-[#1935CA] shadow-sm'
+                        : 'bg-[#F8F9FC] border-slate-200/80 text-[#696F79] hover:bg-slate-100 hover:text-[#1E293B]'
                     }`}
                   >
                     {count} Questions
@@ -359,7 +350,7 @@ export function PdfQuizModal({ isOpen, onClose }: PdfQuizModalProps) {
 
             {/* Difficulty Selector */}
             <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+              <label className="block text-xs font-bold text-[#1E293B] mb-1.5">
                 Difficulty
               </label>
               <div className="grid grid-cols-2 gap-2">
@@ -370,18 +361,18 @@ export function PdfQuizModal({ isOpen, onClose }: PdfQuizModalProps) {
                     onClick={() => setDifficulty(diff.id)}
                     className={`p-3 text-left rounded-xl border transition ${
                       difficulty === diff.id
-                        ? 'bg-rose-500/10 border-rose-500'
-                        : 'bg-slate-950 border-slate-800 hover:border-slate-700'
+                        ? 'bg-[#EEF2FF] border-[#1935CA] ring-1 ring-[#1935CA]'
+                        : 'bg-[#F8F9FC] border-slate-200/80 hover:bg-slate-100'
                     }`}
                   >
                     <span
                       className={`block text-xs font-bold ${
-                        difficulty === diff.id ? 'text-rose-300' : 'text-slate-300'
+                        difficulty === diff.id ? 'text-[#1935CA]' : 'text-[#1E293B]'
                       }`}
                     >
                       {diff.label}
                     </span>
-                    <span className="block text-[11px] text-slate-500 mt-0.5">{diff.desc}</span>
+                    <span className="block text-[11px] text-[#696F79] mt-0.5">{diff.desc}</span>
                   </button>
                 ))}
               </div>
@@ -390,8 +381,8 @@ export function PdfQuizModal({ isOpen, onClose }: PdfQuizModalProps) {
             {/* AI Provider Selector */}
             {providers.length > 0 && (
               <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                  <Cpu className="w-3.5 h-3.5 text-rose-400" />
+                <label className="block text-xs font-bold text-[#1E293B] mb-1.5 flex items-center gap-1.5">
+                  <Cpu className="w-3.5 h-3.5 text-[#1935CA]" />
                   <span>Synthesizing AI Engine</span>
                 </label>
                 <div className="grid grid-cols-3 gap-2">
@@ -403,14 +394,16 @@ export function PdfQuizModal({ isOpen, onClose }: PdfQuizModalProps) {
                       onClick={() => setProvider(p.id)}
                       className={`p-2.5 text-left rounded-xl border transition ${
                         provider === p.id
-                          ? 'bg-rose-500/20 border-rose-500 text-rose-300'
+                          ? 'bg-[#EEF2FF] border-[#1935CA] ring-2 ring-[#1935CA]'
                           : p.isAvailable
-                          ? 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
-                          : 'bg-slate-950/40 border-slate-800/40 text-slate-600 opacity-50 cursor-not-allowed'
+                          ? 'bg-[#F8F9FC] border-slate-200/80 text-[#1E293B] hover:bg-slate-100'
+                          : 'bg-slate-100 border-slate-200 text-slate-400 opacity-50 cursor-not-allowed'
                       }`}
                     >
-                      <span className="block text-xs font-bold truncate">{p.displayName}</span>
-                      <span className="block text-[10px] text-slate-500">
+                      <span className={`block text-xs font-bold truncate ${provider === p.id ? 'text-[#1935CA]' : 'text-[#1E293B]'}`}>
+                        {p.displayName}
+                      </span>
+                      <span className="block text-[10px] text-[#696F79]">
                         {p.isAvailable ? 'Ready' : 'Not configured'}
                       </span>
                     </button>
@@ -423,7 +416,7 @@ export function PdfQuizModal({ isOpen, onClose }: PdfQuizModalProps) {
             <button
               type="submit"
               disabled={!file}
-              className="w-full py-3.5 rounded-2xl bg-rose-600 hover:bg-rose-500 disabled:opacity-50 disabled:hover:bg-rose-600 text-white font-bold text-sm shadow-xl shadow-rose-600/20 transition flex items-center justify-center gap-2"
+              className="w-full py-3.5 rounded-xl bg-[#1935CA] hover:bg-[#142BA3] disabled:opacity-50 text-white font-bold text-sm shadow-xl shadow-[#1935CA]/20 transition flex items-center justify-center gap-2"
             >
               <span>Generate Assessment from PDF</span>
               <ArrowRight className="w-4 h-4" />

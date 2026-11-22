@@ -2,10 +2,9 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { apiClient, ApiError } from '../api/client';
 import { ActiveCodeAttempt, AnswerEvaluation } from '@quiz-forge/shared';
+import { AppLayout } from '../components/layout/AppLayout';
 import {
-  Code2,
   Home,
-  CheckCircle2,
   AlertCircle,
   Loader2,
   Sparkles,
@@ -13,9 +12,8 @@ import {
   ArrowRight,
   Send,
   FileCode,
-  Check,
-  X,
-  HelpCircle,
+  ChevronRight,
+  Award,
 } from 'lucide-react';
 
 export function CodeQuizPlayerPage() {
@@ -43,6 +41,8 @@ export function CodeQuizPlayerPage() {
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
+  // CRITICAL RATE-LIMIT REGRESSION GUARD:
+  // attemptRef holds current attempt without causing useCallback to re-trigger
   const attemptRef = useRef<ActiveCodeAttempt | null>(attempt);
   attemptRef.current = attempt;
 
@@ -122,62 +122,57 @@ export function CodeQuizPlayerPage() {
 
   const handleEvaluateCurrent = async () => {
     if (!currentQuestion || !attemptId) return;
-    const text = answers[currentQuestion.id]?.trim();
-    if (!text || text.length < 5) {
-      setError('Please provide a meaningful answer (at least 5 characters) before evaluating.');
+    const answerText = answers[currentQuestion.id] || '';
+
+    if (!answerText.trim()) {
+      alert('Please write an answer before requesting an LLM evaluation.');
       return;
     }
 
-    setError(null);
     setIsEvaluating(true);
     try {
-      const result = await apiClient.post<{
-        questionId: string;
-        evaluation: AnswerEvaluation;
-        evaluatedAt: string;
-      }>(`/api/code-quizzes/attempts/${attemptId}/answers`, {
-        questionId: currentQuestion.id,
-        answer: text,
-      });
+      const evalResult = await apiClient.post<AnswerEvaluation>(
+        `/api/code-quizzes/attempts/${attemptId}/answers`,
+        {
+          questionId: currentQuestion.id,
+          answer: answerText.trim(),
+        }
+      );
 
       setEvaluations((prev) => ({
         ...prev,
-        [currentQuestion.id]: result.evaluation,
+        [currentQuestion.id]: evalResult,
       }));
 
-      // Update question in state
-      setAttempt((prev) => {
-        if (!prev) return null;
-        return {
-          ...prev,
-          questions: prev.questions.map((q) =>
-            q.id === currentQuestion.id
-              ? {
-                  ...q,
-                  userAnswer: text,
-                  score: result.evaluation.score,
-                  feedback: result.evaluation.feedback,
-                  evaluatedAt: result.evaluatedAt,
-                }
-              : q
-          ),
-        };
-      });
+      // Update question in local state
+      if (attempt) {
+        const updatedQuestions = attempt.questions.map((q) =>
+          q.id === currentQuestion.id
+            ? { ...q, score: evalResult.score, feedback: evalResult.feedback, userAnswer: answerText }
+            : q
+        );
+        const updatedAttempt = { ...attempt, questions: updatedQuestions };
+        setAttempt(updatedAttempt);
+        try {
+          localStorage.setItem(storageKey, JSON.stringify(updatedAttempt));
+        } catch {
+          // safe
+        }
+      }
     } catch (err: unknown) {
-      const msg = err instanceof ApiError ? err.message : 'Evaluation failed. Please try again.';
-      setError(msg);
+      alert(err instanceof ApiError ? err.message : 'Failed to evaluate answer with LLM.');
     } finally {
       setIsEvaluating(false);
     }
   };
 
-  const handleFinalSubmit = async () => {
+  const handleSubmitAttempt = async () => {
     if (!attemptId) return;
     setIsSubmitting(true);
     try {
       await apiClient.post(`/api/code-quizzes/attempts/${attemptId}/submit`);
 
-      // Clean up localStorage on successful completion
+      // Clear local in-progress drafts
       try {
         localStorage.removeItem(storageKey);
         localStorage.removeItem(`quizforge_code_answers_${attemptId}`);
@@ -188,387 +183,354 @@ export function CodeQuizPlayerPage() {
 
       navigate(`/code-quiz/${attemptId}/results`);
     } catch (err: unknown) {
-      const msg = err instanceof ApiError ? err.message : 'Failed to finalize quiz attempt.';
-      setError(msg);
+      alert(err instanceof ApiError ? err.message : 'Failed to finalize code review.');
       setIsSubmitting(false);
     }
   };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4">
-        <Loader2 className="w-10 h-10 text-amber-500 animate-spin mb-4" />
-        <h2 className="text-xl font-bold text-white mb-1">Loading Code Review...</h2>
-        <p className="text-sm text-slate-400">
-          Preparing source code snippets and evaluation context
-        </p>
-      </div>
-    );
-  }
-
-  if (error && !attempt) {
-    return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 text-center">
-        <div className="p-4 rounded-2xl bg-rose-950/40 border border-rose-800/60 text-rose-400 mb-4 inline-flex">
-          <AlertCircle className="w-8 h-8" />
+      <AppLayout activeNav="code-review">
+        <div className="flex flex-col items-center justify-center min-h-[60vh]">
+          <Loader2 className="w-10 h-10 text-[#1935CA] animate-spin mb-4" />
+          <h2 className="text-xl font-bold text-[#1935CA] mb-1">Loading Code Assessment...</h2>
+          <p className="text-sm text-[#696F79]">
+            Preparing repository context and code snippets
+          </p>
         </div>
-        <h2 className="text-2xl font-bold text-white mb-2">Quiz Load Error</h2>
-        <p className="text-sm text-slate-400 max-w-md mb-6">{error}</p>
-        <Link
-          to="/"
-          className="px-4 py-2 rounded-xl text-sm font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition"
-        >
-          Back to Dashboard
-        </Link>
-      </div>
+      </AppLayout>
     );
   }
 
-  if (!attempt || !currentQuestion) {
-    return null;
+  if (error || !attempt || !currentQuestion) {
+    return (
+      <AppLayout activeNav="code-review">
+        <div className="max-w-md mx-auto text-center py-16">
+          <div className="w-14 h-14 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto mb-4 border border-rose-200">
+            <AlertCircle className="w-7 h-7" />
+          </div>
+          <h2 className="text-xl font-extrabold text-[#1E293B] mb-2">Code Quiz Unavailable</h2>
+          <p className="text-xs text-[#696F79] mb-6">{error || 'Attempt could not be found.'}</p>
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#1935CA] text-white text-xs font-bold shadow-md"
+          >
+            <Home className="w-4 h-4" />
+            <span>Return to Dashboard</span>
+          </Link>
+        </div>
+      </AppLayout>
+    );
   }
 
-  const currentAnswer = answers[currentQuestion.id] || '';
-  const currentEvaluation = evaluations[currentQuestion.id] || null;
-
-  const answeredCount = Object.values(answers).filter((a) => a.trim().length > 0).length;
-  const evaluatedCount = Object.values(evaluations).filter(Boolean).length;
+  const currentEval = evaluations[currentQuestion.id];
+  const evaluatedCount = Object.keys(evaluations).filter((k) => evaluations[k] !== null).length;
   const totalQuestions = attempt.questions.length;
-  const progressPercent = Math.round((answeredCount / totalQuestions) * 100);
+  const isLastQuestion = currentIndex === totalQuestions - 1;
+
+  // Split lines for snippet viewer
+  const codeLines = (currentQuestion.codeSnippetContent || '').split('\n');
+  const startLine = currentQuestion.codeSnippetStartLine ?? 1;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
-      {/* Top Header */}
-      <header className="border-b border-slate-800 bg-slate-900/60 backdrop-blur-md px-4 sm:px-8 py-3.5 flex items-center justify-between sticky top-0 z-40">
-        <Link
-          to="/"
-          className="flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-white transition"
-        >
-          <Home className="w-4 h-4" />
-          <span>Dashboard</span>
-        </Link>
-
-        <div className="flex items-center gap-3">
-          <div className="text-xs text-slate-400 font-mono hidden sm:block">
-            {attempt.repoOwner}/{attempt.repoName}
-          </div>
-          <button
-            type="button"
-            onClick={() => setIsSubmitModalOpen(true)}
-            className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-md shadow-amber-500/20 transition"
-          >
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            <span>Finish & View Results</span>
-          </button>
-        </div>
-      </header>
-
-      {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-        {/* Progress bar */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between text-xs font-semibold text-slate-400 mb-2">
-            <span>
-              Question {currentIndex + 1} of {totalQuestions}
-            </span>
-            <span>
-              {answeredCount} Answered • {evaluatedCount} Evaluated
+    <AppLayout activeNav="code-review">
+      <div className="space-y-6">
+        {/* ===================== TOP HEADER & BREADCRUMB BAR ===================== */}
+        <div className="bg-white rounded-[20px] p-4 sm:p-5 shadow-[0_10px_30px_rgba(25,53,202,0.05)] border border-slate-100/80 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          {/* Breadcrumbs */}
+          <div className="flex items-center gap-2 text-xs font-medium text-[#696F79] flex-wrap">
+            <Link to="/" className="hover:text-[#1935CA] transition font-semibold">
+              Dashboard
+            </Link>
+            <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
+            <span>GitHub Code Reviews</span>
+            <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
+            <span className="font-bold text-[#1935CA] font-mono">
+              {attempt.repoUrl.replace('https://github.com/', '')}
             </span>
           </div>
-          <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-amber-500 to-orange-500 transition-all duration-300"
-              style={{ width: `${progressPercent}%` }}
-            />
+
+          {/* Interactive Question Matrix Palette Pills */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1.5 p-1 bg-[#F8F9FC] rounded-xl border border-slate-100">
+              {attempt.questions.map((q, idx) => {
+                const isSelected = idx === currentIndex;
+                const isAnswered = Boolean(evaluations[q.id]);
+                return (
+                  <button
+                    key={q.id}
+                    type="button"
+                    onClick={() => setCurrentIndex(idx)}
+                    className={`w-8 h-8 rounded-lg text-xs font-bold transition flex items-center justify-center ${
+                      isSelected
+                        ? 'bg-[#1935CA] text-white shadow-md'
+                        : isAnswered
+                        ? 'bg-[#ECFDF5] text-emerald-700 border border-emerald-300 hover:bg-emerald-100'
+                        : 'bg-white text-[#696F79] hover:text-[#1E293B] border border-slate-200'
+                    }`}
+                    title={`Question ${idx + 1}: ${isAnswered ? 'Evaluated' : 'Pending'}`}
+                  >
+                    {idx + 1}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Submit Review Button */}
+            <button
+              type="button"
+              onClick={() => setIsSubmitModalOpen(true)}
+              className="px-4 py-2 rounded-xl bg-[#1935CA] hover:bg-[#142BA3] text-white text-xs font-bold shadow-[0_8px_20px_rgba(25,53,202,0.22)] transition flex items-center gap-1.5 active:scale-98"
+            >
+              <span>Submit Review</span>
+              <Send className="w-3 h-3" />
+            </button>
           </div>
         </div>
 
-        {error && (
-          <div className="mb-6 p-4 rounded-xl bg-rose-950/40 border border-rose-800/60 flex items-start gap-3 text-rose-300 text-sm">
-            <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
-            <span>{error}</span>
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 items-start">
-          {/* Main Question & Code Column (2 spans) */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl">
-              {/* File Path Header */}
-              <div className="flex flex-wrap items-center justify-between gap-2 mb-4 pb-4 border-b border-slate-800">
-                <div className="flex items-center gap-2">
-                  <FileCode className="w-4 h-4 text-amber-400" />
-                  <span className="text-xs font-mono font-semibold text-amber-300">
-                    {currentQuestion.codeSnippetPath}
-                  </span>
-                  {currentQuestion.codeSnippetStartLine && (
-                    <span className="text-[11px] text-slate-500 font-mono">
-                      Lines {currentQuestion.codeSnippetStartLine}–
-                      {currentQuestion.codeSnippetEndLine || currentQuestion.codeSnippetStartLine}
-                    </span>
-                  )}
-                </div>
-                <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider bg-slate-800 text-slate-300 border border-slate-700">
+        {/* ===================== 2-COLUMN MAIN WORKSPACE (lg:grid-cols-12) ===================== */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* ===================== LEFT: CODE SNIPPET VIEWER (lg:col-span-7) ===================== */}
+          <div className="lg:col-span-7 bg-white rounded-[20px] p-5 sm:p-6 shadow-[0_10px_30px_rgba(25,53,202,0.05)] border border-slate-100/80 space-y-4">
+            {/* Snippet Header */}
+            <div className="flex items-center justify-between flex-wrap gap-2 pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <FileCode className="w-4 h-4 text-[#1935CA]" />
+                <span className="font-mono text-xs font-bold text-[#1E293B] break-all">
+                  {currentQuestion.codeSnippetPath}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-mono text-[#696F79]">
+                  Lines {startLine}–{startLine + codeLines.length - 1}
+                </span>
+                <span
+                  className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                    currentQuestion.difficulty === 'hard'
+                      ? 'bg-rose-50 text-rose-600 border border-rose-200'
+                      : currentQuestion.difficulty === 'medium'
+                      ? 'bg-amber-50 text-amber-600 border border-amber-200'
+                      : 'bg-emerald-50 text-emerald-600 border border-emerald-200'
+                  }`}
+                >
                   {currentQuestion.difficulty}
                 </span>
               </div>
-
-              {/* Formatted Code Block */}
-              <div className="mb-6 bg-slate-950 border border-slate-800/80 rounded-2xl p-4 overflow-x-auto text-xs font-mono text-slate-300 shadow-inner">
-                <pre className="leading-relaxed">
-                  <code>{currentQuestion.codeSnippetContent}</code>
-                </pre>
-              </div>
-
-              {/* Interview Question */}
-              <div className="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20">
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-400 mb-1.5">
-                  <HelpCircle className="w-4 h-4" />
-                  <span>Interview Question</span>
-                </div>
-                <h2 className="text-base sm:text-lg font-bold text-white leading-snug">
-                  {currentQuestion.questionText}
-                </h2>
-              </div>
-
-              {/* User Answer Textarea */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <label
-                    htmlFor="userAnswer"
-                    className="block text-xs font-semibold uppercase tracking-wider text-slate-300"
-                  >
-                    Your Answer & Explanation
-                  </label>
-                  <span className="text-xs text-slate-500">
-                    {currentAnswer.length} characters
-                  </span>
-                </div>
-                <textarea
-                  id="userAnswer"
-                  rows={5}
-                  value={currentAnswer}
-                  onChange={(e) => handleAnswerChange(e.target.value)}
-                  placeholder="Explain what the code does, why specific lines or comments were written, edge cases considered, and trade-offs..."
-                  className="w-full p-4 rounded-2xl bg-slate-950 border border-slate-700/80 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition resize-y"
-                />
-
-                <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-                  <span className="text-xs text-slate-500">
-                    Tip: Be specific. Address comments and edge cases directly.
-                  </span>
-                  <button
-                    type="button"
-                    onClick={handleEvaluateCurrent}
-                    disabled={isEvaluating || currentAnswer.trim().length < 5}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-md shadow-amber-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                  >
-                    {isEvaluating ? (
-                      <>
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        <span>Evaluating with LLM...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Send className="w-3.5 h-3.5" />
-                        <span>
-                          {currentEvaluation ? 'Re-Evaluate Answer' : 'Evaluate Answer'}
-                        </span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              {/* Inline LLM Evaluation Feedback Card */}
-              {currentEvaluation && (
-                <div className="mt-6 p-5 rounded-2xl bg-slate-950 border border-slate-800 animate-in fade-in duration-300">
-                  <div className="flex flex-wrap items-center justify-between gap-3 mb-3 pb-3 border-b border-slate-800">
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-amber-400" />
-                      <span className="text-xs font-bold text-white uppercase tracking-wider">
-                        LLM Evaluation Result
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-slate-400">Score:</span>
-                      <span
-                        className={`text-base font-extrabold px-3 py-0.5 rounded-lg ${
-                          currentEvaluation.score >= 8
-                            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                            : currentEvaluation.score >= 5
-                            ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                            : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
-                        }`}
-                      >
-                        {currentEvaluation.score.toFixed(1)} / 10
-                      </span>
-                    </div>
-                  </div>
-
-                  <p className="text-xs sm:text-sm text-slate-300 leading-relaxed mb-4">
-                    {currentEvaluation.feedback}
-                  </p>
-
-                  {/* Identified vs Missed Concepts */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                    {currentEvaluation.key_concepts_identified.length > 0 && (
-                      <div className="p-3 rounded-xl bg-emerald-950/20 border border-emerald-800/40">
-                        <span className="font-semibold text-emerald-400 block mb-1">
-                          Key Concepts Captured:
-                        </span>
-                        <ul className="space-y-1 text-slate-300">
-                          {currentEvaluation.key_concepts_identified.map((c, i) => (
-                            <li key={i} className="flex items-center gap-1.5">
-                              <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                              <span>{c}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-
-                    {currentEvaluation.key_concepts_missed.length > 0 && (
-                      <div className="p-3 rounded-xl bg-rose-950/20 border border-rose-800/40">
-                        <span className="font-semibold text-rose-400 block mb-1">
-                          Missing or Under-Explored:
-                        </span>
-                        <ul className="space-y-1 text-slate-300">
-                          {currentEvaluation.key_concepts_missed.map((c, i) => (
-                            <li key={i} className="flex items-center gap-1.5">
-                              <X className="w-3.5 h-3.5 text-rose-400 shrink-0" />
-                              <span>{c}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
             </div>
 
-            {/* Bottom Nav Controls */}
-            <div className="flex items-center justify-between pt-2">
-              <button
-                type="button"
-                onClick={() => setCurrentIndex((idx) => Math.max(0, idx - 1))}
-                disabled={currentIndex === 0}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed transition"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span>Previous Question</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setCurrentIndex((idx) => Math.min(totalQuestions - 1, idx + 1))}
-                disabled={currentIndex === totalQuestions - 1}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed transition"
-              >
-                <span>Next Question</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
+            {/* High-Contrast Code Snippet Container (Recent Quiz.png Reference) */}
+            <div className="bg-[#0F172A] text-slate-100 rounded-xl overflow-hidden shadow-inner border border-slate-800">
+              <div className="px-4 py-2 bg-slate-900 border-b border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400 font-mono">
+                <span>Code Excerpt</span>
+                <span>UTF-8 • Read-only</span>
+              </div>
+              <div className="overflow-x-auto p-4 text-xs font-mono leading-relaxed max-h-[500px] overflow-y-auto">
+                <table className="w-full border-collapse">
+                  <tbody>
+                    {codeLines.map((line: string, idx: number) => {
+                      const lineNum = startLine + idx;
+                      return (
+                        <tr key={idx} className="hover:bg-slate-800/40">
+                          <td className="pr-4 text-right text-slate-600 select-none align-top w-10 border-r border-slate-800/80">
+                            {lineNum}
+                          </td>
+                          <td className="pl-4 whitespace-pre text-slate-200 align-top">
+                            {line || ' '}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
 
-          {/* Right Sidebar Palette & Repo Info */}
-          <div className="space-y-6">
-            {/* Question Palette */}
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl">
-              <h3 className="text-sm font-bold text-white mb-4">Questions Matrix</h3>
-              <div className="grid grid-cols-5 gap-2.5">
-                {attempt.questions.map((q, idx) => {
-                  const isCurrent = idx === currentIndex;
-                  const hasAnswer = Boolean(answers[q.id]?.trim());
-                  const hasEval = Boolean(evaluations[q.id]);
-
-                  let badgeClass = 'bg-slate-800 border-slate-700 text-slate-400';
-                  if (hasEval) {
-                    badgeClass = 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400';
-                  } else if (hasAnswer) {
-                    badgeClass = 'bg-amber-500/20 border-amber-500/40 text-amber-400';
-                  }
-
-                  if (isCurrent) {
-                    badgeClass += ' ring-2 ring-amber-400 font-extrabold scale-105';
-                  }
-
-                  return (
-                    <button
-                      key={q.id}
-                      type="button"
-                      onClick={() => setCurrentIndex(idx)}
-                      className={`h-10 rounded-xl border text-xs font-bold transition-all flex items-center justify-center ${badgeClass}`}
-                    >
-                      {idx + 1}
-                    </button>
-                  );
-                })}
+          {/* ===================== RIGHT: ADVERSARIAL QUESTION & EVALUATION (lg:col-span-5) ===================== */}
+          <div className="lg:col-span-5 bg-white rounded-[20px] p-5 sm:p-6 shadow-[0_10px_30px_rgba(25,53,202,0.05)] border border-slate-100/80 space-y-5">
+            {/* Question Header */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="px-3 py-1 rounded-full bg-[#EEF2FF] text-[#1935CA] text-xs font-bold">
+                  Question {currentIndex + 1} of {totalQuestions}
+                </span>
+                <span className="text-[11px] font-semibold text-[#696F79]">
+                  {currentEval ? 'Evaluated by LLM' : 'Awaiting Answer'}
+                </span>
               </div>
 
-              <div className="mt-6 pt-4 border-t border-slate-800 space-y-2 text-[11px] text-slate-400">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-emerald-500/30 border border-emerald-500" />
-                  <span>Evaluated with Score</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-amber-500/30 border border-amber-500" />
-                  <span>Draft Answer Typed</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-slate-800 border border-slate-700" />
-                  <span>Unanswered</span>
-                </div>
-              </div>
+              <h3 className="text-base sm:text-lg font-bold text-[#1E293B] leading-snug">
+                {currentQuestion.questionText}
+              </h3>
             </div>
 
-            {/* Repository Info Card */}
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl text-xs space-y-3">
-              <div className="flex items-center gap-2 text-white font-bold text-sm">
-                <Code2 className="w-4 h-4 text-amber-400" />
-                <span>Target Repository</span>
-              </div>
-              <div className="text-slate-300 font-mono break-all">
-                {attempt.repoOwner}/{attempt.repoName}
-              </div>
-              <a
-                href={attempt.repoUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="text-amber-400 hover:text-amber-300 block font-semibold transition"
+            {/* Answer Textarea */}
+            <div>
+              <label className="block text-xs font-bold text-[#1E293B] mb-1.5">
+                Your Code Explanation / Defense:
+              </label>
+              <textarea
+                rows={5}
+                value={answers[currentQuestion.id] || ''}
+                onChange={(e) => handleAnswerChange(e.target.value)}
+                placeholder="Explain the intent, architectural trade-offs, edge cases, and why this snippet is constructed this way..."
+                className="w-full p-3.5 rounded-xl bg-[#F8F9FC] text-[#1E293B] placeholder-[#94A3B8] text-sm border border-slate-200/80 focus:ring-2 focus:ring-[#1935CA] focus:bg-white transition outline-none font-medium resize-y"
+              />
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center justify-between gap-3 pt-1">
+              <button
+                type="button"
+                onClick={handleEvaluateCurrent}
+                disabled={isEvaluating || !(answers[currentQuestion.id]?.trim())}
+                className="px-5 py-2.5 rounded-xl bg-[#1935CA] hover:bg-[#142BA3] text-white text-xs font-bold shadow-[0_8px_20px_rgba(25,53,202,0.22)] disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-2 active:scale-98"
               >
-                View on GitHub →
-              </a>
+                {isEvaluating ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Grading with LLM...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Evaluate with LLM</span>
+                  </>
+                )}
+              </button>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCurrentIndex((prev) => Math.max(0, prev - 1))}
+                  disabled={currentIndex === 0}
+                  className="p-2 rounded-xl bg-[#F8F9FC] text-[#1E293B] hover:bg-slate-200 disabled:opacity-30 transition"
+                  title="Previous Question"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCurrentIndex((prev) => Math.min(totalQuestions - 1, prev + 1))}
+                  disabled={isLastQuestion}
+                  className="p-2 rounded-xl bg-[#F8F9FC] text-[#1E293B] hover:bg-slate-200 disabled:opacity-30 transition"
+                  title="Next Question"
+                >
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
             </div>
+
+            {/* Inline Instant Grading Critique (Recent Quiz.png Reference) */}
+            {currentEval && (
+              <div className="p-4 rounded-xl bg-[#F8F9FC] border border-slate-200/80 space-y-3.5 animate-in fade-in">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-[#1E293B] uppercase tracking-wider flex items-center gap-1.5">
+                    <Award className="w-4 h-4 text-[#1935CA]" />
+                    <span>Rubric Score</span>
+                  </span>
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-extrabold ${
+                      currentEval.score >= 7
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : currentEval.score >= 4
+                        ? 'bg-amber-100 text-amber-700'
+                        : 'bg-rose-100 text-rose-700'
+                    }`}
+                  >
+                    {currentEval.score} / 10
+                  </span>
+                </div>
+
+                {/* Rubric Progress Bars */}
+                <div className="space-y-2 text-xs">
+                  <div>
+                    <div className="flex justify-between text-[11px] font-semibold text-[#696F79] mb-1">
+                      <span>Accuracy</span>
+                      <span>{currentEval.accuracy_score || (currentEval.score >= 7 ? 4 : 2)} / 4</span>
+                    </div>
+                    <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                      <div
+                        className="bg-emerald-500 h-1.5 rounded-full"
+                        style={{
+                          width: `${((currentEval.accuracy_score || (currentEval.score >= 7 ? 4 : 2)) / 4) * 100}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between text-[11px] font-semibold text-[#696F79] mb-1">
+                      <span>Depth</span>
+                      <span>{currentEval.depth_score || (currentEval.score >= 7 ? 3 : 1)} / 3</span>
+                    </div>
+                    <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                      <div
+                        className="bg-[#1935CA] h-1.5 rounded-full"
+                        style={{
+                          width: `${((currentEval.depth_score || (currentEval.score >= 7 ? 3 : 1)) / 3) * 100}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between text-[11px] font-semibold text-[#696F79] mb-1">
+                      <span>Completeness</span>
+                      <span>{currentEval.completeness_score || (currentEval.score >= 7 ? 3 : 1)} / 3</span>
+                    </div>
+                    <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                      <div
+                        className="bg-[#38BDF8] h-1.5 rounded-full"
+                        style={{
+                          width: `${((currentEval.completeness_score || (currentEval.score >= 7 ? 3 : 1)) / 3) * 100}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Constructive LLM Feedback */}
+                <div className="pt-2 border-t border-slate-200/60">
+                  <p className="text-xs text-[#475569] leading-relaxed font-medium">
+                    {currentEval.feedback}
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
-      </main>
+      </div>
 
-      {/* Submit Confirmation Modal */}
+      {/* ===================== SUBMISSION MODAL ===================== */}
       {isSubmitModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl">
-            <h3 className="text-xl font-bold text-white mb-2">Finalize Code Review?</h3>
-            <p className="text-xs text-slate-400 mb-4 leading-relaxed">
-              You have answered {answeredCount} of {totalQuestions} questions ({evaluatedCount} evaluated).
-              Finalizing will compute your overall mastery score and complete this session.
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white rounded-[24px] max-w-md w-full p-6 sm:p-7 shadow-2xl border border-slate-100 text-center">
+            <div className="w-12 h-12 rounded-2xl bg-[#EEF2FF] text-[#1935CA] flex items-center justify-center mx-auto mb-4">
+              <Send className="w-6 h-6" />
+            </div>
+
+            <h3 className="text-xl font-extrabold text-[#1935CA] tracking-tight mb-2">
+              Finalize Code Review?
+            </h3>
+            <p className="text-xs text-[#696F79] leading-relaxed mb-5">
+              You have evaluated <strong>{evaluatedCount} of {totalQuestions}</strong> questions with the LLM. Once submitted, your scores and mastery badges will be finalized.
             </p>
 
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
+            <div className="flex items-center gap-3">
               <button
                 type="button"
                 onClick={() => setIsSubmitModalOpen(false)}
                 disabled={isSubmitting}
-                className="px-4 py-2.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 transition"
+                className="w-1/2 py-2.5 rounded-xl bg-[#F8F9FC] hover:bg-slate-200 text-[#1E293B] font-bold text-xs transition"
               >
-                Continue Answering
+                Keep Reviewing
               </button>
               <button
                 type="button"
-                onClick={handleFinalSubmit}
+                onClick={handleSubmitAttempt}
                 disabled={isSubmitting}
-                className="px-5 py-2.5 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-md shadow-amber-500/20 transition flex items-center gap-2"
+                className="w-1/2 py-2.5 rounded-xl bg-[#1935CA] hover:bg-[#142BA3] text-white font-bold text-xs shadow-md transition flex items-center justify-center gap-1.5"
               >
                 {isSubmitting ? (
                   <>
@@ -576,13 +538,13 @@ export function CodeQuizPlayerPage() {
                     <span>Submitting...</span>
                   </>
                 ) : (
-                  <span>Submit & View Results</span>
+                  <span>Submit Final</span>
                 )}
               </button>
             </div>
           </div>
         </div>
       )}
-    </div>
+    </AppLayout>
   );
 }

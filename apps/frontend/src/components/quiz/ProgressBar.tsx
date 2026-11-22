@@ -20,21 +20,21 @@ export function ProgressBar({
   const percentage = totalQuestions > 0 ? ((currentIndex + 1) / totalQuestions) * 100 : 0;
 
   const difficultyColors: Record<QuizDifficulty, string> = {
-    easy: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
-    medium: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
-    hard: 'text-rose-400 bg-rose-500/10 border-rose-500/20',
-    mixed: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20',
+    easy: 'text-emerald-700 bg-emerald-50 border-emerald-200',
+    medium: 'text-amber-700 bg-amber-50 border-amber-200',
+    hard: 'text-rose-700 bg-rose-50 border-rose-200',
+    mixed: 'text-[#1935CA] bg-[#EEF2FF] border-[#1935CA]/20',
   };
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 mb-6 shadow-lg">
+    <div className="bg-white border border-slate-100 rounded-[20px] p-5 mb-6 shadow-[0_10px_30px_rgba(25,53,202,0.05)]">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
         <div className="flex items-center gap-2.5">
-          <span className="text-base sm:text-lg font-bold text-white tracking-tight truncate max-w-xs sm:max-w-md">
+          <span className="text-base sm:text-lg font-bold text-[#1E293B] tracking-tight truncate max-w-xs sm:max-w-md">
             {topic}
           </span>
           <span
-            className={`text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+            className={`text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${
               difficultyColors[difficulty] || difficultyColors.mixed
             }`}
           >
@@ -44,29 +44,29 @@ export function ProgressBar({
 
         <div className="flex items-center gap-3">
           {/* Autosave Indicator */}
-          <div className="flex items-center gap-1.5 text-xs text-slate-400">
+          <div className="flex items-center gap-1.5 text-xs text-[#696F79] font-medium">
             {autosaveStatus === 'saving' && (
               <>
-                <Loader2 className="w-3.5 h-3.5 text-amber-400 animate-spin" />
-                <span className="text-amber-400">Saving...</span>
+                <Loader2 className="w-3.5 h-3.5 text-amber-500 animate-spin" />
+                <span className="text-amber-600">Saving...</span>
               </>
             )}
             {autosaveStatus === 'saved' && (
               <>
-                <Check className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="text-slate-400">Saved</span>
+                <Check className="w-3.5 h-3.5 text-emerald-600" />
+                <span className="text-emerald-600">Saved</span>
               </>
             )}
             {autosaveStatus === 'error' && (
               <>
-                <AlertCircle className="w-3.5 h-3.5 text-rose-400" />
-                <span className="text-rose-400">Save error</span>
+                <AlertCircle className="w-3.5 h-3.5 text-rose-500" />
+                <span className="text-rose-600">Save error</span>
               </>
             )}
           </div>
 
-          <div className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 border border-slate-700">
-            <Sparkles className="w-3 h-3 text-indigo-400" />
+          <div className="flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-lg bg-[#EEF2FF] text-[#1935CA]">
+            <Sparkles className="w-3 h-3 text-[#1935CA]" />
             <span>
               {currentIndex + 1} / {totalQuestions}
             </span>
@@ -75,9 +75,9 @@ export function ProgressBar({
       </div>
 
       {/* Progress Track */}
-      <div className="w-full bg-slate-950 h-2 rounded-full overflow-hidden border border-slate-800">
+      <div className="w-full bg-[#EEF2FF] h-2.5 rounded-full overflow-hidden">
         <div
-          className="bg-gradient-to-r from-indigo-500 to-cyan-400 h-full rounded-full transition-all duration-300 ease-out"
+          className="bg-gradient-to-r from-[#1935CA] to-[#38BDF8] h-full rounded-full transition-all duration-300 ease-out"
           style={{ width: `${percentage}%` }}
         />
       </div>
