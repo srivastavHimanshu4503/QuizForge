@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, index, uniqueIndex } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, real, index, uniqueIndex } from 'drizzle-orm/sqlite-core';
 import { quizzes } from './quizzes';
 
 export const questions = sqliteTable(
@@ -14,6 +14,11 @@ export const questions = sqliteTable(
     questionText: text('question_text').notNull(),
     correctChoiceId: text('correct_choice_id', { enum: ['A', 'B', 'C', 'D'] }).notNull(),
     explanation: text('explanation').notNull(),
+    difficultyTier: text('difficulty_tier', { enum: ['easy', 'medium', 'hard', 'expert'] })
+      .notNull()
+      .default('medium'),
+    difficultyParam: real('difficulty_param').notNull().default(0.0),
+    discriminationParam: real('discrimination_param').notNull().default(1.0),
     createdAt: text('created_at')
       .notNull()
       .$defaultFn(() => new Date().toISOString()),

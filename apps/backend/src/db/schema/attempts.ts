@@ -35,6 +35,23 @@ export const quizAttempts = sqliteTable(
     timeLimitMinutes: integer('time_limit_minutes'),
     tabSwitchCount: integer('tab_switch_count').default(0),
     isTimedOut: integer('is_timed_out', { mode: 'boolean' }).default(false),
+    isAdaptive: integer('is_adaptive', { mode: 'boolean' }).notNull().default(false),
+    currentTheta: real('current_theta').notNull().default(0.0),
+    standardError: real('standard_error').notNull().default(1.0),
+    abilityHistory: text('ability_history', { mode: 'json' })
+      .notNull()
+      .$type<
+        Array<{
+          step: number;
+          questionId: string;
+          theta: number;
+          se: number;
+          isCorrect: boolean;
+          difficultyParam: number;
+          difficultyTier: string;
+        }>
+      >()
+      .$defaultFn(() => []),
   },
   (table) => [
     uniqueIndex('attempts_quiz_user_attempt_number_idx').on(table.quizId, table.userId, table.attemptNumber),

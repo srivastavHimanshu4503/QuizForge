@@ -1,6 +1,7 @@
 import { FastifyInstance, FastifyPluginAsync } from 'fastify';
-import { generateQuizSchema, updateQuizStudioSchema } from '@quiz-forge/shared';
+import { generateQuizSchema, updateQuizStudioSchema, generateAdaptiveQuizSchema } from '@quiz-forge/shared';
 import { quizService, QuizError } from '../services/quiz.service';
+import { catService, CatError } from '../services/cat.service';
 
 export const quizRoutes: FastifyPluginAsync = async (app: FastifyInstance) => {
   // All quiz routes require authentication
@@ -31,6 +32,43 @@ export const quizRoutes: FastifyPluginAsync = async (app: FastifyInstance) => {
       });
     } catch (err: unknown) {
       if (err instanceof QuizError) {
+        return reply.status(err.statusCode).send({
+          success: false,
+          error: {
+            code: err.code,
+            message: err.message,
+          },
+        });
+      }
+      throw err;
+    }
+  });
+
+  // POST /api/quizzes/generate-adaptive
+  app.post('/generate-adaptive', async (request, reply) => {
+    const parseResult = generateAdaptiveQuizSchema.safeParse(request.body);
+    if (!parseResult.success) {
+      return reply.status(400).send({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid adaptive quiz generation input.',
+          details: parseResult.error.format(),
+        },
+      });
+    }
+
+    try {
+      const result = await catService.generateAdaptiveQuiz(
+        request.user!.id,
+        parseResult.data
+      );
+      return reply.status(201).send({
+        success: true,
+        data: result,
+      });
+    } catch (err: unknown) {
+      if (err instanceof CatError || err instanceof QuizError) {
         return reply.status(err.statusCode).send({
           success: false,
           error: {

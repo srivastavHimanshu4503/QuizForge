@@ -57,6 +57,13 @@
       "when": 1795364557001,
       "tag": "0007_spotty_boom_boom",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1795368388311,
+      "tag": "0008_far_toad_men",
+      "breakpoints": true
     }
   ]
 }

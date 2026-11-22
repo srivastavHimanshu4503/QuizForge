@@ -7,6 +7,7 @@ import { PdfQuizModal } from '../components/quiz/PdfQuizModal';
 import { UrlQuizModal } from '../components/quiz/UrlQuizModal';
 import { ImageQuizModal } from '../components/quiz/ImageQuizModal';
 import { CodeQuizModal } from '../components/code-quiz/CodeQuizModal';
+import { AdaptiveQuizModal } from '../components/quiz/AdaptiveQuizModal';
 import { apiClient } from '../api/client';
 import {
   Sparkles,
@@ -57,6 +58,7 @@ export function DashboardPage() {
   const [isUrlModalOpen, setIsUrlModalOpen] = useState(false);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [isCodeModalOpen, setIsCodeModalOpen] = useState(false);
+  const [isAdaptiveModalOpen, setIsAdaptiveModalOpen] = useState(false);
 
   const [activeDraft, setActiveDraft] = useState<ActiveDraft | null>(null);
   const [activeCodeDraft, setActiveCodeDraft] = useState<ActiveCodeDraft | null>(null);
@@ -162,6 +164,14 @@ export function DashboardPage() {
                 >
                   <Code2 className="w-3.5 h-3.5 shrink-0" />
                   <span>Review Repo</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsAdaptiveModalOpen(true)}
+                  className="px-4 py-2.5 rounded-xl bg-purple-50 dark:bg-purple-950/50 hover:bg-purple-100 dark:hover:bg-purple-900/40 text-purple-700 dark:text-purple-300 font-bold text-xs transition flex items-center gap-1.5 shrink-0 border border-purple-200 dark:border-purple-800"
+                >
+                  <Target className="w-3.5 h-3.5 shrink-0" />
+                  <span>Adaptive CAT</span>
                 </button>
                 <button
                   type="button"
@@ -489,7 +499,7 @@ export function DashboardPage() {
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               <button
                 type="button"
                 onClick={() => setIsPdfModalOpen(true)}
@@ -535,6 +545,22 @@ export function DashboardPage() {
                     Image & Diagram
                   </h4>
                   <p className="text-[10px] text-[#696F79] dark:text-slate-400">Gemini 2.5 Vision</p>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsAdaptiveModalOpen(true)}
+                className="flex items-center gap-3 p-3 rounded-xl bg-[#F8F9FC] dark:bg-slate-800/60 hover:bg-[#EEF2FF] dark:hover:bg-slate-700/60 border border-slate-100 dark:border-slate-700/60 text-left transition group"
+              >
+                <div className="w-9 h-9 rounded-lg bg-white dark:bg-[#151C2C] shadow-sm flex items-center justify-center text-purple-600 group-hover:scale-105 transition">
+                  <Target className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-[#1E293B] dark:text-[#F8FAFC] group-hover:text-[#1935CA] dark:group-hover:text-[#38BDF8] transition">
+                    Adaptive CAT
+                  </h4>
+                  <p className="text-[10px] text-[#696F79] dark:text-slate-400">IRT Calibrated</p>
                 </div>
               </button>
             </div>
@@ -649,6 +675,7 @@ export function DashboardPage() {
       <PdfQuizModal isOpen={isPdfModalOpen} onClose={() => setIsPdfModalOpen(false)} />
       <UrlQuizModal isOpen={isUrlModalOpen} onClose={() => setIsUrlModalOpen(false)} />
       <ImageQuizModal isOpen={isImageModalOpen} onClose={() => setIsImageModalOpen(false)} />
+      <AdaptiveQuizModal isOpen={isAdaptiveModalOpen} onClose={() => setIsAdaptiveModalOpen(false)} />
     </AppLayout>
   );
 }

@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { AttemptResult, CertificateMetaDto } from '@quiz-forge/shared';
+import { AttemptResult, CertificateMetaDto, AdaptiveAttemptSummaryDto } from '@quiz-forge/shared';
 import { apiClient, ApiError } from '../api/client';
 import { ScoreCard } from '../components/quiz/ScoreCard';
 import { ReviewQuestionItem } from '../components/quiz/ReviewQuestionItem';
 import { GenerateQuizModal } from '../components/quiz/GenerateQuizModal';
+import { AdaptiveTrajectoryChart } from '../components/cat/AdaptiveTrajectoryChart';
 import { AppLayout } from '../components/layout/AppLayout';
 import {
   RotateCcw,
@@ -31,6 +32,7 @@ export function QuizResultsPage() {
   const navigate = useNavigate();
 
   const [result, setResult] = useState<AttemptResult | null>(null);
+  const [adaptiveData, setAdaptiveData] = useState<AdaptiveAttemptSummaryDto | null>(null);
   const [certMeta, setCertMeta] = useState<CertificateMetaDto | null>(null);
   const [isDownloadingCert, setIsDownloadingCert] = useState(false);
   const [isDownloadingReport, setIsDownloadingReport] = useState(false);
@@ -60,6 +62,18 @@ export function QuizResultsPage() {
           `/api/attempts/${attemptId}/results`
         );
         setResult(data);
+
+        // Milestone 16: Computerized Adaptive Testing Trajectory
+        if (data.isAdaptive) {
+          try {
+            const traj = await apiClient.get<AdaptiveAttemptSummaryDto>(
+              `/api/attempts/${attemptId}/adaptive-trajectory`
+            );
+            if (traj) setAdaptiveData(traj);
+          } catch {
+            // Graceful fallback
+          }
+        }
 
         // Fetch certificate eligibility & meta
         const meta = await apiClient.get<CertificateMetaDto>(
@@ -258,6 +272,19 @@ export function QuizResultsPage() {
 
         {/* Score Card */}
         <ScoreCard result={result} />
+
+        {/* Milestone 16: Computerized Adaptive Testing IRT Trajectory Chart */}
+        {adaptiveData && (
+          <div className="space-y-3">
+            <AdaptiveTrajectoryChart
+              trajectory={adaptiveData.trajectory}
+              finalTheta={adaptiveData.finalTheta}
+              standardError={adaptiveData.standardError}
+              percentile={adaptiveData.percentile}
+              abilityTier={adaptiveData.abilityTier}
+            />
+          </div>
+        )}
 
         {/* Milestone 10: Official Certificate & Performance Report Card Banner */}
         <div className="rounded-[22px] p-6 bg-gradient-to-r from-amber-500/10 via-[#1935CA]/10 to-indigo-500/10 border border-amber-500/30 dark:border-amber-500/20 shadow-[0_10px_30px_rgba(217,119,6,0.06)] flex flex-wrap items-center justify-between gap-5 transition-all">

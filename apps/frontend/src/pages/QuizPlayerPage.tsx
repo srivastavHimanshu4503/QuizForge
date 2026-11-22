@@ -1,6 +1,6 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ChoiceId } from '@quiz-forge/shared';
+import { ChoiceId, AdaptiveNextQuestionDto, QuestionDifficultyTier, ClientQuestion } from '@quiz-forge/shared';
 import { useQuizAttempt } from '../hooks/useQuizAttempt';
 import { useAudioTutor } from '../context/AudioContext';
 import { ProgressBar } from '../components/quiz/ProgressBar';
@@ -8,6 +8,8 @@ import { OptionCard } from '../components/quiz/OptionCard';
 import { QuestionPalette } from '../components/quiz/QuestionPalette';
 import { SubmitModal } from '../components/quiz/SubmitModal';
 import { AudioWaveform } from '../components/audio/AudioWaveform';
+import { AdaptiveAbilityGauge } from '../components/cat/AdaptiveAbilityGauge';
+import { apiClient } from '../api/client';
 import {
   ArrowLeft,
   ArrowRight,
@@ -23,6 +25,7 @@ import {
   Volume2,
   Square,
   Mic,
+  Target,
 } from 'lucide-react';
 
 export function QuizPlayerPage() {
@@ -59,6 +62,95 @@ export function QuizPlayerPage() {
     refetch,
   } = useQuizAttempt(attemptId || '');
 
+  // Milestone 16: Computerized Adaptive Testing (CAT) State
+  const [adaptiveStep, setAdaptiveStep] = useState<number>(1);
+  const [adaptiveMaxSteps, setAdaptiveMaxSteps] = useState<number>(8);
+  const [adaptiveTheta, setAdaptiveTheta] = useState<number>(0.0);
+  const [adaptiveSE, setAdaptiveSE] = useState<number>(1.0);
+  const [adaptiveTier, setAdaptiveTier] = useState<QuestionDifficultyTier>('medium');
+  const [adaptiveQuestion, setAdaptiveQuestion] = useState<ClientQuestion | null>(null);
+  const [adaptiveDelta, setAdaptiveDelta] = useState<number | null>(null);
+  const [isAdaptiveSubmitting, setIsAdaptiveSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (attempt?.isAdaptive && attemptId) {
+      void (async () => {
+        try {
+          const next = await apiClient.get<AdaptiveNextQuestionDto>(
+            `/api/attempts/${attemptId}/adaptive-next`
+          );
+          if (next.isComplete || !next.question) {
+            navigate(`/quiz/${attemptId}/results`);
+            return;
+          }
+          setAdaptiveQuestion(next.question);
+          setAdaptiveStep(next.step);
+          setAdaptiveMaxSteps(next.maxSteps);
+          setAdaptiveTheta(next.currentTheta);
+          setAdaptiveSE(next.standardError);
+          setAdaptiveTier(next.currentDifficultyTier);
+        } catch {
+          // Graceful fallback
+        }
+      })();
+    }
+  }, [attempt?.isAdaptive, attemptId, navigate]);
+
+  const handleAdaptiveSubmit = async () => {
+    const q = adaptiveQuestion || currentQuestion;
+    if (!q || !attemptId || isAdaptiveSubmitting) return;
+    const choice = answers[q.question_id];
+    if (!choice) return;
+
+    setIsAdaptiveSubmitting(true);
+    try {
+      const oldTheta = adaptiveTheta;
+      const res = await apiClient.post<{
+        isCorrect: boolean;
+        newTheta: number;
+        newSE: number;
+        abilityTier: string;
+        step: number;
+        isComplete: boolean;
+      }>(`/api/attempts/${attemptId}/adaptive-answer`, {
+        questionId: q.question_id,
+        selectedChoiceId: choice,
+      });
+
+      const delta = res.newTheta - oldTheta;
+      setAdaptiveDelta(delta);
+      setAdaptiveTheta(res.newTheta);
+      setAdaptiveSE(res.newSE);
+
+      if (res.isComplete) {
+        setTimeout(() => {
+          navigate(`/quiz/${attemptId}/results`);
+        }, 800);
+        return;
+      }
+
+      // Fetch next calibrated question
+      const next = await apiClient.get<AdaptiveNextQuestionDto>(
+        `/api/attempts/${attemptId}/adaptive-next`
+      );
+      if (next.isComplete || !next.question) {
+        setTimeout(() => {
+          navigate(`/quiz/${attemptId}/results`);
+        }, 800);
+        return;
+      }
+
+      setAdaptiveQuestion(next.question);
+      setAdaptiveStep(next.step);
+      setAdaptiveTier(next.currentDifficultyTier);
+      setIsAdaptiveSubmitting(false);
+    } catch {
+      setIsAdaptiveSubmitting(false);
+    }
+  };
+
+  const activeDisplayQuestion = (attempt?.isAdaptive && adaptiveQuestion) ? adaptiveQuestion : currentQuestion;
+
   // Milestone 15: AI Voice Narration & Audio Tutor
   const {
     isSupported: isAudioSupported,
@@ -74,29 +166,33 @@ export function QuizPlayerPage() {
   } = useAudioTutor();
 
   const handleReadCurrentQuestion = useCallback(() => {
-    if (!currentQuestion) return;
+    const q = activeDisplayQuestion;
+    if (!q) return;
     if (isSpeaking) {
       stopSpeaking();
       return;
     }
 
-    const choicesText = currentQuestion.choices
+    const choicesText = q.choices
       .map((c) => `Option ${c.choice_id}: ${c.option_text}`)
       .join('. ');
-    const fullSpeech = `Question ${currentIndex + 1} of ${totalQuestions}: ${currentQuestion.question}. ${choicesText}`;
+    const stepLabel = attempt?.isAdaptive ? `Adaptive Question ${adaptiveStep}` : `Question ${currentIndex + 1} of ${totalQuestions}`;
+    const fullSpeech = `${stepLabel}: ${q.question}. ${choicesText}`;
     speak(fullSpeech);
-  }, [currentQuestion, currentIndex, totalQuestions, isSpeaking, speak, stopSpeaking]);
+  }, [activeDisplayQuestion, attempt?.isAdaptive, adaptiveStep, currentIndex, totalQuestions, isSpeaking, speak, stopSpeaking]);
 
   // Auto-read question on advancement if enabled
   useEffect(() => {
-    if (currentQuestion && audioPrefs.voiceEnabled && audioPrefs.autoReadQuestion) {
-      const choicesText = currentQuestion.choices
+    const q = activeDisplayQuestion;
+    if (q && audioPrefs.voiceEnabled && audioPrefs.autoReadQuestion) {
+      const choicesText = q.choices
         .map((c) => `Option ${c.choice_id}: ${c.option_text}`)
         .join('. ');
-      const fullSpeech = `Question ${currentIndex + 1}: ${currentQuestion.question}. ${choicesText}`;
+      const stepLabel = attempt?.isAdaptive ? `Adaptive Question ${adaptiveStep}` : `Question ${currentIndex + 1}`;
+      const fullSpeech = `${stepLabel}: ${q.question}. ${choicesText}`;
       speak(fullSpeech);
     }
-  }, [currentQuestion?.question_id, audioPrefs.voiceEnabled, audioPrefs.autoReadQuestion]);
+  }, [activeDisplayQuestion?.question_id, audioPrefs.voiceEnabled, audioPrefs.autoReadQuestion, attempt?.isAdaptive, adaptiveStep, currentIndex, speak]);
 
   // Toggle Hands-Free Voice Control
   const handleToggleVoiceControl = useCallback(() => {
@@ -106,14 +202,23 @@ export function QuizPlayerPage() {
     }
 
     startVoiceListening((cmd) => {
-      if (cmd.action === 'select_choice' && cmd.choiceId && currentQuestion) {
-        selectOption(currentQuestion.question_id, cmd.choiceId);
+      const q = activeDisplayQuestion;
+      if (cmd.action === 'select_choice' && cmd.choiceId && q) {
+        selectOption(q.question_id, cmd.choiceId);
       } else if (cmd.action === 'next_question') {
-        if (!isLastQuestion) nextQuestion();
+        if (attempt?.isAdaptive) {
+          void handleAdaptiveSubmit();
+        } else if (!isLastQuestion) {
+          nextQuestion();
+        }
       } else if (cmd.action === 'prev_question') {
-        if (!isFirstQuestion) prevQuestion();
+        if (!isFirstQuestion && !attempt?.isAdaptive) prevQuestion();
       } else if (cmd.action === 'submit_quiz') {
-        openSubmitModal();
+        if (attempt?.isAdaptive) {
+          void handleAdaptiveSubmit();
+        } else {
+          openSubmitModal();
+        }
       } else if (cmd.action === 'repeat_question') {
         handleReadCurrentQuestion();
       }
@@ -122,7 +227,9 @@ export function QuizPlayerPage() {
     isListening,
     stopVoiceListening,
     startVoiceListening,
-    currentQuestion,
+    activeDisplayQuestion,
+    attempt?.isAdaptive,
+    handleAdaptiveSubmit,
     selectOption,
     isLastQuestion,
     nextQuestion,
@@ -201,14 +308,14 @@ export function QuizPlayerPage() {
         '4': 'D',
       };
 
-      if (choiceMapping[key] && currentQuestion) {
+      if (choiceMapping[key] && activeDisplayQuestion) {
         const targetChoice = choiceMapping[key];
-        const exists = currentQuestion.choices.some(
+        const exists = activeDisplayQuestion.choices.some(
           (c) => c.choice_id === targetChoice
         );
         if (exists) {
           e.preventDefault();
-          selectOption(currentQuestion.question_id, targetChoice);
+          selectOption(activeDisplayQuestion.question_id, targetChoice);
         }
         return;
       }
@@ -216,7 +323,9 @@ export function QuizPlayerPage() {
       // Enter advances to next question or opens review modal on last question
       if (e.key === 'Enter') {
         e.preventDefault();
-        if (isLastQuestion) {
+        if (attempt?.isAdaptive) {
+          void handleAdaptiveSubmit();
+        } else if (isLastQuestion) {
           openSubmitModal();
         } else {
           nextQuestion();
@@ -225,13 +334,13 @@ export function QuizPlayerPage() {
       }
 
       // Arrow navigation
-      if (e.key === 'ArrowRight' && !isLastQuestion) {
+      if (e.key === 'ArrowRight' && !isLastQuestion && !attempt?.isAdaptive) {
         e.preventDefault();
         nextQuestion();
         return;
       }
 
-      if (e.key === 'ArrowLeft' && !isFirstQuestion) {
+      if (e.key === 'ArrowLeft' && !isFirstQuestion && !attempt?.isAdaptive) {
         e.preventDefault();
         prevQuestion();
         return;
@@ -242,7 +351,9 @@ export function QuizPlayerPage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [
     isSubmitModalOpen,
-    currentQuestion,
+    activeDisplayQuestion,
+    attempt?.isAdaptive,
+    handleAdaptiveSubmit,
     isLastQuestion,
     isFirstQuestion,
     selectOption,
@@ -265,7 +376,9 @@ export function QuizPlayerPage() {
     );
   }
 
-  if (error || !attempt || !currentQuestion) {
+  const activeQ = activeDisplayQuestion || currentQuestion;
+
+  if (error || !attempt || !activeQ) {
     return (
       <div className="min-h-screen bg-[#F8F9FC] dark:bg-[#0B0F19] flex flex-col items-center justify-center p-4 text-center">
         <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-900 text-rose-600 dark:text-rose-400 mb-4 inline-flex">
@@ -293,7 +406,7 @@ export function QuizPlayerPage() {
     );
   }
 
-  const selectedChoice = answers[currentQuestion.question_id] ?? null;
+  const selectedChoice = activeQ ? (answers[activeQ.question_id] ?? null) : null;
 
   return (
     <div className="min-h-screen bg-[#F8F9FC] dark:bg-[#0B0F19] text-[#1E293B] dark:text-[#F8FAFC] flex flex-col antialiased transition-colors duration-200">
@@ -370,13 +483,24 @@ export function QuizPlayerPage() {
 
       {/* Main Content */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-        <ProgressBar
-          currentIndex={currentIndex}
-          totalQuestions={totalQuestions}
-          topic={attempt.topic}
-          difficulty={attempt.difficulty}
-          autosaveStatus={autosaveStatus}
-        />
+        {attempt.isAdaptive ? (
+          <div className="mb-6">
+            <AdaptiveAbilityGauge
+              theta={adaptiveTheta}
+              standardError={adaptiveSE}
+              difficultyTier={adaptiveTier}
+              delta={adaptiveDelta}
+            />
+          </div>
+        ) : (
+          <ProgressBar
+            currentIndex={currentIndex}
+            totalQuestions={totalQuestions}
+            topic={attempt.topic}
+            difficulty={attempt.difficulty}
+            autosaveStatus={autosaveStatus}
+          />
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 items-start">
           {/* Question & Options Column (2 spans) */}
@@ -384,7 +508,9 @@ export function QuizPlayerPage() {
             <div className="bg-white dark:bg-[#151C2C] border border-slate-100 dark:border-slate-800 rounded-[20px] p-6 sm:p-8 shadow-[0_10px_30px_rgba(25,53,202,0.05)] transition-colors duration-200">
               <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                 <span className="text-xs font-extrabold uppercase tracking-wider text-[#1935CA] dark:text-[#38BDF8]">
-                  Question {currentIndex + 1} of {totalQuestions}
+                  {attempt.isAdaptive
+                    ? `Adaptive Step ${adaptiveStep} of ${adaptiveMaxSteps}`
+                    : `Question ${currentIndex + 1} of ${totalQuestions}`}
                 </span>
 
                 {/* Voice Narration & Hands-free Recognition Controls */}
@@ -461,19 +587,19 @@ export function QuizPlayerPage() {
               )}
 
               <h2 className="text-xl sm:text-2xl font-bold text-[#1E293B] dark:text-[#F8FAFC] leading-snug mb-8">
-                {currentQuestion.question}
+                {activeQ.question}
               </h2>
 
               {/* Options */}
               <div className="space-y-3.5">
-                {currentQuestion.choices.map((choice) => (
+                {activeQ.choices.map((choice) => (
                   <OptionCard
                     key={choice.choice_id}
                     choiceId={choice.choice_id}
                     optionText={choice.option_text}
                     isSelected={selectedChoice === choice.choice_id}
                     onSelect={() =>
-                      selectOption(currentQuestion.question_id, choice.choice_id)
+                      selectOption(activeQ.question_id, choice.choice_id)
                     }
                   />
                 ))}
@@ -483,34 +609,62 @@ export function QuizPlayerPage() {
             {/* Navigation Buttons */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
               <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={prevQuestion}
-                  disabled={isFirstQuestion}
-                  className="flex items-center gap-2 px-5 py-3 rounded-2xl text-sm font-bold bg-white dark:bg-[#151C2C] border border-slate-200 dark:border-slate-700 text-[#1E293B] dark:text-[#F8FAFC] hover:bg-slate-50 dark:hover:bg-slate-800 transition disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  <span>Previous</span>
-                </button>
-
-                {isLastQuestion ? (
+                {attempt.isAdaptive ? (
                   <button
                     type="button"
-                    onClick={openSubmitModal}
-                    className="flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/25 transition"
+                    onClick={handleAdaptiveSubmit}
+                    disabled={isAdaptiveSubmitting || !selectedChoice}
+                    className="flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-bold bg-[#1935CA] hover:bg-[#142BA3] disabled:opacity-40 text-white shadow-lg shadow-[#1935CA]/20 transition"
                   >
-                    <span>Review & Submit</span>
-                    <CheckCircle2 className="w-4 h-4" />
+                    {isAdaptiveSubmitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Calibrating Ability θ...</span>
+                      </>
+                    ) : adaptiveStep >= adaptiveMaxSteps ? (
+                      <>
+                        <span>Finish Adaptive Assessment</span>
+                        <CheckCircle2 className="w-4 h-4" />
+                      </>
+                    ) : (
+                      <>
+                        <span>Submit & Next Question</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </>
+                    )}
                   </button>
                 ) : (
-                  <button
-                    type="button"
-                    onClick={nextQuestion}
-                    className="flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-bold bg-[#1935CA] hover:bg-[#142BA3] text-white shadow-lg shadow-[#1935CA]/20 transition"
-                  >
-                    <span>Next Question</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      onClick={prevQuestion}
+                      disabled={isFirstQuestion}
+                      className="flex items-center gap-2 px-5 py-3 rounded-2xl text-sm font-bold bg-white dark:bg-[#151C2C] border border-slate-200 dark:border-slate-700 text-[#1E293B] dark:text-[#F8FAFC] hover:bg-slate-50 dark:hover:bg-slate-800 transition disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+                    >
+                      <ArrowLeft className="w-4 h-4" />
+                      <span>Previous</span>
+                    </button>
+
+                    {isLastQuestion ? (
+                      <button
+                        type="button"
+                        onClick={openSubmitModal}
+                        className="flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/25 transition"
+                      >
+                        <span>Review & Submit</span>
+                        <CheckCircle2 className="w-4 h-4" />
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={nextQuestion}
+                        className="flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-bold bg-[#1935CA] hover:bg-[#142BA3] text-white shadow-lg shadow-[#1935CA]/20 transition"
+                      >
+                        <span>Next Question</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </button>
+                    )}
+                  </>
                 )}
               </div>
 
@@ -520,7 +674,7 @@ export function QuizPlayerPage() {
                   <kbd className="font-bold text-[#1935CA] dark:text-[#38BDF8]">A-D</kbd> select
                 </span>
                 <span className="flex items-center gap-1 font-mono text-[11px] bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-[#1E293B] dark:text-[#F8FAFC]">
-                  <kbd className="font-bold text-[#1935CA] dark:text-[#38BDF8]">↵</kbd> {isLastQuestion ? 'submit' : 'next'}
+                  <kbd className="font-bold text-[#1935CA] dark:text-[#38BDF8]">↵</kbd> {attempt.isAdaptive ? 'calibrate' : isLastQuestion ? 'submit' : 'next'}
                 </span>
               </div>
             </div>
@@ -528,12 +682,42 @@ export function QuizPlayerPage() {
 
           {/* Palette Column (1 span) */}
           <div className="space-y-6">
-            <QuestionPalette
-              questions={attempt.questions}
-              currentIndex={currentIndex}
-              answers={answers}
-              onSelectIndex={goToQuestion}
-            />
+            {attempt.isAdaptive ? (
+              <div className="bg-white dark:bg-[#151C2C] border border-slate-100 dark:border-slate-800 rounded-[20px] p-5 text-xs text-[#696F79] dark:text-slate-400 shadow-[0_10px_30px_rgba(25,53,202,0.05)] space-y-3 transition-colors duration-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 font-bold text-[#1E293B] dark:text-[#F8FAFC]">
+                    <Target className="w-4 h-4 text-[#1935CA] dark:text-[#38BDF8]" />
+                    <span>CAT Dynamic Engine</span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#1935CA]/10 text-[#1935CA] dark:text-[#38BDF8]">
+                    Step {adaptiveStep}/{adaptiveMaxSteps}
+                  </span>
+                </div>
+                <div className="space-y-2 text-xs">
+                  <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
+                    <span className="text-slate-400">Current Ability (θ):</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200 font-mono">
+                      {adaptiveTheta >= 0 ? `+${adaptiveTheta.toFixed(2)}` : adaptiveTheta.toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
+                    <span className="text-slate-400">Item Selection:</span>
+                    <span className="font-medium text-emerald-600 dark:text-emerald-400">Max Fisher Info</span>
+                  </div>
+                  <div className="flex justify-between py-1">
+                    <span className="text-slate-400">Standard Error:</span>
+                    <span className="font-mono text-slate-800 dark:text-slate-200">± {adaptiveSE.toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <QuestionPalette
+                questions={attempt.questions}
+                currentIndex={currentIndex}
+                answers={answers}
+                onSelectIndex={goToQuestion}
+              />
+            )}
 
             <div className="bg-white dark:bg-[#151C2C] border border-slate-100 dark:border-slate-800 rounded-[20px] p-5 text-xs text-[#696F79] dark:text-slate-400 shadow-[0_10px_30px_rgba(25,53,202,0.05)] space-y-3 transition-colors duration-200">
               <div className="flex items-center gap-2 font-bold text-[#1E293B] dark:text-[#F8FAFC]">

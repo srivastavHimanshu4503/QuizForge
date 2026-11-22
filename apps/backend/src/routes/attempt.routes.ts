@@ -1,6 +1,7 @@
 import { FastifyInstance, FastifyPluginAsync } from 'fastify';
-import { saveAnswerSchema } from '@quiz-forge/shared';
+import { saveAnswerSchema, ChoiceId } from '@quiz-forge/shared';
 import { attemptService, AttemptError } from '../services/attempt.service';
+import { catService, CatError } from '../services/cat.service';
 
 export const attemptRoutes: FastifyPluginAsync = async (app: FastifyInstance) => {
   // All attempt routes require authentication
@@ -154,4 +155,89 @@ export const attemptRoutes: FastifyPluginAsync = async (app: FastifyInstance) =>
       throw err;
     }
   });
+
+  // Milestone 16: Computerized Adaptive Testing (CAT) Endpoints
+
+  // GET /api/attempts/:attemptId/adaptive-next
+  app.get<{ Params: { attemptId: string } }>('/:attemptId/adaptive-next', async (request, reply) => {
+    try {
+      const data = await catService.getNextAdaptiveQuestion(
+        request.user!.id,
+        request.params.attemptId
+      );
+      return reply.status(200).send({
+        success: true,
+        data,
+      });
+    } catch (err: unknown) {
+      if (err instanceof CatError || err instanceof AttemptError) {
+        return reply.status(err.statusCode).send({
+          success: false,
+          error: {
+            code: err.code,
+            message: err.message,
+          },
+        });
+      }
+      throw err;
+    }
+  });
+
+  // POST /api/attempts/:attemptId/adaptive-answer
+  app.post<{
+    Params: { attemptId: string };
+    Body: { questionId: string; selectedChoiceId: ChoiceId };
+  }>('/:attemptId/adaptive-answer', async (request, reply) => {
+    try {
+      const data = await catService.recordAdaptiveAnswer(
+        request.user!.id,
+        request.params.attemptId,
+        request.body.questionId,
+        request.body.selectedChoiceId
+      );
+      return reply.status(200).send({
+        success: true,
+        data,
+      });
+    } catch (err: unknown) {
+      if (err instanceof CatError || err instanceof AttemptError) {
+        return reply.status(err.statusCode).send({
+          success: false,
+          error: {
+            code: err.code,
+            message: err.message,
+          },
+        });
+      }
+      throw err;
+    }
+  });
+
+  // GET /api/attempts/:attemptId/adaptive-trajectory
+  app.get<{ Params: { attemptId: string } }>(
+    '/:attemptId/adaptive-trajectory',
+    async (request, reply) => {
+      try {
+        const data = await catService.getAdaptiveTrajectory(
+          request.user!.id,
+          request.params.attemptId
+        );
+        return reply.status(200).send({
+          success: true,
+          data,
+        });
+      } catch (err: unknown) {
+        if (err instanceof CatError || err instanceof AttemptError) {
+          return reply.status(err.statusCode).send({
+            success: false,
+            error: {
+              code: err.code,
+              message: err.message,
+            },
+          });
+        }
+        throw err;
+      }
+    }
+  );
 };

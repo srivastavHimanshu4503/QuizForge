@@ -16,6 +16,7 @@ export const quizzes = sqliteTable(
     aiModel: text('ai_model').notNull().default('gemini-2.5-flash'),
     status: text('status', { enum: ['draft', 'published'] }).notNull().default('published'),
     isPublic: integer('is_public').notNull().default(0),
+    isAdaptive: integer('is_adaptive', { mode: 'boolean' }).notNull().default(false),
     shareCode: text('share_code').unique(),
     createdAt: text('created_at')
       .notNull()

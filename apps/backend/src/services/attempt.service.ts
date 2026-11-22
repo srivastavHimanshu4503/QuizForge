@@ -127,6 +127,9 @@ export class AttemptService {
       startedAt: attempt.startedAt,
       tabSwitchCount: attempt.tabSwitchCount ?? 0,
       isTimedOut: attempt.isTimedOut ?? false,
+      isAdaptive: Boolean(attempt.isAdaptive),
+      currentTheta: attempt.currentTheta ?? 0.0,
+      standardError: attempt.standardError ?? 1.0,
     };
   }
 
@@ -532,6 +535,9 @@ export class AttemptService {
       durationSeconds,
       tabSwitchCount: attempt.tabSwitchCount ?? 0,
       isTimedOut: Boolean(attempt.isTimedOut),
+      isAdaptive: Boolean(attempt.isAdaptive),
+      currentTheta: attempt.currentTheta ?? 0.0,
+      standardError: attempt.standardError ?? 1.0,
     };
   }
 

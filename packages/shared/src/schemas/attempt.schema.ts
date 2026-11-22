@@ -23,6 +23,9 @@ export const activeAttemptSchema = z.object({
   startedAt: z.string().optional(),
   tabSwitchCount: z.number().int().optional(),
   isTimedOut: z.boolean().optional(),
+  isAdaptive: z.boolean().optional(),
+  currentTheta: z.number().optional(),
+  standardError: z.number().optional(),
 });
 
 export const submitAttemptPayloadSchema = z.object({
@@ -60,6 +63,9 @@ export const attemptResultSchema = z.object({
   durationSeconds: z.number().int().optional(),
   tabSwitchCount: z.number().int().optional(),
   isTimedOut: z.boolean().optional(),
+  isAdaptive: z.boolean().optional(),
+  currentTheta: z.number().optional(),
+  standardError: z.number().optional(),
 });
 
 export const historyItemTypeEnum = z.enum(['mcq', 'code_review']);

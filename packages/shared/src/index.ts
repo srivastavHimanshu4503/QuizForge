@@ -9,4 +9,5 @@ export * from './schemas/arena.schema.js';
 export * from './schemas/flashcards.schema.js';
 export * from './schemas/analytics.schema.js';
 export * from './schemas/audio-tutor.schema.js';
+export * from './schemas/cat.schema.js';
 export * from './types/index.js';
