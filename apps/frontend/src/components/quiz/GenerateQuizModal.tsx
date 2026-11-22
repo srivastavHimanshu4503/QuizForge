@@ -1,8 +1,17 @@
-import { useState, FormEvent } from 'react';
+import { useState, useEffect, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient, ApiError } from '../../api/client';
 import { QuizDifficulty } from '@quiz-forge/shared';
 import { Sparkles, Brain, Loader2, X, AlertCircle } from 'lucide-react';
+
+interface ProviderOption {
+  id: string;
+  name: string;
+  displayName: string;
+  defaultModel: string;
+  isAvailable: boolean;
+  supportsVision?: boolean;
+}
 
 interface GenerateQuizModalProps {
   isOpen: boolean;
@@ -32,10 +41,26 @@ export function GenerateQuizModal({ isOpen, onClose }: GenerateQuizModalProps) {
   const [questionCount, setQuestionCount] = useState<number>(5);
   const [difficulty, setDifficulty] = useState<QuizDifficulty>('mixed');
   const [provider, setProvider] = useState<string>('groq');
+  const [providers, setProviders] = useState<ProviderOption[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isOpen) {
+      apiClient
+        .get<{ providers: ProviderOption[] }>('/api/llm/providers')
+        .then((data) => {
+          setProviders(data.providers);
+          const firstAvail = data.providers.find((p) => p.isAvailable);
+          if (firstAvail) {
+            setProvider(firstAvail.id);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -226,70 +251,50 @@ export function GenerateQuizModal({ isOpen, onClose }: GenerateQuizModalProps) {
               <span>AI Engine / Model</span>
               <span className="text-[10px] text-[#1935CA] font-mono font-semibold">Multi-LLM Registry</span>
             </label>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              <button
-                type="button"
-                disabled={isGenerating}
-                onClick={() => setProvider('groq')}
-                className={`p-3 rounded-xl text-left border transition ${
-                  provider === 'groq'
-                    ? 'bg-[#EEF2FF] border-[#1935CA] ring-2 ring-[#1935CA]'
-                    : 'bg-[#F8F9FC] border-slate-200/80 hover:bg-slate-100'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className={`text-xs font-bold ${provider === 'groq' ? 'text-[#1935CA]' : 'text-[#1E293B]'}`}>
-                    Groq
-                  </span>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 font-mono font-bold">
-                    Fastest
-                  </span>
-                </div>
-                <p className="text-[11px] font-semibold text-[#1E293B] mt-1">GPT-OSS-120B</p>
-              </button>
-
-              <button
-                type="button"
-                disabled={isGenerating}
-                onClick={() => setProvider('gemini')}
-                className={`p-3 rounded-xl text-left border transition ${
-                  provider === 'gemini'
-                    ? 'bg-[#EEF2FF] border-[#1935CA] ring-2 ring-[#1935CA]'
-                    : 'bg-[#F8F9FC] border-slate-200/80 hover:bg-slate-100'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className={`text-xs font-bold ${provider === 'gemini' ? 'text-[#1935CA]' : 'text-[#1E293B]'}`}>
-                    Gemini
-                  </span>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 font-mono font-bold">
-                    Multimodal
-                  </span>
-                </div>
-                <p className="text-[11px] font-semibold text-[#1E293B] mt-1">2.5 Flash</p>
-              </button>
-
-              <button
-                type="button"
-                disabled={isGenerating}
-                onClick={() => setProvider('nvidia')}
-                className={`p-3 rounded-xl text-left border transition ${
-                  provider === 'nvidia'
-                    ? 'bg-[#EEF2FF] border-[#1935CA] ring-2 ring-[#1935CA]'
-                    : 'bg-[#F8F9FC] border-slate-200/80 hover:bg-slate-100'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className={`text-xs font-bold ${provider === 'nvidia' ? 'text-[#1935CA]' : 'text-[#1E293B]'}`}>
-                    NVIDIA NIM
-                  </span>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 font-mono font-bold">
-                    Cloud
-                  </span>
-                </div>
-                <p className="text-[11px] font-semibold text-[#1E293B] mt-1">Llama 3.3 70B</p>
-              </button>
-            </div>
+            {providers.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {providers.map((p) => {
+                  const cleanModelName = p.defaultModel.replace(/^(openai|meta|nvidia|google)\//i, '');
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      disabled={isGenerating || !p.isAvailable}
+                      onClick={() => setProvider(p.id)}
+                      className={`p-3 rounded-xl text-left border transition ${
+                        provider === p.id
+                          ? 'bg-[#EEF2FF] border-[#1935CA] ring-2 ring-[#1935CA]'
+                          : p.isAvailable
+                          ? 'bg-[#F8F9FC] border-slate-200/80 hover:bg-slate-100'
+                          : 'bg-slate-100 border-slate-200 opacity-50 cursor-not-allowed'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className={`text-xs font-bold truncate ${provider === p.id ? 'text-[#1935CA]' : 'text-[#1E293B]'}`}>
+                          {p.name.toUpperCase()}
+                        </span>
+                        <span
+                          className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-bold ${
+                            p.isAvailable
+                              ? 'bg-emerald-50 text-emerald-700'
+                              : 'bg-slate-200 text-slate-500'
+                          }`}
+                        >
+                          {p.isAvailable ? 'Ready' : 'Offline'}
+                        </span>
+                      </div>
+                      <p className="text-[11px] font-semibold text-[#1E293B] mt-1 font-mono truncate" title={p.defaultModel}>
+                        {cleanModelName}
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-500 font-medium">
+                Loading available models from environment...
+              </div>
+            )}
           </div>
 
           {/* Submit Action */}
@@ -302,7 +307,10 @@ export function GenerateQuizModal({ isOpen, onClose }: GenerateQuizModalProps) {
               {isGenerating ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Generating Questions with {provider === 'groq' ? 'Groq (GPT-OSS-120B)' : provider === 'gemini' ? 'Gemini 2.5 Flash' : 'AI'}...</span>
+                  <span>
+                    Generating Questions with{' '}
+                    {providers.find((p) => p.id === provider)?.displayName || provider.toUpperCase()}...
+                  </span>
                 </>
               ) : (
                 <>

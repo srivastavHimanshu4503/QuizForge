@@ -84,9 +84,9 @@ export function DashboardPage() {
       .catch(() => {
         // Fallback default list
         setProviders([
-          { id: 'groq', name: 'groq', displayName: 'Groq (GPT-OSS-120B)', defaultModel: 'openai/gpt-oss-120b', isAvailable: true, description: 'Ultra-low latency' },
+          { id: 'groq', name: 'groq', displayName: 'Groq', defaultModel: 'openai/gpt-oss-120b', isAvailable: true, description: 'Ultra-low latency' },
           { id: 'gemini', name: 'gemini', displayName: 'Google Gemini', defaultModel: 'gemini-2.5-flash', isAvailable: true, description: 'Multimodal vision & reasoning' },
-          { id: 'nvidia', name: 'nvidia', displayName: 'NVIDIA NIM', defaultModel: 'meta/llama-3.3-70b-instruct', isAvailable: false, description: 'High-throughput enterprise' },
+          { id: 'nvidia', name: 'nvidia', displayName: 'NVIDIA NIM', defaultModel: 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning', isAvailable: true, description: 'High-throughput enterprise' },
         ]);
       });
   }, []);
@@ -516,7 +516,7 @@ export function DashboardPage() {
                           {p.displayName}
                         </span>
                         <span className="text-[10px] text-[#696F79] font-mono block">
-                          {p.defaultModel.replace('openai/', '').replace('meta/', '')}
+                          {p.defaultModel.replace(/^(openai|meta|nvidia|google)\//i, '')}
                         </span>
                       </div>
                     </div>

@@ -182,6 +182,18 @@ describe('LLM Providers & Registry', () => {
       expect(list.some((p) => p.id === 'nvidia')).toBe(true);
       expect(list.some((p) => p.id === 'gemini')).toBe(true);
     });
+
+    it('dynamically formats displayName and description from model name in environment', () => {
+      const registry = new LLMProviderRegistry();
+      const list = registry.getAvailableProviders();
+      const groq = list.find((p) => p.id === 'groq');
+      const nvidia = list.find((p) => p.id === 'nvidia');
+      const gemini = list.find((p) => p.id === 'gemini');
+
+      expect(groq?.displayName).toContain(groq?.defaultModel.replace('openai/', ''));
+      expect(nvidia?.displayName).toContain(nvidia?.defaultModel.replace('nvidia/', '').replace('meta/', ''));
+      expect(gemini?.displayName).toContain(gemini?.defaultModel);
+    });
   });
 
   describe('LLMQuestionGenerator (Unified AI Layer)', () => {

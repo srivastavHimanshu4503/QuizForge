@@ -228,7 +228,7 @@ export function CodeQuizModal({ isOpen, onClose }: CodeQuizModalProps) {
                         />
                       </div>
                       <span className="text-[10px] text-[#696F79] font-mono block">
-                        {p.defaultModel.replace('openai/', '').replace('meta/', '')}
+                        {p.defaultModel.replace(/^(openai|meta|nvidia|google)\//i, '')}
                       </span>
                     </button>
                   );

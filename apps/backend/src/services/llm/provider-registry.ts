@@ -51,38 +51,45 @@ export class LLMProviderRegistry {
   }
 
   getAvailableProviders(): ProviderInfo[] {
-    const displayMeta: Record<string, { displayName: string; description: string }> = {
-      groq: {
-        displayName: 'Groq (GPT-OSS-120B)',
-        description: 'Ultra-fast LPU inference powered by GPT-OSS-120B.',
-      },
-      nvidia: {
-        displayName: 'NVIDIA NIM (Llama 3.3 70B)',
-        description: 'Enterprise AI microservices powered by NVIDIA accelerated compute.',
-      },
-      gemini: {
-        displayName: 'Google Gemini (2.5 Flash)',
-        description: 'High-throughput multimodal intelligence with large context window.',
-      },
-      mock: {
-        displayName: 'Mock Provider (Test)',
-        description: 'Local deterministic mock provider for testing.',
-      },
-    };
-
     return Array.from(this.providers.values()).map((p) => {
-      const meta = displayMeta[p.name] || {
-        displayName: p.name.toUpperCase(),
-        description: `${p.name} LLM Provider`,
-      };
+      // Dynamically extract model name from environment/provider default
+      const rawModel = p.defaultModel || '';
+      const cleanModel = rawModel.replace(/^(openai|meta|nvidia|google)\//i, '');
+
+      let displayName: string;
+      let description: string;
+
+      switch (p.name.toLowerCase()) {
+        case 'groq':
+          displayName = `Groq (${cleanModel})`;
+          description = `Ultra-fast LPU inference powered by ${cleanModel}.`;
+          break;
+        case 'nvidia':
+          displayName = `NVIDIA NIM (${cleanModel})`;
+          description = `Enterprise AI microservices powered by ${cleanModel}.`;
+          break;
+        case 'gemini':
+          displayName = `Google Gemini (${cleanModel})`;
+          description = `High-throughput multimodal intelligence with ${cleanModel}.`;
+          break;
+        case 'mock':
+          displayName = `Mock Provider (${cleanModel})`;
+          description = `Local deterministic mock provider for testing with ${cleanModel}.`;
+          break;
+        default:
+          displayName = `${p.name.toUpperCase()} (${cleanModel})`;
+          description = `${p.name} LLM Provider running ${cleanModel}.`;
+          break;
+      }
+
       return {
         id: p.name,
         name: p.name,
-        displayName: meta.displayName,
+        displayName,
         defaultModel: p.defaultModel,
         isAvailable: p.isAvailable,
         supportsVision: p.supportsVision,
-        description: meta.description,
+        description,
       };
     });
   }
