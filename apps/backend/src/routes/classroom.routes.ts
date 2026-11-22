@@ -103,6 +103,63 @@ export const classroomRoutes: FastifyPluginAsync = async (app: FastifyInstance) 
     }
   });
 
+  // GET /api/classrooms/:id/gradebook (Teacher only: full score matrix & item analysis)
+  app.get<{ Params: { id: string } }>(
+    '/:id/gradebook',
+    { preHandler: [app.requireRole(['teacher', 'admin'])] },
+    async (request, reply) => {
+      try {
+        const gradebook = await classroomService.getClassroomGradebook(
+          request.user!.id,
+          request.params.id
+        );
+        return reply.status(200).send({
+          success: true,
+          data: gradebook,
+        });
+      } catch (err: unknown) {
+        if (err instanceof ClassroomError) {
+          return reply.status(err.statusCode).send({
+            success: false,
+            error: {
+              code: err.code,
+              message: err.message,
+            },
+          });
+        }
+        throw err;
+      }
+    }
+  );
+
+  // GET /api/classrooms/:id/gradebook/export (Teacher only: download CSV gradebook)
+  app.get<{ Params: { id: string } }>(
+    '/:id/gradebook/export',
+    { preHandler: [app.requireRole(['teacher', 'admin'])] },
+    async (request, reply) => {
+      try {
+        const { filename, csv } = await classroomService.exportClassroomGradebookCsv(
+          request.user!.id,
+          request.params.id
+        );
+        reply.header('Content-Type', 'text/csv; charset=utf-8');
+        reply.header('Content-Disposition', `attachment; filename="${filename}"`);
+        return reply.status(200).send(csv);
+      } catch (err: unknown) {
+        if (err instanceof ClassroomError) {
+          return reply.status(err.statusCode).send({
+            success: false,
+            error: {
+              code: err.code,
+              message: err.message,
+            },
+          });
+        }
+        throw err;
+      }
+    }
+  );
+
   // POST /api/classrooms/join (Student)
   app.post('/join', async (request, reply) => {
     const parseResult = joinClassroomSchema.safeParse(request.body);

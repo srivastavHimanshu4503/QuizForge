@@ -9,6 +9,7 @@ import {
   questions,
   codeQuizzes,
   quizAttempts,
+  attemptAnswers,
 } from '../db/schema/index';
 import {
   CreateClassroomInput,
@@ -19,6 +20,11 @@ import {
   AssignmentDto,
   StudentSubmissionDto,
   ClassroomAssignmentSummaryDto,
+  ClassroomGradebookPayload,
+  GradebookAssignmentCol,
+  GradebookStudentRow,
+  GradebookStudentScore,
+  GradebookQuestionAnalysis,
 } from '@quiz-forge/shared';
 import { shuffleArray } from '../utils/shuffle';
 
@@ -945,6 +951,301 @@ export class ClassroomService {
     });
 
     return { success: true, id: classroomId };
+  }
+
+  async getClassroomGradebook(
+    teacherId: string,
+    classroomId: string,
+    database = db
+  ): Promise<ClassroomGradebookPayload> {
+    const classroom = database
+      .select()
+      .from(classrooms)
+      .where(eq(classrooms.id, classroomId))
+      .get();
+
+    if (!classroom) {
+      throw new ClassroomError('Classroom not found.', 404, 'CLASSROOM_NOT_FOUND');
+    }
+
+    if (classroom.teacherId !== teacherId) {
+      const teacherUser = database.select().from(users).where(eq(users.id, teacherId)).get();
+      if (teacherUser?.role !== 'admin') {
+        throw new ClassroomError('Only the classroom instructor can view the gradebook.', 403, 'FORBIDDEN');
+      }
+    }
+
+    const teacher = database
+      .select()
+      .from(users)
+      .where(eq(users.id, classroom.teacherId))
+      .get();
+
+    // Fetch all assignments in this classroom
+    const assignmentList = database
+      .select()
+      .from(quizAssignments)
+      .where(eq(quizAssignments.classroomId, classroomId))
+      .orderBy(desc(quizAssignments.createdAt))
+      .all();
+
+    // Process assignment columns and item analyses
+    const assignmentCols: GradebookAssignmentCol[] = [];
+    for (const a of assignmentList) {
+      const qList = database
+        .select({
+          id: questions.id,
+          orderIndex: questions.questionOrder,
+          questionText: questions.questionText,
+        })
+        .from(questions)
+        .where(eq(questions.quizId, a.quizId))
+        .orderBy(questions.questionOrder)
+        .all();
+
+      const assignAttempts = database
+        .select({ id: quizAttempts.id })
+        .from(quizAttempts)
+        .where(eq(quizAttempts.assignmentId, a.id))
+        .all();
+
+      const attemptIds = assignAttempts.map((att) => att.id);
+
+      let answersList: Array<{ questionId: string; isCorrect: boolean | null }> = [];
+      if (attemptIds.length > 0) {
+        answersList = database
+          .select({
+            questionId: attemptAnswers.questionId,
+            isCorrect: attemptAnswers.isCorrect,
+          })
+          .from(attemptAnswers)
+          .where(inArray(attemptAnswers.attemptId, attemptIds))
+          .all();
+      }
+
+      const itemAnalysis: GradebookQuestionAnalysis[] = qList.map((q, idx) => {
+        const qAnswers = answersList.filter((ans) => ans.questionId === q.id);
+        const totalAnswered = qAnswers.length;
+        const correctAnswered = qAnswers.filter((ans) => ans.isCorrect === true).length;
+        const difficultyIndex = totalAnswered > 0 ? Number((correctAnswered / totalAnswered).toFixed(2)) : 0;
+        let difficultyLabel: 'Easy' | 'Moderate' | 'Challenging' = 'Moderate';
+        if (difficultyIndex >= 0.75) difficultyLabel = 'Easy';
+        else if (difficultyIndex < 0.40) difficultyLabel = 'Challenging';
+
+        return {
+          questionId: q.id,
+          orderIndex: q.orderIndex ?? idx + 1,
+          questionText: q.questionText,
+          totalAnswered,
+          correctAnswered,
+          difficultyIndex,
+          difficultyLabel,
+          flagged: totalAnswered >= 2 && difficultyIndex < 0.40,
+        };
+      });
+
+      assignmentCols.push({
+        id: a.id,
+        title: a.title,
+        quizId: a.quizId,
+        quizType: a.quizType as any,
+        totalQuestions: qList.length,
+        dueDate: a.dueDate,
+        itemAnalysis,
+      });
+    }
+
+    // Fetch all enrolled students
+    const enrolledStudents = database
+      .select({
+        studentId: users.id,
+        studentName: users.displayName,
+        studentEmail: users.email,
+        joinedAt: classroomMembers.joinedAt,
+      })
+      .from(classroomMembers)
+      .innerJoin(users, eq(classroomMembers.studentId, users.id))
+      .where(eq(classroomMembers.classroomId, classroomId))
+      .orderBy(users.displayName)
+      .all();
+
+    // Build student rows and score matrix
+    const studentRows: GradebookStudentRow[] = [];
+    let totalCompletedSubmissions = 0;
+    let sumOfStudentAverages = 0;
+    let studentsWithGrades = 0;
+
+    for (const s of enrolledStudents) {
+      const scores: Record<string, GradebookStudentScore> = {};
+      let completedCount = 0;
+      let studentSumPercentages = 0;
+
+      for (const a of assignmentCols) {
+        const attempts = database
+          .select()
+          .from(quizAttempts)
+          .where(
+            and(
+              eq(quizAttempts.userId, s.studentId),
+              eq(quizAttempts.assignmentId, a.id)
+            )
+          )
+          .orderBy(desc(quizAttempts.startedAt))
+          .all();
+
+        let bestScore: number | null = null;
+        let status: 'not_started' | 'in_progress' | 'completed' | 'overdue' = 'not_started';
+        let lastAttemptAt: string | null = null;
+
+        const isOverdue = a.dueDate ? new Date(a.dueDate) < new Date() : false;
+
+        if (attempts.length > 0) {
+          lastAttemptAt = attempts[0]?.startedAt || null;
+          const hasCompleted = attempts.some((att) => att.status === 'completed');
+          const hasInProgress = attempts.some((att) => att.status === 'in_progress');
+
+          if (hasCompleted) {
+            status = 'completed';
+            for (const att of attempts) {
+              if (att.score !== null) {
+                bestScore = bestScore === null ? att.score : Math.max(bestScore, att.score);
+              }
+            }
+          } else if (hasInProgress) {
+            status = 'in_progress';
+          }
+        } else if (isOverdue) {
+          status = 'overdue';
+        }
+
+        let percentage: number | null = null;
+        if (status === 'completed' && bestScore !== null && a.totalQuestions > 0) {
+          percentage = Number(((bestScore / a.totalQuestions) * 100).toFixed(1));
+          completedCount++;
+          totalCompletedSubmissions++;
+          studentSumPercentages += percentage;
+        }
+
+        scores[a.id] = {
+          assignmentId: a.id,
+          status,
+          score: bestScore,
+          totalQuestions: a.totalQuestions,
+          percentage,
+          attemptsCount: attempts.length,
+          lastAttemptAt,
+        };
+      }
+
+      const overallAveragePercentage =
+        completedCount > 0 ? Number((studentSumPercentages / completedCount).toFixed(1)) : null;
+
+      if (overallAveragePercentage !== null) {
+        sumOfStudentAverages += overallAveragePercentage;
+        studentsWithGrades++;
+      }
+
+      studentRows.push({
+        studentId: s.studentId,
+        studentName: s.studentName,
+        studentEmail: s.studentEmail,
+        joinedAt: s.joinedAt,
+        completedCount,
+        overallAveragePercentage,
+        scores,
+      });
+    }
+
+    const totalPossibleSubmissions = enrolledStudents.length * assignmentCols.length;
+    const overallCompletionRate =
+      totalPossibleSubmissions > 0
+        ? Number(((totalCompletedSubmissions / totalPossibleSubmissions) * 100).toFixed(1))
+        : 0;
+
+    const classAveragePercentage =
+      studentsWithGrades > 0 ? Number((sumOfStudentAverages / studentsWithGrades).toFixed(1)) : null;
+
+    return {
+      classroom: {
+        id: classroom.id,
+        name: classroom.name,
+        description: classroom.description,
+        code: classroom.code,
+        teacherName: teacher?.displayName || 'Instructor',
+      },
+      assignments: assignmentCols,
+      students: studentRows,
+      stats: {
+        totalStudents: enrolledStudents.length,
+        totalAssignments: assignmentCols.length,
+        classAveragePercentage,
+        overallCompletionRate,
+      },
+    };
+  }
+
+  async exportClassroomGradebookCsv(
+    teacherId: string,
+    classroomId: string,
+    database = db
+  ): Promise<{ filename: string; csv: string }> {
+    const gradebook = await this.getClassroomGradebook(teacherId, classroomId, database);
+
+    const escapeCsv = (val: string | number | null | undefined): string => {
+      if (val === null || val === undefined) return '""';
+      let str = String(val).replace(/"/g, '""');
+      if (['=', '+', '-', '@'].some((char) => str.startsWith(char))) {
+        str = `'${str}`;
+      }
+      return `"${str}"`;
+    };
+
+    const headers = [
+      'Student Name',
+      'Student Email',
+      'Enrolled Date',
+      'Completed Assignments',
+      'Overall Average (%)',
+    ];
+
+    for (const a of gradebook.assignments) {
+      headers.push(`${a.title} (Score)`);
+      headers.push(`${a.title} (%)`);
+      headers.push(`${a.title} (Status)`);
+    }
+
+    const lines: string[] = [];
+    lines.push(headers.map(escapeCsv).join(','));
+
+    for (const s of gradebook.students) {
+      const row = [
+        s.studentName,
+        s.studentEmail,
+        new Date(s.joinedAt).toLocaleDateString(),
+        `${s.completedCount} / ${gradebook.assignments.length}`,
+        s.overallAveragePercentage !== null ? `${s.overallAveragePercentage}%` : 'N/A',
+      ];
+
+      for (const a of gradebook.assignments) {
+        const sc = s.scores[a.id];
+        if (!sc || sc.status === 'not_started') {
+          row.push('—', '—', 'Not Started');
+        } else if (sc.status === 'overdue') {
+          row.push('—', '—', 'Overdue');
+        } else if (sc.status === 'in_progress') {
+          row.push('—', '—', 'In Progress');
+        } else {
+          row.push(`${sc.score}/${sc.totalQuestions}`, `${sc.percentage}%`, 'Completed');
+        }
+      }
+
+      lines.push(row.map(escapeCsv).join(','));
+    }
+
+    const cleanName = gradebook.classroom.name.replace(/[^a-zA-Z0-9_-]/g, '_');
+    const filename = `gradebook_${cleanName}_${new Date().toISOString().slice(0, 10)}.csv`;
+
+    return { filename, csv: lines.join('\r\n') };
   }
 }
 

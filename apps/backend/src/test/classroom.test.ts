@@ -356,6 +356,80 @@ describe('RBAC & Classroom / Assignment Engine (Milestone 2)', () => {
     expect(res.statusCode).toBe(403);
   });
 
+  it('blocks students from accessing full classroom gradebook (403 Forbidden)', async () => {
+    const res = await app.inject({
+      method: 'GET',
+      url: `/api/classrooms/${classroomId}/gradebook`,
+      headers: { cookie: studentCookie },
+    });
+
+    expect(res.statusCode).toBe(403);
+  });
+
+  it('allows teacher to retrieve full classroom gradebook matrix with psychometric item analysis', async () => {
+    const res = await app.inject({
+      method: 'GET',
+      url: `/api/classrooms/${classroomId}/gradebook`,
+      headers: { cookie: teacherCookie },
+    });
+
+    expect(res.statusCode).toBe(200);
+    const body = JSON.parse(res.payload);
+    expect(body.success).toBe(true);
+
+    const gradebook = body.data;
+    expect(gradebook.classroom.id).toBe(classroomId);
+    expect(gradebook.stats.totalStudents).toBe(1);
+    expect(gradebook.stats.totalAssignments).toBe(1);
+    expect(gradebook.stats.overallCompletionRate).toBe(100);
+    expect(typeof gradebook.stats.classAveragePercentage).toBe('number');
+
+    // Verify assignment column definitions
+    expect(gradebook.assignments.length).toBe(1);
+    const assignCol = gradebook.assignments[0];
+    expect(assignCol.id).toBe(assignmentId);
+    expect(Array.isArray(assignCol.itemAnalysis)).toBe(true);
+    expect(assignCol.itemAnalysis.length).toBeGreaterThan(0);
+    const qAnalysis = assignCol.itemAnalysis[0];
+    expect(qAnalysis).toHaveProperty('questionId');
+    expect(qAnalysis).toHaveProperty('difficultyIndex');
+    expect(qAnalysis).toHaveProperty('difficultyLabel');
+    expect(qAnalysis).toHaveProperty('flagged');
+
+    // Verify student matrix row
+    expect(gradebook.students.length).toBe(1);
+    const studentRow = gradebook.students[0];
+    expect(studentRow.studentName).toBe('Alice Student');
+    expect(studentRow.completedCount).toBe(1);
+    expect(studentRow.overallAveragePercentage).toBeDefined();
+    expect(studentRow.scores[assignmentId]).toBeDefined();
+    expect(studentRow.scores[assignmentId].status).toBe('completed');
+  });
+
+  it('blocks students from exporting classroom gradebook CSV (403 Forbidden)', async () => {
+    const res = await app.inject({
+      method: 'GET',
+      url: `/api/classrooms/${classroomId}/gradebook/export`,
+      headers: { cookie: studentCookie },
+    });
+
+    expect(res.statusCode).toBe(403);
+  });
+
+  it('allows teacher to export classroom gradebook CSV with proper headers and escaping', async () => {
+    const res = await app.inject({
+      method: 'GET',
+      url: `/api/classrooms/${classroomId}/gradebook/export`,
+      headers: { cookie: teacherCookie },
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.headers['content-type']).toContain('text/csv');
+    expect(res.headers['content-disposition']).toContain('attachment; filename=');
+    expect(res.payload).toContain('"Student Name","Student Email","Enrolled Date","Completed Assignments","Overall Average (%)"');
+    expect(res.payload).toContain('Alice Student');
+  });
+
   it('allows teacher to retrieve their created quizzes via GET /api/quizzes/mine', async () => {
     const res = await app.inject({
       method: 'GET',

@@ -172,3 +172,62 @@ export interface StudentSubmissionDto {
   lastAttemptAt: string | null;
   status: 'not_started' | 'in_progress' | 'completed';
 }
+
+export interface GradebookQuestionAnalysis {
+  questionId: string;
+  orderIndex: number;
+  questionText: string;
+  totalAnswered: number;
+  correctAnswered: number;
+  difficultyIndex: number; // 0.0 - 1.0 (% correct)
+  difficultyLabel: 'Easy' | 'Moderate' | 'Challenging';
+  flagged: boolean; // true if tricky / high difficulty (< 0.40)
+}
+
+export interface GradebookAssignmentCol {
+  id: string;
+  title: string;
+  quizId: string;
+  quizType: AssignmentQuizType;
+  totalQuestions: number;
+  dueDate: string | null;
+  itemAnalysis: GradebookQuestionAnalysis[];
+}
+
+export interface GradebookStudentScore {
+  assignmentId: string;
+  status: 'not_started' | 'in_progress' | 'completed' | 'overdue';
+  score: number | null;
+  totalQuestions: number;
+  percentage: number | null;
+  attemptsCount: number;
+  lastAttemptAt: string | null;
+}
+
+export interface GradebookStudentRow {
+  studentId: string;
+  studentName: string;
+  studentEmail: string;
+  joinedAt: string;
+  completedCount: number;
+  overallAveragePercentage: number | null;
+  scores: Record<string, GradebookStudentScore>;
+}
+
+export interface ClassroomGradebookPayload {
+  classroom: {
+    id: string;
+    name: string;
+    description?: string | null;
+    code: string;
+    teacherName: string;
+  };
+  assignments: GradebookAssignmentCol[];
+  students: GradebookStudentRow[];
+  stats: {
+    totalStudents: number;
+    totalAssignments: number;
+    classAveragePercentage: number | null;
+    overallCompletionRate: number;
+  };
+}

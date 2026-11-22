@@ -7,6 +7,7 @@ import {
   StudentSubmissionDto,
   CreatedQuizSummaryDto,
   ClassroomAssignmentSummaryDto,
+  ClassroomGradebookPayload,
 } from '@quiz-forge/shared';
 import { AppLayout } from '../components/layout/AppLayout';
 import {
@@ -31,6 +32,12 @@ import {
   Image as ImageIcon,
   Code2,
   FileQuestion,
+  Download,
+  BarChart2,
+  CheckCircle2,
+  AlertTriangle,
+  TrendingUp,
+  Search,
 } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { GenerateQuizModal } from '../components/quiz/GenerateQuizModal';
@@ -97,8 +104,63 @@ export function ClassroomsPage() {
   const [submissions, setSubmissions] = useState<StudentSubmissionDto[]>([]);
   const [isLoadingSubmissions, setIsLoadingSubmissions] = useState(false);
 
+  // Gradebook & Analytics State
+  const [activeTab, setActiveTab] = useState<'assignments' | 'gradebook' | 'roster'>('assignments');
+  const [gradebookData, setGradebookData] = useState<ClassroomGradebookPayload | null>(null);
+  const [isLoadingGradebook, setIsLoadingGradebook] = useState(false);
+  const [isExportingCsv, setIsExportingCsv] = useState(false);
+  const [selectedAnalysisAssignmentId, setSelectedAnalysisAssignmentId] = useState<string | null>(null);
+  const [studentSearchQuery, setStudentSearchQuery] = useState('');
+
   // Copied code feedback
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+
+  const fetchGradebook = async (classId: string) => {
+    setIsLoadingGradebook(true);
+    try {
+      const res = await apiClient.get<ClassroomGradebookPayload>(`/api/classrooms/${classId}/gradebook`);
+      setGradebookData(res);
+      if (res.assignments.length > 0) {
+        setSelectedAnalysisAssignmentId((prev) => prev || res.assignments[0]?.id || null);
+      }
+    } catch (err) {
+      console.error('Failed to load gradebook', err);
+    } finally {
+      setIsLoadingGradebook(false);
+    }
+  };
+
+  const handleExportCsv = async () => {
+    if (!selectedClassId) return;
+    setIsExportingCsv(true);
+    try {
+      const res = await fetch(`/api/classrooms/${selectedClassId}/gradebook/export`, {
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        throw new Error('Failed to export gradebook CSV.');
+      }
+      const blob = await res.blob();
+      const disposition = res.headers.get('content-disposition');
+      let filename = `gradebook_${selectedClassId}.csv`;
+      if (disposition && disposition.includes('filename=')) {
+        const match = disposition.match(/filename="?([^";]+)"?/);
+        if (match && match[1]) filename = match[1];
+      }
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Export failed.');
+    } finally {
+      setIsExportingCsv(false);
+    }
+  };
 
   const fetchClassrooms = async () => {
     setIsLoading(true);
@@ -164,8 +226,11 @@ export function ClassroomsPage() {
   useEffect(() => {
     if (selectedClassId) {
       fetchClassDetails(selectedClassId);
+      if (activeTab === 'gradebook' && isTeacher) {
+        fetchGradebook(selectedClassId);
+      }
     }
-  }, [selectedClassId]);
+  }, [selectedClassId, activeTab, isTeacher]);
 
   const handleCreateClass = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -224,6 +289,7 @@ export function ClassroomsPage() {
       });
       setShowAssignModal(false);
       fetchClassDetails(selectedClassId);
+      if (activeTab === 'gradebook' && isTeacher) fetchGradebook(selectedClassId);
     } catch (err) {
       alert(err instanceof ApiError ? err.message : 'Failed to create assignment.');
     } finally {
@@ -242,7 +308,10 @@ export function ClassroomsPage() {
         dueDate: editAssignDueDate ? new Date(editAssignDueDate).toISOString() : null,
       });
       setEditingAssignment(null);
-      if (selectedClassId) fetchClassDetails(selectedClassId);
+      if (selectedClassId) {
+        fetchClassDetails(selectedClassId);
+        if (activeTab === 'gradebook' && isTeacher) fetchGradebook(selectedClassId);
+      }
     } catch (err) {
       alert(err instanceof ApiError ? err.message : 'Failed to update assignment.');
     } finally {
@@ -254,7 +323,10 @@ export function ClassroomsPage() {
     if (!window.confirm('Are you sure you want to delete this assignment from the classroom?')) return;
     try {
       await apiClient.delete(`/api/classrooms/assignments/${assignmentId}`);
-      if (selectedClassId) fetchClassDetails(selectedClassId);
+      if (selectedClassId) {
+        fetchClassDetails(selectedClassId);
+        if (activeTab === 'gradebook' && isTeacher) fetchGradebook(selectedClassId);
+      }
     } catch (err) {
       alert(err instanceof ApiError ? err.message : 'Failed to delete assignment.');
     }
@@ -518,199 +590,679 @@ export function ClassroomsPage() {
                   </div>
                 </div>
 
-                {/* Assignments Section */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between px-1">
-                    <h3 className="text-xs font-bold text-[#696F79] dark:text-slate-400 uppercase tracking-wider">
-                      Assignments ({classDetails.assignments.length})
-                    </h3>
-                    {!isTeacher ? (
-                      <Link
-                        to="/assignments"
-                        className="text-xs font-bold text-[#1935CA] dark:text-[#38BDF8] hover:underline flex items-center gap-1"
+                {/* Classroom Navigation Tabs */}
+                <div className="flex items-center gap-2 border-b border-slate-200/80 dark:border-slate-800 pb-2 overflow-x-auto">
+                  <button
+                    onClick={() => setActiveTab('assignments')}
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition whitespace-nowrap ${
+                      activeTab === 'assignments'
+                        ? 'bg-[#1935CA] text-white shadow-md shadow-[#1935CA]/20'
+                        : 'text-[#696F79] dark:text-slate-400 hover:text-[#1E293B] dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
+                    }`}
+                  >
+                    <BookOpen className="w-3.5 h-3.5" />
+                    <span>Assignments</span>
+                    <span
+                      className={`px-1.5 py-0.5 rounded-full text-[10px] ${
+                        activeTab === 'assignments'
+                          ? 'bg-white/20 text-white'
+                          : 'bg-slate-200/70 dark:bg-slate-700 text-[#1E293B] dark:text-slate-300'
+                      }`}
+                    >
+                      {classDetails.assignments.length}
+                    </span>
+                  </button>
+
+                  {isTeacher && (
+                    <button
+                      onClick={() => setActiveTab('gradebook')}
+                      className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition whitespace-nowrap ${
+                        activeTab === 'gradebook'
+                          ? 'bg-[#1935CA] text-white shadow-md shadow-[#1935CA]/20'
+                          : 'text-[#696F79] dark:text-slate-400 hover:text-[#1E293B] dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
+                      }`}
+                    >
+                      <BarChart2 className="w-3.5 h-3.5" />
+                      <span>Gradebook & Analytics</span>
+                      <span
+                        className={`px-1.5 py-0.5 rounded-full text-[10px] uppercase font-bold tracking-wider ${
+                          activeTab === 'gradebook'
+                            ? 'bg-white/20 text-white'
+                            : 'bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300'
+                        }`}
                       >
-                        <span>Take Assigned Quizzes</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </Link>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => {
-                            fetchMyQuizzes();
-                            setShowAssignModal(true);
-                          }}
+                        Live
+                      </span>
+                    </button>
+                  )}
+
+                  <button
+                    onClick={() => setActiveTab('roster')}
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition whitespace-nowrap ${
+                      activeTab === 'roster'
+                        ? 'bg-[#1935CA] text-white shadow-md shadow-[#1935CA]/20'
+                        : 'text-[#696F79] dark:text-slate-400 hover:text-[#1E293B] dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
+                    }`}
+                  >
+                    <Users className="w-3.5 h-3.5" />
+                    <span>Student Roster</span>
+                    <span
+                      className={`px-1.5 py-0.5 rounded-full text-[10px] ${
+                        activeTab === 'roster'
+                          ? 'bg-white/20 text-white'
+                          : 'bg-slate-200/70 dark:bg-slate-700 text-[#1E293B] dark:text-slate-300'
+                      }`}
+                    >
+                      {classDetails.members.length}
+                    </span>
+                  </button>
+                </div>
+
+                {/* Tab 1: Assignments Section */}
+                {activeTab === 'assignments' && (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between px-1">
+                      <h3 className="text-xs font-bold text-[#696F79] dark:text-slate-400 uppercase tracking-wider">
+                        Assignments ({classDetails.assignments.length})
+                      </h3>
+                      {!isTeacher ? (
+                        <Link
+                          to="/assignments"
                           className="text-xs font-bold text-[#1935CA] dark:text-[#38BDF8] hover:underline flex items-center gap-1"
                         >
-                          <Plus className="w-3.5 h-3.5" />
-                          <span>Assign Quiz</span>
-                        </button>
+                          <span>Take Assigned Quizzes</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </Link>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => {
+                              fetchMyQuizzes();
+                              setShowAssignModal(true);
+                            }}
+                            className="text-xs font-bold text-[#1935CA] dark:text-[#38BDF8] hover:underline flex items-center gap-1"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>Assign Quiz</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {classDetails.assignments.length === 0 ? (
+                      <div className="p-8 text-center text-[#696F79] dark:text-slate-400 text-sm bg-white dark:bg-[#151C2C] rounded-[20px] shadow-[0_10px_30px_rgba(25,53,202,0.05)] border border-slate-100 dark:border-slate-800 space-y-2">
+                        <p>No quizzes have been assigned to this classroom yet.</p>
+                        {isTeacher && (
+                          <button
+                            onClick={() => {
+                              fetchMyQuizzes();
+                              setShowAssignModal(true);
+                            }}
+                            className="px-4 py-2 text-xs font-bold text-[#1935CA] dark:text-[#38BDF8] bg-[#EEF2FF] dark:bg-slate-800 hover:bg-[#E0E7FF] dark:hover:bg-slate-700 rounded-xl transition"
+                          >
+                            Create First Assignment
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 gap-3">
+                        {classDetails.assignments.map((a) => (
+                          <div
+                            key={a.id}
+                            className="p-4 sm:p-5 rounded-[18px] bg-white dark:bg-[#151C2C] border border-slate-100 dark:border-slate-800 shadow-[0_8px_24px_rgba(25,53,202,0.04)] flex flex-col md:flex-row md:items-center justify-between gap-4 transition-colors duration-200"
+                          >
+                            <div className="space-y-1.5 flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-bold text-[#1E293B] dark:text-[#F8FAFC] text-sm truncate">{a.title}</span>
+                                <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-[#EEF2FF] dark:bg-slate-800 text-[#1935CA] dark:text-[#38BDF8]">
+                                  {a.quizType === 'code_review' ? 'Code Review' : 'MCQ'}
+                                </span>
+                              </div>
+                              <div className="flex flex-wrap items-center gap-4 text-xs text-[#696F79] dark:text-slate-400 font-medium">
+                                {a.dueDate && (
+                                  <div className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
+                                    <Calendar className="w-3.5 h-3.5" />
+                                    <span>Due: {new Date(a.dueDate).toLocaleDateString()}</span>
+                                  </div>
+                                )}
+                                <div>
+                                  <span>Limit: {a.maxAttempts} {a.maxAttempts === 1 ? 'attempt' : 'attempts'}</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2 flex-wrap self-start md:self-auto">
+                              {isTeacher ? (
+                                <>
+                                  {/* Edit Questions in Studio (MCQ only) */}
+                                  {a.quizType === 'mcq' && (
+                                    <Link
+                                      to={`/studio/${a.quizId}`}
+                                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[#1935CA] dark:text-[#38BDF8] hover:bg-[#EEF2FF] dark:hover:bg-slate-700 bg-[#F8F9FC] dark:bg-slate-800 rounded-xl border border-slate-200/80 dark:border-slate-700 transition"
+                                      title="Edit questions, choices and answers in Quiz Studio"
+                                    >
+                                      <SlidersHorizontal className="w-3.5 h-3.5" />
+                                      <span>Edit Quiz</span>
+                                    </Link>
+                                  )}
+
+                                  {/* Share Assignment Link */}
+                                  <button
+                                    onClick={() =>
+                                      setShareModalData({
+                                        type: 'assignment',
+                                        title: a.title,
+                                        code: a.shareCode || undefined,
+                                        url: a.shareCode
+                                          ? `${window.location.origin}/quiz/shared/${a.shareCode}`
+                                          : `${window.location.origin}/classrooms?join=${classDetails.classroom.code}`,
+                                      })
+                                    }
+                                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[#1935CA] dark:text-[#38BDF8] hover:bg-[#EEF2FF] dark:hover:bg-slate-700 bg-[#F8F9FC] dark:bg-slate-800 rounded-xl border border-slate-200/80 dark:border-slate-700 transition"
+                                    title="Share quiz or direct access code"
+                                  >
+                                    <Share2 className="w-3.5 h-3.5" />
+                                    <span>Share</span>
+                                  </button>
+
+                                  {/* Edit Assignment Settings */}
+                                  <button
+                                    onClick={() => {
+                                      setEditingAssignment(a);
+                                      setEditAssignTitle(a.title);
+                                      setEditAssignDueDate(a.dueDate ? a.dueDate.split('T')[0] || '' : '');
+                                      setEditAssignMaxAttempts(a.maxAttempts);
+                                    }}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[#696F79] dark:text-slate-300 hover:text-[#1E293B] dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 bg-[#F8F9FC] dark:bg-slate-800 rounded-xl border border-slate-200/80 dark:border-slate-700 transition"
+                                    title="Edit Assignment Settings (Due date, attempts, title)"
+                                  >
+                                    <Settings className="w-3.5 h-3.5" />
+                                    <span>Settings</span>
+                                  </button>
+
+                                  {/* Submissions Modal */}
+                                  <button
+                                    onClick={() => handleViewSubmissions(a.id)}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[#696F79] dark:text-slate-300 hover:text-[#1E293B] dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 bg-[#F8F9FC] dark:bg-slate-800 rounded-xl border border-slate-200/80 dark:border-slate-700 transition"
+                                    title="View individual student attempts and scores"
+                                  >
+                                    <ClipboardList className="w-3.5 h-3.5" />
+                                    <span>Submissions</span>
+                                  </button>
+
+                                  {/* Switch directly to Gradebook matrix */}
+                                  <button
+                                    onClick={() => {
+                                      setSelectedAnalysisAssignmentId(a.id);
+                                      setActiveTab('gradebook');
+                                    }}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[#1935CA] dark:text-[#38BDF8] hover:bg-[#EEF2FF] dark:hover:bg-slate-700 bg-[#F8F9FC] dark:bg-slate-800 rounded-xl border border-slate-200/80 dark:border-slate-700 transition"
+                                  >
+                                    <Award className="w-3.5 h-3.5" />
+                                    <span>Gradebook</span>
+                                  </button>
+
+                                  {/* Delete Assignment */}
+                                  <button
+                                    onClick={() => handleDeleteAssignment(a.id)}
+                                    className="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition border border-transparent hover:border-rose-100"
+                                    title="Delete Assignment"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </>
+                              ) : (
+                                <Link
+                                  to="/assignments"
+                                  className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-[#1935CA] hover:bg-[#142BA3] rounded-xl transition shadow-sm"
+                                >
+                                  <span>Start Task</span>
+                                  <ArrowRight className="w-3.5 h-3.5" />
+                                </Link>
+                              )}
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>
+                )}
 
-                  {classDetails.assignments.length === 0 ? (
-                    <div className="p-8 text-center text-[#696F79] dark:text-slate-400 text-sm bg-white dark:bg-[#151C2C] rounded-[20px] shadow-[0_10px_30px_rgba(25,53,202,0.05)] border border-slate-100 dark:border-slate-800 space-y-2">
-                      <p>No quizzes have been assigned to this classroom yet.</p>
-                      {isTeacher && (
-                        <button
-                          onClick={() => {
-                            fetchMyQuizzes();
-                            setShowAssignModal(true);
-                          }}
-                          className="px-4 py-2 text-xs font-bold text-[#1935CA] dark:text-[#38BDF8] bg-[#EEF2FF] dark:bg-slate-800 hover:bg-[#E0E7FF] dark:hover:bg-slate-700 rounded-xl transition"
-                        >
-                          Create First Assignment
-                        </button>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 gap-3">
-                      {classDetails.assignments.map((a) => (
-                        <div
-                          key={a.id}
-                          className="p-4 sm:p-5 rounded-[18px] bg-white dark:bg-[#151C2C] border border-slate-100 dark:border-slate-800 shadow-[0_8px_24px_rgba(25,53,202,0.04)] flex flex-col md:flex-row md:items-center justify-between gap-4 transition-colors duration-200"
-                        >
-                          <div className="space-y-1.5 flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-bold text-[#1E293B] dark:text-[#F8FAFC] text-sm truncate">{a.title}</span>
-                              <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-[#EEF2FF] dark:bg-slate-800 text-[#1935CA] dark:text-[#38BDF8]">
-                                {a.quizType === 'code_review' ? 'Code Review' : 'MCQ'}
-                              </span>
-                            </div>
-                            <div className="flex flex-wrap items-center gap-4 text-xs text-[#696F79] dark:text-slate-400 font-medium">
-                              {a.dueDate && (
-                                <div className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
-                                  <Calendar className="w-3.5 h-3.5" />
-                                  <span>Due: {new Date(a.dueDate).toLocaleDateString()}</span>
-                                </div>
-                              )}
-                              <div>
-                                <span>Limit: {a.maxAttempts} {a.maxAttempts === 1 ? 'attempt' : 'attempts'}</span>
+                {/* Tab 2: Gradebook & Analytics Section (Teacher Only) */}
+                {activeTab === 'gradebook' && isTeacher && (
+                  <div className="space-y-6">
+                    {isLoadingGradebook ? (
+                      <div className="p-12 text-center text-[#696F79] dark:text-slate-400 text-sm bg-white dark:bg-[#151C2C] rounded-[20px] shadow-[0_10px_30px_rgba(25,53,202,0.05)] border border-slate-100 dark:border-slate-800">
+                        Loading gradebook matrix and analytics...
+                      </div>
+                    ) : !gradebookData ? (
+                      <div className="p-12 text-center text-[#696F79] dark:text-slate-400 text-sm bg-white dark:bg-[#151C2C] rounded-[20px] shadow-[0_10px_30px_rgba(25,53,202,0.05)] border border-slate-100 dark:border-slate-800">
+                        Unable to load gradebook data.
+                      </div>
+                    ) : (
+                      <>
+                        {/* Summary Metrics Row */}
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                          <div className="p-5 rounded-[20px] bg-white dark:bg-[#151C2C] border border-slate-100 dark:border-slate-800 shadow-[0_10px_30px_rgba(25,53,202,0.04)] space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-bold text-[#696F79] dark:text-slate-400">Class Average</span>
+                              <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400">
+                                <TrendingUp className="w-4 h-4" />
                               </div>
                             </div>
+                            <div className="text-2xl font-extrabold text-[#1E293B] dark:text-[#F8FAFC]">
+                              {gradebookData.stats.classAveragePercentage !== null
+                                ? `${gradebookData.stats.classAveragePercentage}%`
+                                : '—'}
+                            </div>
+                            <p className="text-[11px] text-[#696F79] dark:text-slate-400 font-medium">Cohort weighted average</p>
                           </div>
 
-                          <div className="flex items-center gap-2 flex-wrap self-start md:self-auto">
-                            {isTeacher ? (
-                              <>
-                                {/* Edit Questions in Studio (MCQ only) */}
-                                {a.quizType === 'mcq' && (
-                                  <Link
-                                    to={`/studio/${a.quizId}`}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[#1935CA] dark:text-[#38BDF8] hover:bg-[#EEF2FF] dark:hover:bg-slate-700 bg-[#F8F9FC] dark:bg-slate-800 rounded-xl border border-slate-200/80 dark:border-slate-700 transition"
-                                    title="Edit questions, choices and answers in Quiz Studio"
-                                  >
-                                    <SlidersHorizontal className="w-3.5 h-3.5" />
-                                    <span>Edit Quiz</span>
-                                  </Link>
-                                )}
+                          <div className="p-5 rounded-[20px] bg-white dark:bg-[#151C2C] border border-slate-100 dark:border-slate-800 shadow-[0_10px_30px_rgba(25,53,202,0.04)] space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-bold text-[#696F79] dark:text-slate-400">Completion Rate</span>
+                              <div className="p-2 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-[#1935CA] dark:text-[#38BDF8]">
+                                <CheckCircle2 className="w-4 h-4" />
+                              </div>
+                            </div>
+                            <div className="text-2xl font-extrabold text-[#1E293B] dark:text-[#F8FAFC]">
+                              {gradebookData.stats.overallCompletionRate}%
+                            </div>
+                            <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                              <div
+                                className="bg-[#1935CA] dark:bg-[#38BDF8] h-1.5 rounded-full transition-all duration-500"
+                                style={{ width: `${Math.min(100, Math.max(0, gradebookData.stats.overallCompletionRate))}%` }}
+                              />
+                            </div>
+                          </div>
 
-                                {/* Share Assignment Link */}
-                                <button
-                                  onClick={() =>
-                                    setShareModalData({
-                                      type: 'assignment',
-                                      title: a.title,
-                                      code: a.shareCode || undefined,
-                                      url: a.shareCode
-                                        ? `${window.location.origin}/quiz/shared/${a.shareCode}`
-                                        : `${window.location.origin}/classrooms?join=${classDetails.classroom.code}`,
-                                    })
-                                  }
-                                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[#1935CA] dark:text-[#38BDF8] hover:bg-[#EEF2FF] dark:hover:bg-slate-700 bg-[#F8F9FC] dark:bg-slate-800 rounded-xl border border-slate-200/80 dark:border-slate-700 transition"
-                                  title="Share quiz or direct access code"
-                                >
-                                  <Share2 className="w-3.5 h-3.5" />
-                                  <span>Share</span>
-                                </button>
+                          <div className="p-5 rounded-[20px] bg-white dark:bg-[#151C2C] border border-slate-100 dark:border-slate-800 shadow-[0_10px_30px_rgba(25,53,202,0.04)] space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-bold text-[#696F79] dark:text-slate-400">Enrolled Students</span>
+                              <div className="p-2 rounded-xl bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400">
+                                <Users className="w-4 h-4" />
+                              </div>
+                            </div>
+                            <div className="text-2xl font-extrabold text-[#1E293B] dark:text-[#F8FAFC]">
+                              {gradebookData.stats.totalStudents}
+                            </div>
+                            <p className="text-[11px] text-[#696F79] dark:text-slate-400 font-medium">Registered student cohort</p>
+                          </div>
 
-                                {/* Edit Assignment Settings */}
-                                <button
-                                  onClick={() => {
-                                    setEditingAssignment(a);
-                                    setEditAssignTitle(a.title);
-                                    setEditAssignDueDate(a.dueDate ? a.dueDate.split('T')[0] || '' : '');
-                                    setEditAssignMaxAttempts(a.maxAttempts);
-                                  }}
-                                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[#696F79] dark:text-slate-300 hover:text-[#1E293B] dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 bg-[#F8F9FC] dark:bg-slate-800 rounded-xl border border-slate-200/80 dark:border-slate-700 transition"
-                                  title="Edit Assignment Settings (Due date, attempts, title)"
-                                >
-                                  <Settings className="w-3.5 h-3.5" />
-                                  <span>Settings</span>
-                                </button>
-
-                                {/* Gradebook */}
-                                <button
-                                  onClick={() => handleViewSubmissions(a.id)}
-                                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[#1935CA] dark:text-[#38BDF8] hover:bg-[#EEF2FF] dark:hover:bg-slate-700 bg-[#F8F9FC] dark:bg-slate-800 rounded-xl border border-slate-200/80 dark:border-slate-700 transition"
-                                >
-                                  <Award className="w-3.5 h-3.5" />
-                                  <span>Gradebook</span>
-                                </button>
-
-                                {/* Delete Assignment */}
-                                <button
-                                  onClick={() => handleDeleteAssignment(a.id)}
-                                  className="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition border border-transparent hover:border-rose-100"
-                                  title="Delete Assignment"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              </>
-                            ) : (
-                              <Link
-                                to="/assignments"
-                                className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-[#1935CA] hover:bg-[#142BA3] rounded-xl transition shadow-sm"
-                              >
-                                <span>Start Task</span>
-                                <ArrowRight className="w-3.5 h-3.5" />
-                              </Link>
-                            )}
+                          <div className="p-5 rounded-[20px] bg-white dark:bg-[#151C2C] border border-slate-100 dark:border-slate-800 shadow-[0_10px_30px_rgba(25,53,202,0.04)] space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-bold text-[#696F79] dark:text-slate-400">Total Quizzes</span>
+                              <div className="p-2 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400">
+                                <BookOpen className="w-4 h-4" />
+                              </div>
+                            </div>
+                            <div className="text-2xl font-extrabold text-[#1E293B] dark:text-[#F8FAFC]">
+                              {gradebookData.stats.totalAssignments}
+                            </div>
+                            <p className="text-[11px] text-[#696F79] dark:text-slate-400 font-medium">Active classroom tasks</p>
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
 
-                {/* Roster Section */}
-                <div className="space-y-3">
-                  <h3 className="text-xs font-bold text-[#696F79] dark:text-slate-400 uppercase tracking-wider px-1">
-                    Enrolled Students ({classDetails.members.length})
-                  </h3>
-
-                  {classDetails.members.length === 0 ? (
-                    <div className="p-8 text-center text-[#696F79] dark:text-slate-400 text-sm bg-white dark:bg-[#151C2C] rounded-[20px] shadow-[0_10px_30px_rgba(25,53,202,0.05)] border border-slate-100 dark:border-slate-800">
-                      No students have joined yet. Share the code{' '}
-                      <span className="font-mono text-[#1935CA] dark:text-[#38BDF8] font-bold">
-                        {classDetails.classroom.code}
-                      </span>{' '}
-                      with your class!
-                    </div>
-                  ) : (
-                    <div className="p-2 rounded-[20px] bg-white dark:bg-[#151C2C] border border-slate-100 dark:border-slate-800 shadow-[0_10px_30px_rgba(25,53,202,0.05)] divide-y divide-slate-100 dark:divide-slate-800">
-                      {classDetails.members.map((m) => (
-                        <div
-                          key={m.studentId}
-                          className="p-3.5 flex items-center justify-between text-xs"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-[#EEF2FF] dark:bg-slate-800 text-[#1935CA] dark:text-[#38BDF8] flex items-center justify-center font-bold">
-                              {m.studentName.charAt(0)}
-                            </div>
+                        {/* Gradebook Matrix Card */}
+                        <div className="p-6 sm:p-7 rounded-[20px] bg-white dark:bg-[#151C2C] border border-slate-100 dark:border-slate-800 shadow-[0_10px_30px_rgba(25,53,202,0.05)] space-y-4">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
                             <div>
-                              <span className="font-bold text-[#1E293B] dark:text-[#F8FAFC] block">{m.studentName}</span>
-                              <span className="text-[#696F79] dark:text-slate-400 text-[11px] font-medium">{m.studentEmail}</span>
+                              <h3 className="text-base font-bold text-[#1E293B] dark:text-[#F8FAFC] flex items-center gap-2">
+                                <Award className="w-4 h-4 text-[#1935CA] dark:text-[#38BDF8]" />
+                                <span>Student Gradebook Matrix</span>
+                              </h3>
+                              <p className="text-xs text-[#696F79] dark:text-slate-400 mt-0.5">
+                                Cross-assignment performance, completion statuses, and individual scores.
+                              </p>
+                            </div>
+
+                            <div className="flex items-center gap-3">
+                              {/* Student search input */}
+                              <div className="relative">
+                                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                                <input
+                                  type="text"
+                                  placeholder="Filter students..."
+                                  value={studentSearchQuery}
+                                  onChange={(e) => setStudentSearchQuery(e.target.value)}
+                                  className="pl-8 pr-3 py-1.5 text-xs rounded-xl bg-[#F8F9FC] dark:bg-[#1E293B] border border-slate-200/80 dark:border-slate-700 text-[#1E293B] dark:text-[#F8FAFC] placeholder-slate-400 outline-none focus:ring-2 focus:ring-[#1935CA]"
+                                />
+                              </div>
+
+                              {/* CSV Export Button */}
+                              <button
+                                onClick={handleExportCsv}
+                                disabled={isExportingCsv}
+                                className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-[#1935CA] hover:bg-[#142BA3] disabled:opacity-50 rounded-xl transition shadow-md shadow-[#1935CA]/20 active:scale-98 whitespace-nowrap"
+                                title="Download complete classroom gradebook as CSV"
+                              >
+                                <Download className="w-3.5 h-3.5" />
+                                <span>{isExportingCsv ? 'Exporting...' : 'Export to CSV'}</span>
+                              </button>
                             </div>
                           </div>
-                          <span className="text-[#696F79] dark:text-slate-400 text-[11px] font-medium">
-                            Joined {new Date(m.joinedAt).toLocaleDateString()}
-                          </span>
+
+                          {/* Matrix Table */}
+                          {gradebookData.students.length === 0 ? (
+                            <div className="p-8 text-center text-[#696F79] dark:text-slate-400 text-sm">
+                              No students are enrolled in this classroom yet.
+                            </div>
+                          ) : (
+                            <div className="overflow-x-auto rounded-xl border border-slate-100 dark:border-slate-800">
+                              <table className="w-full text-left text-xs border-collapse">
+                                <thead>
+                                  <tr className="bg-slate-50 dark:bg-slate-800/60 text-[#696F79] dark:text-slate-400 border-b border-slate-200/80 dark:border-slate-800">
+                                    <th className="py-3 px-4 font-bold sticky left-0 bg-slate-50 dark:bg-slate-800 z-10 min-w-[200px]">
+                                      Student
+                                    </th>
+                                    <th className="py-3 px-4 font-bold text-center min-w-[110px]">
+                                      Average
+                                    </th>
+                                    <th className="py-3 px-4 font-bold text-center min-w-[100px]">
+                                      Completed
+                                    </th>
+                                    {gradebookData.assignments.map((a) => (
+                                      <th key={a.id} className="py-3 px-4 font-bold text-center min-w-[150px]">
+                                        <div className="truncate max-w-[160px] mx-auto text-[#1E293B] dark:text-[#F8FAFC]" title={a.title}>
+                                          {a.title}
+                                        </div>
+                                        <div className="flex items-center justify-center gap-1.5 mt-0.5">
+                                          <span className="text-[10px] uppercase font-bold text-[#1935CA] dark:text-[#38BDF8]">
+                                            {a.quizType === 'code_review' ? 'Code' : 'MCQ'}
+                                          </span>
+                                          <span className="text-[10px] text-slate-400">
+                                            ({a.totalQuestions} Qs)
+                                          </span>
+                                        </div>
+                                      </th>
+                                    ))}
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
+                                  {gradebookData.students
+                                    .filter(
+                                      (s) =>
+                                        s.studentName.toLowerCase().includes(studentSearchQuery.toLowerCase()) ||
+                                        s.studentEmail.toLowerCase().includes(studentSearchQuery.toLowerCase())
+                                    )
+                                    .map((s) => (
+                                      <tr key={s.studentId} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition">
+                                        <td className="py-3 px-4 sticky left-0 bg-white dark:bg-[#151C2C] z-10 border-r border-slate-100 dark:border-slate-800/60">
+                                          <div className="flex items-center gap-2.5">
+                                            <div className="w-7 h-7 rounded-full bg-[#EEF2FF] dark:bg-slate-800 text-[#1935CA] dark:text-[#38BDF8] flex items-center justify-center font-bold text-xs">
+                                              {s.studentName.charAt(0)}
+                                            </div>
+                                            <div className="min-w-0">
+                                              <div className="font-bold text-[#1E293B] dark:text-[#F8FAFC] truncate">
+                                                {s.studentName}
+                                              </div>
+                                              <div className="text-[11px] text-[#696F79] dark:text-slate-400 truncate">
+                                                {s.studentEmail}
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </td>
+
+                                        {/* Overall Average */}
+                                        <td className="py-3 px-4 text-center">
+                                          {s.overallAveragePercentage !== null ? (
+                                            <span
+                                              className={`inline-block px-2.5 py-1 rounded-full text-xs font-bold ${
+                                                s.overallAveragePercentage >= 80
+                                                  ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
+                                                  : s.overallAveragePercentage >= 60
+                                                  ? 'bg-blue-50 dark:bg-blue-950/40 text-[#1935CA] dark:text-[#38BDF8] border border-blue-200 dark:border-blue-800'
+                                                  : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800'
+                                              }`}
+                                            >
+                                              {s.overallAveragePercentage}%
+                                            </span>
+                                          ) : (
+                                            <span className="text-slate-400">—</span>
+                                          )}
+                                        </td>
+
+                                        {/* Completed Count */}
+                                        <td className="py-3 px-4 text-center text-[#696F79] dark:text-slate-400 font-mono text-xs">
+                                          {s.completedCount} / {gradebookData.assignments.length}
+                                        </td>
+
+                                        {/* Per-Assignment Cell */}
+                                        {gradebookData.assignments.map((a) => {
+                                          const sc = s.scores[a.id];
+                                          if (!sc || sc.status === 'not_started') {
+                                            return (
+                                              <td key={a.id} className="py-3 px-4 text-center">
+                                                <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-400">
+                                                  Not Started
+                                                </span>
+                                              </td>
+                                            );
+                                          }
+                                          if (sc.status === 'overdue') {
+                                            return (
+                                              <td key={a.id} className="py-3 px-4 text-center">
+                                                <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900">
+                                                  Overdue
+                                                </span>
+                                              </td>
+                                            );
+                                          }
+                                          if (sc.status === 'in_progress') {
+                                            return (
+                                              <td key={a.id} className="py-3 px-4 text-center">
+                                                <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                                                  In Progress
+                                                </span>
+                                              </td>
+                                            );
+                                          }
+                                          return (
+                                            <td key={a.id} className="py-3 px-4 text-center">
+                                              <span
+                                                className={`inline-block px-2.5 py-1 rounded-lg text-xs font-bold ${
+                                                  (sc.percentage ?? 0) >= 80
+                                                    ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
+                                                    : (sc.percentage ?? 0) >= 60
+                                                    ? 'bg-blue-50 dark:bg-blue-950/40 text-[#1935CA] dark:text-[#38BDF8] border border-blue-200 dark:border-blue-800'
+                                                    : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800'
+                                                }`}
+                                              >
+                                                {sc.score}/{sc.totalQuestions} ({sc.percentage}%)
+                                              </span>
+                                            </td>
+                                          );
+                                        })}
+                                      </tr>
+                                    ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          )}
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+
+                        {/* Psychometric Item Analysis & Question Calibration */}
+                        {gradebookData.assignments.length > 0 && (
+                          <div className="p-6 sm:p-7 rounded-[20px] bg-white dark:bg-[#151C2C] border border-slate-100 dark:border-slate-800 shadow-[0_10px_30px_rgba(25,53,202,0.05)] space-y-5">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-100 dark:border-slate-800">
+                              <div>
+                                <h3 className="text-base font-bold text-[#1E293B] dark:text-[#F8FAFC] flex items-center gap-2">
+                                  <BarChart2 className="w-4 h-4 text-[#1935CA] dark:text-[#38BDF8]" />
+                                  <span>Psychometric Item Analysis & Question Calibration</span>
+                                </h3>
+                                <p className="text-xs text-[#696F79] dark:text-slate-400 mt-0.5">
+                                  Item difficulty index ($p$-value = % correct) and automated curriculum calibration flags.
+                                </p>
+                              </div>
+
+                              {/* Assignment Selector Pills */}
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                {gradebookData.assignments.map((a) => {
+                                  const isSelected = (selectedAnalysisAssignmentId || gradebookData.assignments[0]?.id) === a.id;
+                                  return (
+                                    <button
+                                      key={a.id}
+                                      onClick={() => setSelectedAnalysisAssignmentId(a.id)}
+                                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+                                        isSelected
+                                          ? 'bg-[#1935CA] text-white shadow-sm'
+                                          : 'bg-slate-100 dark:bg-slate-800 text-[#696F79] dark:text-slate-400 hover:text-[#1E293B] dark:hover:text-white'
+                                      }`}
+                                    >
+                                      {a.title}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+
+                            {/* Active Assignment Analysis */}
+                            {(() => {
+                              const activeCol =
+                                gradebookData.assignments.find(
+                                  (a) => a.id === (selectedAnalysisAssignmentId || gradebookData.assignments[0]?.id)
+                                ) || gradebookData.assignments[0];
+
+                              if (!activeCol) return null;
+
+                              return (
+                                <div className="space-y-4">
+                                  <div className="flex items-center justify-between flex-wrap gap-2">
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-bold text-sm text-[#1E293B] dark:text-[#F8FAFC]">
+                                        {activeCol.title}
+                                      </span>
+                                      <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-[#EEF2FF] dark:bg-slate-800 text-[#1935CA] dark:text-[#38BDF8]">
+                                        {activeCol.quizType === 'code_review' ? 'Code Review' : 'MCQ'}
+                                      </span>
+                                    </div>
+
+                                    {activeCol.quizType === 'mcq' && (
+                                      <Link
+                                        to={`/studio/${activeCol.quizId}`}
+                                        className="flex items-center gap-1.5 px-3 py-1 text-xs font-bold text-[#1935CA] dark:text-[#38BDF8] bg-[#EEF2FF] dark:bg-slate-800 hover:bg-[#E0E7FF] dark:hover:bg-slate-700 rounded-xl transition"
+                                      >
+                                        <SlidersHorizontal className="w-3.5 h-3.5" />
+                                        <span>Calibrate in Quiz Studio</span>
+                                      </Link>
+                                    )}
+                                  </div>
+
+                                  {activeCol.itemAnalysis.length === 0 ? (
+                                    <div className="p-6 text-center text-xs text-[#696F79] dark:text-slate-400 bg-slate-50 dark:bg-slate-800/40 rounded-xl">
+                                      No item analysis data available for this assignment yet.
+                                    </div>
+                                  ) : (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                      {activeCol.itemAnalysis.map((item) => (
+                                        <div
+                                          key={item.questionId}
+                                          className={`p-4 rounded-xl border transition ${
+                                            item.flagged
+                                              ? 'bg-rose-50/40 dark:bg-rose-950/20 border-rose-200 dark:border-rose-900'
+                                              : 'bg-[#F8F9FC] dark:bg-[#1E293B]/60 border-slate-200/80 dark:border-slate-800'
+                                          }`}
+                                        >
+                                          <div className="flex items-start justify-between gap-3">
+                                            <div className="min-w-0 flex-1">
+                                              <span className="text-[10px] font-mono font-bold text-[#696F79] dark:text-slate-400 block mb-1">
+                                                QUESTION {item.orderIndex + 1}
+                                              </span>
+                                              <p className="text-xs font-semibold text-[#1E293B] dark:text-[#F8FAFC] line-clamp-2">
+                                                {item.questionText}
+                                              </p>
+                                            </div>
+
+                                            {item.flagged ? (
+                                              <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 dark:bg-rose-950/80 text-rose-700 dark:text-rose-400 border border-rose-300 dark:border-rose-800 shrink-0">
+                                                <AlertTriangle className="w-3 h-3" />
+                                                <span>Needs Review</span>
+                                              </span>
+                                            ) : (
+                                              <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 shrink-0">
+                                                <Check className="w-3 h-3" />
+                                                <span>Balanced</span>
+                                              </span>
+                                            )}
+                                          </div>
+
+                                          <div className="mt-3 pt-3 border-t border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between text-xs">
+                                            <div className="flex items-center gap-3 text-[#696F79] dark:text-slate-400 text-[11px] font-medium">
+                                              <span>Responses: {item.totalAnswered}</span>
+                                              <span>Correct: {item.correctAnswered}</span>
+                                            </div>
+
+                                            <div className="flex items-center gap-2">
+                                              <span className="font-mono text-xs font-bold text-[#1E293B] dark:text-[#F8FAFC]">
+                                                p = {(item.difficultyIndex * 100).toFixed(0)}%
+                                              </span>
+                                              <span
+                                                className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                                                  item.difficultyLabel === 'Easy'
+                                                    ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400'
+                                                    : item.difficultyLabel === 'Moderate'
+                                                    ? 'bg-blue-100 dark:bg-blue-950/60 text-[#1935CA] dark:text-[#38BDF8]'
+                                                    : 'bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400'
+                                                }`}
+                                              >
+                                                {item.difficultyLabel}
+                                              </span>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })()}
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
+
+                {/* Tab 3: Roster Section */}
+                {activeTab === 'roster' && (
+                  <div className="space-y-3">
+                    <h3 className="text-xs font-bold text-[#696F79] dark:text-slate-400 uppercase tracking-wider px-1">
+                      Enrolled Students ({classDetails.members.length})
+                    </h3>
+
+                    {classDetails.members.length === 0 ? (
+                      <div className="p-8 text-center text-[#696F79] dark:text-slate-400 text-sm bg-white dark:bg-[#151C2C] rounded-[20px] shadow-[0_10px_30px_rgba(25,53,202,0.05)] border border-slate-100 dark:border-slate-800">
+                        No students have joined yet. Share the code{' '}
+                        <span className="font-mono text-[#1935CA] dark:text-[#38BDF8] font-bold">
+                          {classDetails.classroom.code}
+                        </span>{' '}
+                        with your class!
+                      </div>
+                    ) : (
+                      <div className="p-2 rounded-[20px] bg-white dark:bg-[#151C2C] border border-slate-100 dark:border-slate-800 shadow-[0_10px_30px_rgba(25,53,202,0.05)] divide-y divide-slate-100 dark:divide-slate-800">
+                        {classDetails.members.map((m) => (
+                          <div
+                            key={m.studentId}
+                            className="p-3.5 flex items-center justify-between text-xs"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-[#EEF2FF] dark:bg-slate-800 text-[#1935CA] dark:text-[#38BDF8] flex items-center justify-center font-bold">
+                                {m.studentName.charAt(0)}
+                              </div>
+                              <div>
+                                <span className="font-bold text-[#1E293B] dark:text-[#F8FAFC] block">{m.studentName}</span>
+                                <span className="text-[#696F79] dark:text-slate-400 text-[11px] font-medium">{m.studentEmail}</span>
+                              </div>
+                            </div>
+                            <span className="text-[#696F79] dark:text-slate-400 text-[11px] font-medium">
+                              Joined {new Date(m.joinedAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>
