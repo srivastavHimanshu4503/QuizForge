@@ -13,7 +13,10 @@ import {
   ArrowLeft,
   RotateCw,
   Award,
+  Volume2,
+  Square,
 } from 'lucide-react';
+import { useAudioTutor } from '../context/AudioContext';
 
 export function FlashcardStudyPage() {
   const { deckId } = useParams<{ deckId: string }>();
@@ -35,6 +38,17 @@ export function FlashcardStudyPage() {
   }>({ again: 0, hard: 0, good: 0, easy: 0 });
 
   const [isComplete, setIsComplete] = useState(false);
+
+  const { speak, stopSpeaking, isSpeaking, isSupported: isAudioSupported } = useAudioTutor();
+
+  const handleSpeakCardText = (e: React.MouseEvent, text: string) => {
+    e.stopPropagation();
+    if (isSpeaking) {
+      stopSpeaking();
+    } else {
+      speak(text);
+    }
+  };
 
   const fetchSession = useCallback(async () => {
     if (!deckId) return;
@@ -320,9 +334,22 @@ export function FlashcardStudyPage() {
                       {currentCard.state} card
                     </span>
 
-                    <span className="text-[11px] font-mono text-slate-400 font-bold">
-                      Repetition: #{currentCard.repetitionNumber}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      {isAudioSupported && (
+                        <button
+                          type="button"
+                          onClick={(e) => handleSpeakCardText(e, currentCard.front)}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-[#1935CA] dark:hover:text-[#38BDF8] hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                          title={isSpeaking ? 'Stop audio' : 'Listen to card prompt'}
+                          aria-label={isSpeaking ? 'Stop audio' : 'Listen to card prompt'}
+                        >
+                          {isSpeaking ? <Square className="w-3.5 h-3.5 text-rose-500 fill-current" /> : <Volume2 className="w-3.5 h-3.5" />}
+                        </button>
+                      )}
+                      <span className="text-[11px] font-mono text-slate-400 font-bold">
+                        Repetition: #{currentCard.repetitionNumber}
+                      </span>
+                    </div>
                   </div>
 
                   <div className="my-auto text-center py-6">
@@ -350,9 +377,31 @@ export function FlashcardStudyPage() {
                     <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-indigo-500/10 text-[#1935CA] dark:text-[#38BDF8]">
                       Answer Revealed
                     </span>
-                    <span className="text-[11px] font-mono text-slate-400 font-bold">
-                      EF: {currentCard.easinessFactor.toFixed(2)}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      {isAudioSupported && (
+                        <button
+                          type="button"
+                          onClick={(e) =>
+                            handleSpeakCardText(
+                              e,
+                              `${currentCard.back}. ${currentCard.explanation || ''}`
+                            )
+                          }
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-[#1935CA] dark:hover:text-[#38BDF8] hover:bg-slate-200/50 dark:hover:bg-slate-800 transition"
+                          title={isSpeaking ? 'Stop audio' : 'Listen to card answer'}
+                          aria-label={isSpeaking ? 'Stop audio' : 'Listen to card answer'}
+                        >
+                          {isSpeaking ? (
+                            <Square className="w-3.5 h-3.5 text-rose-500 fill-current" />
+                          ) : (
+                            <Volume2 className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+                      )}
+                      <span className="text-[11px] font-mono text-slate-400 font-bold">
+                        EF: {currentCard.easinessFactor.toFixed(2)}
+                      </span>
+                    </div>
                   </div>
 
                   <div className="my-auto space-y-4 py-4 text-center">

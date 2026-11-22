@@ -2,10 +2,12 @@ import { useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ChoiceId } from '@quiz-forge/shared';
 import { useQuizAttempt } from '../hooks/useQuizAttempt';
+import { useAudioTutor } from '../context/AudioContext';
 import { ProgressBar } from '../components/quiz/ProgressBar';
 import { OptionCard } from '../components/quiz/OptionCard';
 import { QuestionPalette } from '../components/quiz/QuestionPalette';
 import { SubmitModal } from '../components/quiz/SubmitModal';
+import { AudioWaveform } from '../components/audio/AudioWaveform';
 import {
   ArrowLeft,
   ArrowRight,
@@ -18,6 +20,9 @@ import {
   ShieldAlert,
   ShieldCheck,
   X,
+  Volume2,
+  Square,
+  Mic,
 } from 'lucide-react';
 
 export function QuizPlayerPage() {
@@ -53,6 +58,79 @@ export function QuizPlayerPage() {
     closeSubmitModal,
     refetch,
   } = useQuizAttempt(attemptId || '');
+
+  // Milestone 15: AI Voice Narration & Audio Tutor
+  const {
+    isSupported: isAudioSupported,
+    isRecognitionSupported,
+    isSpeaking,
+    isListening,
+    activeTranscript,
+    preferences: audioPrefs,
+    speak,
+    stopSpeaking,
+    startVoiceListening,
+    stopVoiceListening,
+  } = useAudioTutor();
+
+  const handleReadCurrentQuestion = useCallback(() => {
+    if (!currentQuestion) return;
+    if (isSpeaking) {
+      stopSpeaking();
+      return;
+    }
+
+    const choicesText = currentQuestion.choices
+      .map((c) => `Option ${c.choice_id}: ${c.option_text}`)
+      .join('. ');
+    const fullSpeech = `Question ${currentIndex + 1} of ${totalQuestions}: ${currentQuestion.question}. ${choicesText}`;
+    speak(fullSpeech);
+  }, [currentQuestion, currentIndex, totalQuestions, isSpeaking, speak, stopSpeaking]);
+
+  // Auto-read question on advancement if enabled
+  useEffect(() => {
+    if (currentQuestion && audioPrefs.voiceEnabled && audioPrefs.autoReadQuestion) {
+      const choicesText = currentQuestion.choices
+        .map((c) => `Option ${c.choice_id}: ${c.option_text}`)
+        .join('. ');
+      const fullSpeech = `Question ${currentIndex + 1}: ${currentQuestion.question}. ${choicesText}`;
+      speak(fullSpeech);
+    }
+  }, [currentQuestion?.question_id, audioPrefs.voiceEnabled, audioPrefs.autoReadQuestion]);
+
+  // Toggle Hands-Free Voice Control
+  const handleToggleVoiceControl = useCallback(() => {
+    if (isListening) {
+      stopVoiceListening();
+      return;
+    }
+
+    startVoiceListening((cmd) => {
+      if (cmd.action === 'select_choice' && cmd.choiceId && currentQuestion) {
+        selectOption(currentQuestion.question_id, cmd.choiceId);
+      } else if (cmd.action === 'next_question') {
+        if (!isLastQuestion) nextQuestion();
+      } else if (cmd.action === 'prev_question') {
+        if (!isFirstQuestion) prevQuestion();
+      } else if (cmd.action === 'submit_quiz') {
+        openSubmitModal();
+      } else if (cmd.action === 'repeat_question') {
+        handleReadCurrentQuestion();
+      }
+    });
+  }, [
+    isListening,
+    stopVoiceListening,
+    startVoiceListening,
+    currentQuestion,
+    selectOption,
+    isLastQuestion,
+    nextQuestion,
+    isFirstQuestion,
+    prevQuestion,
+    openSubmitModal,
+    handleReadCurrentQuestion,
+  ]);
 
   const handleConfirmSubmit = useCallback(async () => {
     try {
@@ -304,19 +382,83 @@ export function QuizPlayerPage() {
           {/* Question & Options Column (2 spans) */}
           <div className="lg:col-span-2 space-y-6">
             <div className="bg-white dark:bg-[#151C2C] border border-slate-100 dark:border-slate-800 rounded-[20px] p-6 sm:p-8 shadow-[0_10px_30px_rgba(25,53,202,0.05)] transition-colors duration-200">
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                 <span className="text-xs font-extrabold uppercase tracking-wider text-[#1935CA] dark:text-[#38BDF8]">
                   Question {currentIndex + 1} of {totalQuestions}
                 </span>
-                {selectedChoice ? (
-                  <span className="text-xs text-emerald-700 dark:text-emerald-400 font-bold flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-1 rounded-full border border-emerald-200 dark:border-emerald-800">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    Answered (Choice {selectedChoice})
-                  </span>
-                ) : (
-                  <span className="text-xs text-[#696F79] dark:text-slate-400 font-medium">Unanswered</span>
-                )}
+
+                {/* Voice Narration & Hands-free Recognition Controls */}
+                <div className="flex items-center gap-2">
+                  {/* Read Question Audio Button */}
+                  {isAudioSupported && (
+                    <button
+                      type="button"
+                      onClick={handleReadCurrentQuestion}
+                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold transition shadow-sm ${
+                        isSpeaking
+                          ? 'bg-rose-500 text-white hover:bg-rose-600'
+                          : 'bg-indigo-50 dark:bg-indigo-950/60 text-[#1935CA] dark:text-[#38BDF8] hover:bg-indigo-100 dark:hover:bg-indigo-900/40'
+                      }`}
+                      aria-label={isSpeaking ? 'Stop reading question' : 'Read question aloud'}
+                      title={isSpeaking ? 'Stop reading' : 'Read question & options aloud'}
+                    >
+                      {isSpeaking ? (
+                        <>
+                          <Square className="w-3.5 h-3.5 fill-current" />
+                          <span>Stop</span>
+                          <AudioWaveform isSpeaking={true} />
+                        </>
+                      ) : (
+                        <>
+                          <Volume2 className="w-3.5 h-3.5" />
+                          <span>Read Aloud</span>
+                        </>
+                      )}
+                    </button>
+                  )}
+
+                  {/* Hands-Free Voice Answering Mic Button */}
+                  {isRecognitionSupported && (
+                    <button
+                      type="button"
+                      onClick={handleToggleVoiceControl}
+                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold transition shadow-sm ${
+                        isListening
+                          ? 'bg-amber-500 text-slate-950 ring-2 ring-amber-300 animate-pulse'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                      }`}
+                      aria-label={isListening ? 'Stop listening for voice answer' : 'Answer using voice command'}
+                      title={isListening ? 'Listening... say "Option A", "Next", or "Submit"' : 'Click to answer with your voice'}
+                    >
+                      <Mic className="w-3.5 h-3.5" />
+                      <span>{isListening ? 'Listening...' : 'Voice Answer'}</span>
+                    </button>
+                  )}
+
+                  {selectedChoice ? (
+                    <span className="text-xs text-emerald-700 dark:text-emerald-400 font-bold flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-1 rounded-full border border-emerald-200 dark:border-emerald-800">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      Choice {selectedChoice}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-[#696F79] dark:text-slate-400 font-medium">Unanswered</span>
+                  )}
+                </div>
               </div>
+
+              {/* Live Voice Transcript Toast / Region */}
+              {isListening && activeTranscript && (
+                <div
+                  role="status"
+                  aria-live="polite"
+                  className="mb-4 px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/40 text-amber-800 dark:text-amber-300 text-xs flex items-center gap-2"
+                >
+                  <Mic className="w-3.5 h-3.5 text-amber-600 animate-bounce shrink-0" />
+                  <span>
+                    Heard: <strong>"{activeTranscript}"</strong>
+                  </span>
+                </div>
+              )}
 
               <h2 className="text-xl sm:text-2xl font-bold text-[#1E293B] dark:text-[#F8FAFC] leading-snug mb-8">
                 {currentQuestion.question}

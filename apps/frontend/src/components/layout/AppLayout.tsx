@@ -5,6 +5,8 @@ import { CodeQuizModal } from '../code-quiz/CodeQuizModal';
 import { GenerateQuizModal } from '../quiz/GenerateQuizModal';
 import { ThemeToggle } from '../common/ThemeToggle';
 import { NetworkStatusBar } from '../common/NetworkStatusBar';
+import { AudioTutorModal } from '../audio/AudioTutorModal';
+import { useAudioTutor } from '../../context/AudioContext';
 import {
   LayoutDashboard,
   Code2,
@@ -22,6 +24,7 @@ import {
   Swords,
   Layers,
   Flame,
+  Volume2,
 } from 'lucide-react';
 
 interface AppLayoutProps {
@@ -37,7 +40,10 @@ export function AppLayout({ children, activeNav }: AppLayoutProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCodeModalOpen, setIsCodeModalOpen] = useState(false);
   const [isMcqModalOpen, setIsMcqModalOpen] = useState(false);
+  const [isAudioModalOpen, setIsAudioModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  const { preferences: audioPrefs } = useAudioTutor();
 
   // Determine active item from prop or pathname
   const currentPath = location.pathname;
@@ -445,6 +451,26 @@ export function AppLayout({ children, activeNav }: AppLayoutProps) {
             {/* Subtle Divider */}
             <div className="hidden sm:block h-6 w-px bg-slate-200 dark:bg-slate-800 shrink-0" />
 
+            {/* AI Voice Tutor Audio Settings Button */}
+            <div className="flex items-center shrink-0">
+              <button
+                type="button"
+                onClick={() => setIsAudioModalOpen(true)}
+                className={`p-2 rounded-xl border transition shadow-sm ${
+                  audioPrefs.voiceEnabled
+                    ? 'bg-indigo-50 dark:bg-indigo-950/60 border-indigo-200 dark:border-indigo-800 text-[#1935CA] dark:text-[#38BDF8]'
+                    : 'bg-white dark:bg-[#151C2C] border-slate-200 dark:border-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                }`}
+                title="AI Voice Tutor & Audio Settings"
+                aria-label="Open AI Voice Tutor & Audio Settings"
+              >
+                <Volume2 className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Subtle Divider */}
+            <div className="hidden sm:block h-6 w-px bg-slate-200 dark:bg-slate-800 shrink-0" />
+
             {/* Animated Theme Slider Toggle */}
             <div className="flex items-center shrink-0">
               <ThemeToggle />
@@ -479,6 +505,7 @@ export function AppLayout({ children, activeNav }: AppLayoutProps) {
       {/* Shared Global Modals */}
       <CodeQuizModal isOpen={isCodeModalOpen} onClose={() => setIsCodeModalOpen(false)} />
       <GenerateQuizModal isOpen={isMcqModalOpen} onClose={() => setIsMcqModalOpen(false)} />
+      <AudioTutorModal isOpen={isAudioModalOpen} onClose={() => setIsAudioModalOpen(false)} />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { QuestionReview } from '@quiz-forge/shared';
 import { Check, X, AlertCircle, Info } from 'lucide-react';
+import { SocraticAudioPlayer } from '../audio/SocraticAudioPlayer';
 
 interface ReviewQuestionItemProps {
   questionNumber: number;
@@ -105,7 +106,7 @@ export function ReviewQuestionItem({
       </div>
 
       {/* Authoritative Explanation Callout */}
-      <div className="p-4 sm:p-5 rounded-2xl bg-[#EEF2FF] dark:bg-indigo-950/40 border border-[#1935CA]/20 dark:border-indigo-800/40 flex items-start gap-3.5">
+      <div className="p-4 sm:p-5 rounded-2xl bg-[#EEF2FF] dark:bg-indigo-950/40 border border-[#1935CA]/20 dark:border-indigo-800/40 flex items-start gap-3.5 mb-4">
         <Info className="w-5 h-5 text-[#1935CA] dark:text-[#38BDF8] shrink-0 mt-0.5" />
         <div className="text-xs sm:text-sm text-[#1E293B] dark:text-[#F8FAFC] leading-relaxed">
           <strong className="block text-[#1935CA] dark:text-[#38BDF8] font-bold mb-1">
@@ -114,6 +115,15 @@ export function ReviewQuestionItem({
           {explanation}
         </div>
       </div>
+
+      {/* Milestone 15: Socratic Audio Walkthrough Player */}
+      <SocraticAudioPlayer
+        questionText={question}
+        selectedChoiceText={choices.find((c) => c.choice_id === selected_choice_id)?.option_text}
+        correctChoiceText={choices.find((c) => c.choice_id === correct_choice_id)?.option_text || ''}
+        isCorrect={Boolean(is_correct)}
+        explanation={explanation}
+      />
     </div>
   );
 }
