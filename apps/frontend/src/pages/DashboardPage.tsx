@@ -153,21 +153,21 @@ export function DashboardPage() {
               </div>
 
               {/* Start Quiz Action */}
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 shrink-0 flex-wrap">
                 <button
                   type="button"
                   onClick={() => setIsCodeModalOpen(true)}
-                  className="px-4 py-2.5 rounded-xl bg-[#EEF2FF] dark:bg-slate-800 hover:bg-[#1935CA]/10 dark:hover:bg-slate-700/80 text-[#1935CA] dark:text-[#38BDF8] font-bold text-xs transition flex items-center gap-1.5"
+                  className="px-4 py-2.5 rounded-xl bg-[#EEF2FF] dark:bg-slate-800 hover:bg-[#1935CA]/10 dark:hover:bg-slate-700/80 text-[#1935CA] dark:text-[#38BDF8] font-bold text-xs transition flex items-center gap-1.5 shrink-0"
                 >
-                  <Code2 className="w-3.5 h-3.5" />
+                  <Code2 className="w-3.5 h-3.5 shrink-0" />
                   <span>Review Repo</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setIsGenerateModalOpen(true)}
-                  className="px-5 py-2.5 rounded-xl bg-[#1935CA] hover:bg-[#142BA3] text-white font-bold text-xs shadow-[0_8px_20px_rgba(25,53,202,0.22)] transition flex items-center gap-1.5"
+                  className="px-5 py-2.5 rounded-xl bg-[#1935CA] hover:bg-[#142BA3] text-white font-bold text-xs shadow-[0_8px_20px_rgba(25,53,202,0.22)] transition flex items-center gap-1.5 shrink-0"
                 >
-                  <Play className="w-3.5 h-3.5 fill-white" />
+                  <Play className="w-3.5 h-3.5 fill-white shrink-0" />
                   <span>Start Quiz</span>
                 </button>
               </div>
