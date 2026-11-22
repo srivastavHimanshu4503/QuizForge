@@ -1,12 +1,13 @@
-import { eq, and, inArray } from 'drizzle-orm';
+import { eq, and, inArray, desc } from 'drizzle-orm';
 import crypto from 'node:crypto';
 import { db } from '../db/index';
-import { quizzes, questions, choices, quizAttempts } from '../db/schema/index';
+import { quizzes, questions, choices, quizAttempts, codeQuizzes, quizAssignments } from '../db/schema/index';
 import { aiService } from './ai/ai.service';
 import { shuffleArray } from '../utils/shuffle';
 import {
   ChoiceId,
   ClientQuestion,
+  CreatedQuizSummaryDto,
   GenerateQuizInput,
   QuizMetadata,
   QuizStudioPayload,
@@ -553,6 +554,93 @@ export class QuizService {
       attemptId,
       quizId: quiz.id,
     };
+  }
+
+  async getUserQuizzes(
+    userId: string,
+    database = db
+  ): Promise<CreatedQuizSummaryDto[]> {
+    const userMcqQuizzes = database
+      .select({
+        id: quizzes.id,
+        topic: quizzes.topic,
+        difficulty: quizzes.difficulty,
+        questionCount: quizzes.questionCount,
+        status: quizzes.status,
+        shareCode: quizzes.shareCode,
+        createdAt: quizzes.createdAt,
+      })
+      .from(quizzes)
+      .where(eq(quizzes.userId, userId))
+      .orderBy(desc(quizzes.createdAt))
+      .all();
+
+    const userCodeQuizzes = database
+      .select({
+        id: codeQuizzes.id,
+        repoName: codeQuizzes.repoName,
+        questionCount: codeQuizzes.questionCount,
+        createdAt: codeQuizzes.createdAt,
+      })
+      .from(codeQuizzes)
+      .where(eq(codeQuizzes.userId, userId))
+      .orderBy(desc(codeQuizzes.createdAt))
+      .all();
+
+    const formattedMcqs: CreatedQuizSummaryDto[] = userMcqQuizzes.map((q) => ({
+      id: q.id,
+      topic: q.topic,
+      difficulty: q.difficulty,
+      questionCount: q.questionCount,
+      quizType: 'mcq',
+      status: q.status,
+      shareCode: q.shareCode,
+      createdAt: q.createdAt,
+    }));
+
+    const formattedCode: CreatedQuizSummaryDto[] = userCodeQuizzes.map((q) => ({
+      id: q.id,
+      topic: `Code Review: ${q.repoName}`,
+      difficulty: 'medium',
+      questionCount: q.questionCount,
+      quizType: 'code_review',
+      status: 'published',
+      shareCode: null,
+      createdAt: q.createdAt,
+    }));
+
+    return [...formattedMcqs, ...formattedCode].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }
+
+  async deleteQuiz(
+    userId: string,
+    quizId: string,
+    database = db
+  ): Promise<{ success: boolean; id: string }> {
+    const quiz = database
+      .select()
+      .from(quizzes)
+      .where(and(eq(quizzes.id, quizId), eq(quizzes.userId, userId)))
+      .get();
+
+    if (!quiz) {
+      throw new QuizError(
+        'Quiz not found or you do not have permission to delete it.',
+        404,
+        'QUIZ_NOT_FOUND'
+      );
+    }
+
+    database.transaction((tx) => {
+      // Remove any assignments referencing this quiz
+      tx.delete(quizAssignments).where(eq(quizAssignments.quizId, quizId)).run();
+      // Delete quiz (cascades to questions, choices, attempts, answers)
+      tx.delete(quizzes).where(eq(quizzes.id, quizId)).run();
+    });
+
+    return { success: true, id: quizId };
   }
 }
 

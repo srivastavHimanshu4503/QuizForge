@@ -1,4 +1,4 @@
-import { eq, and, sql, desc } from 'drizzle-orm';
+import { eq, and, sql, desc, inArray } from 'drizzle-orm';
 import { db } from '../db/index';
 import {
   classrooms,
@@ -14,9 +14,11 @@ import {
   CreateClassroomInput,
   JoinClassroomInput,
   CreateAssignmentInput,
+  UpdateAssignmentInput,
   ClassroomDto,
   AssignmentDto,
   StudentSubmissionDto,
+  ClassroomAssignmentSummaryDto,
 } from '@quiz-forge/shared';
 import { shuffleArray } from '../utils/shuffle';
 
@@ -323,16 +325,35 @@ export class ClassroomService {
     const assignmentList = database
       .select({
         id: quizAssignments.id,
-        title: quizAssignments.title,
+        quizId: quizAssignments.quizId,
         quizType: quizAssignments.quizType,
+        title: quizAssignments.title,
+        description: quizAssignments.description,
         dueDate: quizAssignments.dueDate,
         maxAttempts: quizAssignments.maxAttempts,
+        timeLimitMinutes: quizAssignments.timeLimitMinutes,
         createdAt: quizAssignments.createdAt,
       })
       .from(quizAssignments)
       .where(eq(quizAssignments.classroomId, classroomId))
       .orderBy(desc(quizAssignments.createdAt))
       .all();
+
+    const enrichedAssignments: ClassroomAssignmentSummaryDto[] = assignmentList.map((a) => {
+      let shareCode: string | null = null;
+      if (a.quizType === 'mcq') {
+        const q = database
+          .select({ shareCode: quizzes.shareCode })
+          .from(quizzes)
+          .where(eq(quizzes.id, a.quizId))
+          .get();
+        shareCode = q?.shareCode || null;
+      }
+      return {
+        ...a,
+        shareCode,
+      };
+    });
 
     return {
       classroom: {
@@ -347,7 +368,7 @@ export class ClassroomService {
         createdAt: classroom.createdAt,
       },
       members,
-      assignments: assignmentList,
+      assignments: enrichedAssignments,
     };
   }
 
@@ -811,6 +832,119 @@ export class ClassroomService {
       totalQuestions: questionIds.length,
       status: 'in_progress',
     };
+  }
+
+  async updateAssignment(
+    teacherId: string,
+    assignmentId: string,
+    input: UpdateAssignmentInput,
+    database = db
+  ): Promise<AssignmentDto> {
+    const assignment = database
+      .select()
+      .from(quizAssignments)
+      .where(eq(quizAssignments.id, assignmentId))
+      .get();
+
+    if (!assignment) {
+      throw new ClassroomError('Assignment not found.', 404, 'ASSIGNMENT_NOT_FOUND');
+    }
+
+    if (assignment.teacherId !== teacherId) {
+      throw new ClassroomError('Only the assigning instructor can modify this assignment.', 403, 'FORBIDDEN');
+    }
+
+    const updates: Partial<typeof quizAssignments.$inferInsert> = {
+      updatedAt: new Date().toISOString(),
+    };
+
+    if (input.title !== undefined) updates.title = input.title.trim();
+    if (input.description !== undefined) updates.description = input.description?.trim() || null;
+    if (input.dueDate !== undefined) updates.dueDate = input.dueDate;
+    if (input.maxAttempts !== undefined) updates.maxAttempts = input.maxAttempts;
+    if (input.timeLimitMinutes !== undefined) updates.timeLimitMinutes = input.timeLimitMinutes;
+    if (input.showFeedbackImmediately !== undefined) updates.showFeedbackImmediately = input.showFeedbackImmediately;
+
+    database
+      .update(quizAssignments)
+      .set(updates)
+      .where(eq(quizAssignments.id, assignmentId))
+      .run();
+
+    return this.getAssignmentDetails(teacherId, assignmentId, database);
+  }
+
+  async deleteAssignment(
+    teacherId: string,
+    assignmentId: string,
+    database = db
+  ): Promise<{ success: boolean; id: string }> {
+    const assignment = database
+      .select()
+      .from(quizAssignments)
+      .where(eq(quizAssignments.id, assignmentId))
+      .get();
+
+    if (!assignment) {
+      throw new ClassroomError('Assignment not found.', 404, 'ASSIGNMENT_NOT_FOUND');
+    }
+
+    if (assignment.teacherId !== teacherId) {
+      throw new ClassroomError('Only the assigning instructor can delete this assignment.', 403, 'FORBIDDEN');
+    }
+
+    database.transaction((tx) => {
+      // Unlink student attempts that had this assignmentId
+      tx.update(quizAttempts)
+        .set({ assignmentId: null })
+        .where(eq(quizAttempts.assignmentId, assignmentId))
+        .run();
+
+      // Delete the assignment
+      tx.delete(quizAssignments).where(eq(quizAssignments.id, assignmentId)).run();
+    });
+
+    return { success: true, id: assignmentId };
+  }
+
+  async deleteClassroom(
+    teacherId: string,
+    classroomId: string,
+    database = db
+  ): Promise<{ success: boolean; id: string }> {
+    const classroom = database
+      .select()
+      .from(classrooms)
+      .where(eq(classrooms.id, classroomId))
+      .get();
+
+    if (!classroom) {
+      throw new ClassroomError('Classroom not found.', 404, 'CLASSROOM_NOT_FOUND');
+    }
+
+    if (classroom.teacherId !== teacherId) {
+      throw new ClassroomError('Only the classroom instructor can delete this classroom.', 403, 'FORBIDDEN');
+    }
+
+    database.transaction((tx) => {
+      const assignments = tx
+        .select({ id: quizAssignments.id })
+        .from(quizAssignments)
+        .where(eq(quizAssignments.classroomId, classroomId))
+        .all();
+
+      const assignIds = assignments.map((a) => a.id);
+      if (assignIds.length > 0) {
+        tx.update(quizAttempts)
+          .set({ assignmentId: null })
+          .where(inArray(quizAttempts.assignmentId, assignIds))
+          .run();
+      }
+
+      tx.delete(classrooms).where(eq(classrooms.id, classroomId)).run();
+    });
+
+    return { success: true, id: classroomId };
   }
 }
 

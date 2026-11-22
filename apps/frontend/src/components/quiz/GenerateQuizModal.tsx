@@ -16,6 +16,7 @@ interface ProviderOption {
 interface GenerateQuizModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onQuizCreated?: (quizId: string, topic?: string) => void;
 }
 
 const TOPIC_PRESETS = [
@@ -36,7 +37,7 @@ const DIFFICULTIES: Array<{ id: QuizDifficulty; label: string; desc: string }> =
   { id: 'mixed', label: 'Mixed', desc: 'Balanced variety across tiers' },
 ];
 
-export function GenerateQuizModal({ isOpen, onClose }: GenerateQuizModalProps) {
+export function GenerateQuizModal({ isOpen, onClose, onQuizCreated }: GenerateQuizModalProps) {
   const [topic, setTopic] = useState('');
   const [questionCount, setQuestionCount] = useState<number>(5);
   const [difficulty, setDifficulty] = useState<QuizDifficulty>('mixed');
@@ -104,7 +105,11 @@ export function GenerateQuizModal({ isOpen, onClose }: GenerateQuizModalProps) {
       }
 
       onClose();
-      navigate(`/quiz/${data.attemptId}`);
+      if (onQuizCreated) {
+        onQuizCreated(data.quizId, topic.trim());
+      } else {
+        navigate(`/quiz/${data.attemptId}`);
+      }
     } catch (err: unknown) {
       const msg =
         err instanceof ApiError

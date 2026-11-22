@@ -66,13 +66,24 @@ export function LoginPage() {
 
     setIsSubmitting(true);
     try {
-      await login({
+      const loggedInUser = await login({
         email,
         password,
         captchaId: captcha?.captchaId,
         captchaAnswer: captchaAnswer.trim(),
       });
-      navigate(from, { replace: true });
+
+      let targetPath = from;
+      if (loggedInUser?.role === 'teacher' || loggedInUser?.role === 'admin') {
+        if (targetPath === '/assignments' || targetPath.startsWith('/quiz/') || targetPath.startsWith('/code-quiz/')) {
+          targetPath = '/classrooms';
+        }
+      } else if (loggedInUser?.role === 'student') {
+        if (targetPath.startsWith('/studio/')) {
+          targetPath = '/';
+        }
+      }
+      navigate(targetPath, { replace: true });
     } catch {
       fetchCaptcha();
     } finally {

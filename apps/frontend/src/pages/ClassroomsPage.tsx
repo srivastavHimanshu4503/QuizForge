@@ -1,7 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { apiClient, ApiError } from '../api/client';
-import { ClassroomDto, AssignmentDto, StudentSubmissionDto } from '@quiz-forge/shared';
+import {
+  ClassroomDto,
+  AssignmentDto,
+  StudentSubmissionDto,
+  CreatedQuizSummaryDto,
+  ClassroomAssignmentSummaryDto,
+} from '@quiz-forge/shared';
 import { AppLayout } from '../components/layout/AppLayout';
 import {
   Users,
@@ -16,11 +22,26 @@ import {
   ArrowRight,
   ClipboardList,
   X,
+  Share2,
+  Trash2,
+  SlidersHorizontal,
+  Settings,
+  FileText,
+  Globe,
+  Image as ImageIcon,
+  Code2,
+  FileQuestion,
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
+import { GenerateQuizModal } from '../components/quiz/GenerateQuizModal';
+import { PdfQuizModal } from '../components/quiz/PdfQuizModal';
+import { UrlQuizModal } from '../components/quiz/UrlQuizModal';
+import { ImageQuizModal } from '../components/quiz/ImageQuizModal';
+import { CodeQuizModal } from '../components/code-quiz/CodeQuizModal';
 
 export function ClassroomsPage() {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
   const isTeacher = user?.role === 'teacher' || user?.role === 'admin';
 
   const [classrooms, setClassrooms] = useState<ClassroomDto[]>([]);
@@ -42,14 +63,7 @@ export function ClassroomsPage() {
   const [classDetails, setClassDetails] = useState<{
     classroom: ClassroomDto;
     members: { studentId: string; studentName: string; studentEmail: string; joinedAt: string }[];
-    assignments: {
-      id: string;
-      title: string;
-      quizType: 'mcq' | 'code_review';
-      dueDate: string | null;
-      maxAttempts: number;
-      createdAt: string;
-    }[];
+    assignments: ClassroomAssignmentSummaryDto[];
   } | null>(null);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
 
@@ -59,7 +73,24 @@ export function ClassroomsPage() {
   const [assignTitle, setAssignTitle] = useState('');
   const [assignMaxAttempts, setAssignMaxAttempts] = useState(1);
   const [assignDueDate, setAssignDueDate] = useState('');
-  const [myQuizzes, setMyQuizzes] = useState<{ id: string; topic: string; difficulty: string }[]>([]);
+  const [myQuizzes, setMyQuizzes] = useState<CreatedQuizSummaryDto[]>([]);
+
+  // Generation launcher modals inside classroom
+  const [activeCreationModal, setActiveCreationModal] = useState<'topic' | 'pdf' | 'url' | 'image' | 'code' | null>(null);
+
+  // Edit Assignment Modal
+  const [editingAssignment, setEditingAssignment] = useState<ClassroomAssignmentSummaryDto | null>(null);
+  const [editAssignTitle, setEditAssignTitle] = useState('');
+  const [editAssignDueDate, setEditAssignDueDate] = useState('');
+  const [editAssignMaxAttempts, setEditAssignMaxAttempts] = useState(1);
+
+  // Share Modal
+  const [shareModalData, setShareModalData] = useState<{
+    type: 'classroom' | 'assignment';
+    title: string;
+    code?: string;
+    url: string;
+  } | null>(null);
 
   // Submissions Modal
   const [selectedAssignmentId, setSelectedAssignmentId] = useState<string | null>(null);
@@ -97,33 +128,38 @@ export function ClassroomsPage() {
     }
   };
 
-  const fetchMyQuizzes = async () => {
+  const fetchMyQuizzes = async (): Promise<CreatedQuizSummaryDto[]> => {
     try {
-      const res = await apiClient.get<any>('/api/history?limit=50&type=all');
-      if (res && res.items) {
-        const mcqs = res.items
-          .filter((item: any) => item.type === 'mcq')
-          .map((item: any) => ({
-            id: item.quizId,
-            topic: item.topic,
-            difficulty: item.difficulty,
-          }));
-        const unique = Array.from(new Map(mcqs.map((q: any) => [q.id, q])).values());
-        setMyQuizzes(unique as any);
-        if (unique.length > 0 && !assignQuizId) {
-          const first = unique[0] as { id: string; topic: string };
-          setAssignQuizId(first.id);
-          setAssignTitle(`Homework: ${first.topic}`);
+      const res = await apiClient.get<{ quizzes: CreatedQuizSummaryDto[] }>('/api/quizzes/mine');
+      if (res && res.quizzes) {
+        setMyQuizzes(res.quizzes);
+        if (res.quizzes.length > 0 && !assignQuizId) {
+          const first = res.quizzes[0];
+          if (first) {
+            setAssignQuizId(first.id);
+            setAssignTitle(`Homework: ${first.topic}`);
+          }
         }
+        return res.quizzes;
       }
     } catch {
-      // Ignore
+      // Fallback
     }
+    return [];
   };
 
   useEffect(() => {
     fetchClassrooms();
   }, []);
+
+  // Detect URL query parameter for join code (?join=CODE)
+  useEffect(() => {
+    const codeParam = searchParams.get('join');
+    if (codeParam && !isTeacher) {
+      setJoinCode(codeParam.toUpperCase());
+      setShowJoinModal(true);
+    }
+  }, [searchParams, isTeacher]);
 
   useEffect(() => {
     if (selectedClassId) {
@@ -176,10 +212,11 @@ export function ClassroomsPage() {
     if (!selectedClassId || !assignQuizId || !assignTitle.trim()) return;
     setIsSubmitting(true);
     try {
+      const selectedQuiz = myQuizzes.find((q) => q.id === assignQuizId);
       await apiClient.post<AssignmentDto>('/api/classrooms/assignments', {
         classroomId: selectedClassId,
         quizId: assignQuizId,
-        quizType: 'mcq',
+        quizType: selectedQuiz?.quizType || 'mcq',
         title: assignTitle.trim(),
         maxAttempts: Number(assignMaxAttempts),
         dueDate: assignDueDate ? new Date(assignDueDate).toISOString() : undefined,
@@ -192,6 +229,57 @@ export function ClassroomsPage() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleUpdateAssignment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingAssignment) return;
+    setIsSubmitting(true);
+    try {
+      await apiClient.put(`/api/classrooms/assignments/${editingAssignment.id}`, {
+        title: editAssignTitle.trim(),
+        maxAttempts: Number(editAssignMaxAttempts),
+        dueDate: editAssignDueDate ? new Date(editAssignDueDate).toISOString() : null,
+      });
+      setEditingAssignment(null);
+      if (selectedClassId) fetchClassDetails(selectedClassId);
+    } catch (err) {
+      alert(err instanceof ApiError ? err.message : 'Failed to update assignment.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteAssignment = async (assignmentId: string) => {
+    if (!window.confirm('Are you sure you want to delete this assignment from the classroom?')) return;
+    try {
+      await apiClient.delete(`/api/classrooms/assignments/${assignmentId}`);
+      if (selectedClassId) fetchClassDetails(selectedClassId);
+    } catch (err) {
+      alert(err instanceof ApiError ? err.message : 'Failed to delete assignment.');
+    }
+  };
+
+  const handleDeleteClassroom = async (classroomId: string) => {
+    if (!window.confirm('Are you sure you want to delete this classroom? All enrolled members and assignments will be removed.')) return;
+    try {
+      await apiClient.delete(`/api/classrooms/${classroomId}`);
+      setClassrooms((prev) => prev.filter((c) => c.id !== classroomId));
+      setSelectedClassId(null);
+      setClassDetails(null);
+      fetchClassrooms();
+    } catch (err) {
+      alert(err instanceof ApiError ? err.message : 'Failed to delete classroom.');
+    }
+  };
+
+  const handleQuizCreatedForClassroom = async (newQuizId: string, topic?: string) => {
+    setActiveCreationModal(null);
+    const updatedQuizzes = await fetchMyQuizzes();
+    setAssignQuizId(newQuizId);
+    const q = updatedQuizzes.find((x) => x.id === newQuizId);
+    setAssignTitle(topic ? `Homework: ${topic}` : q ? `Homework: ${q.topic}` : 'New Homework Assignment');
+    setShowAssignModal(true);
   };
 
   const handleViewSubmissions = async (assignmentId: string) => {
@@ -237,7 +325,7 @@ export function ClassroomsPage() {
             </div>
             <p className="text-sm text-[#696F79] mt-1 font-medium">
               {isTeacher
-                ? 'Organize student cohorts, assign quizzes with deadlines, and inspect gradebook analytics.'
+                ? 'Organize student cohorts, assign quizzes with deadlines, inspect gradebook analytics, and share access codes.'
                 : 'Collaborate with your classes, view authorized assignments, and track submission scores.'}
             </p>
           </div>
@@ -246,7 +334,7 @@ export function ClassroomsPage() {
             {isTeacher ? (
               <button
                 onClick={() => setShowCreateModal(true)}
-                className="flex items-center gap-2 px-5 py-2.5 text-xs font-bold text-white bg-[#1935CA] hover:bg-[#142BA3] rounded-xl transition shadow-lg shadow-[#1935CA]/20"
+                className="flex items-center gap-2 px-5 py-2.5 text-xs font-bold text-white bg-[#1935CA] hover:bg-[#142BA3] rounded-xl transition shadow-lg shadow-[#1935CA]/20 active:scale-98"
               >
                 <Plus className="w-4 h-4" />
                 <span>Create Classroom</span>
@@ -262,7 +350,7 @@ export function ClassroomsPage() {
                 </Link>
                 <button
                   onClick={() => setShowJoinModal(true)}
-                  className="flex items-center gap-2 px-5 py-2.5 text-xs font-bold text-white bg-[#1935CA] hover:bg-[#142BA3] rounded-xl transition shadow-lg shadow-[#1935CA]/20"
+                  className="flex items-center gap-2 px-5 py-2.5 text-xs font-bold text-white bg-[#1935CA] hover:bg-[#142BA3] rounded-xl transition shadow-lg shadow-[#1935CA]/20 active:scale-98"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Join with Code</span>
@@ -355,7 +443,18 @@ export function ClassroomsPage() {
                 <div className="p-6 sm:p-7 rounded-[20px] bg-white border border-slate-100 shadow-[0_10px_30px_rgba(25,53,202,0.05)] space-y-4">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                      <h2 className="text-xl font-bold text-[#1E293B]">{classDetails.classroom.name}</h2>
+                      <div className="flex items-center gap-3">
+                        <h2 className="text-xl font-bold text-[#1E293B]">{classDetails.classroom.name}</h2>
+                        {isTeacher && (
+                          <button
+                            onClick={() => handleDeleteClassroom(classDetails.classroom.id)}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
+                            title="Delete Classroom"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
                       <p className="text-sm text-[#696F79] mt-1 font-medium">
                         Instructor: <span className="text-[#1E293B] font-bold">{classDetails.classroom.teacherName}</span>
                       </p>
@@ -364,7 +463,7 @@ export function ClassroomsPage() {
                       )}
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-3">
                       <div className="p-3 rounded-xl bg-[#F8F9FC] border border-slate-200/80 text-center">
                         <span className="text-[10px] font-bold text-[#696F79] uppercase tracking-wider block">
                           Join Code
@@ -387,13 +486,29 @@ export function ClassroomsPage() {
                         </div>
                       </div>
 
+                      <button
+                        onClick={() =>
+                          setShareModalData({
+                            type: 'classroom',
+                            title: classDetails.classroom.name,
+                            code: classDetails.classroom.code,
+                            url: `${window.location.origin}/classrooms?join=${classDetails.classroom.code}`,
+                          })
+                        }
+                        className="flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-bold text-[#1935CA] bg-[#EEF2FF] hover:bg-[#E0E7FF] rounded-xl transition"
+                        title="Share Classroom Invite Link"
+                      >
+                        <Share2 className="w-4 h-4" />
+                        <span>Share Class</span>
+                      </button>
+
                       {isTeacher && (
                         <button
                           onClick={() => {
                             fetchMyQuizzes();
                             setShowAssignModal(true);
                           }}
-                          className="flex items-center gap-2 px-4 py-2.5 text-xs font-bold text-white bg-[#1935CA] hover:bg-[#142BA3] rounded-xl transition shadow-lg shadow-[#1935CA]/20"
+                          className="flex items-center gap-2 px-4 py-2.5 text-xs font-bold text-white bg-[#1935CA] hover:bg-[#142BA3] rounded-xl transition shadow-lg shadow-[#1935CA]/20 active:scale-98"
                         >
                           <Sparkles className="w-4 h-4" />
                           <span>Assign Quiz</span>
@@ -409,7 +524,7 @@ export function ClassroomsPage() {
                     <h3 className="text-xs font-bold text-[#696F79] uppercase tracking-wider">
                       Assignments ({classDetails.assignments.length})
                     </h3>
-                    {!isTeacher && (
+                    {!isTeacher ? (
                       <Link
                         to="/assignments"
                         className="text-xs font-bold text-[#1935CA] hover:underline flex items-center gap-1"
@@ -417,28 +532,52 @@ export function ClassroomsPage() {
                         <span>Take Assigned Quizzes</span>
                         <ArrowRight className="w-3.5 h-3.5" />
                       </Link>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => {
+                            fetchMyQuizzes();
+                            setShowAssignModal(true);
+                          }}
+                          className="text-xs font-bold text-[#1935CA] hover:underline flex items-center gap-1"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>Assign Quiz</span>
+                        </button>
+                      </div>
                     )}
                   </div>
 
                   {classDetails.assignments.length === 0 ? (
-                    <div className="p-8 text-center text-[#696F79] text-sm bg-white rounded-[20px] shadow-[0_10px_30px_rgba(25,53,202,0.05)] border border-slate-100">
-                      No quizzes have been assigned to this classroom yet.
+                    <div className="p-8 text-center text-[#696F79] text-sm bg-white rounded-[20px] shadow-[0_10px_30px_rgba(25,53,202,0.05)] border border-slate-100 space-y-2">
+                      <p>No quizzes have been assigned to this classroom yet.</p>
+                      {isTeacher && (
+                        <button
+                          onClick={() => {
+                            fetchMyQuizzes();
+                            setShowAssignModal(true);
+                          }}
+                          className="px-4 py-2 text-xs font-bold text-[#1935CA] bg-[#EEF2FF] hover:bg-[#E0E7FF] rounded-xl transition"
+                        >
+                          Create First Assignment
+                        </button>
+                      )}
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 gap-3">
                       {classDetails.assignments.map((a) => (
                         <div
                           key={a.id}
-                          className="p-4 sm:p-5 rounded-[18px] bg-white border border-slate-100 shadow-[0_8px_24px_rgba(25,53,202,0.04)] flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                          className="p-4 sm:p-5 rounded-[18px] bg-white border border-slate-100 shadow-[0_8px_24px_rgba(25,53,202,0.04)] flex flex-col md:flex-row md:items-center justify-between gap-4"
                         >
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                              <span className="font-bold text-[#1E293B] text-sm">{a.title}</span>
+                          <div className="space-y-1.5 flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-bold text-[#1E293B] text-sm truncate">{a.title}</span>
                               <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-[#EEF2FF] text-[#1935CA]">
-                                {a.quizType}
+                                {a.quizType === 'code_review' ? 'Code Review' : 'MCQ'}
                               </span>
                             </div>
-                            <div className="flex items-center gap-4 text-xs text-[#696F79] font-medium">
+                            <div className="flex flex-wrap items-center gap-4 text-xs text-[#696F79] font-medium">
                               {a.dueDate && (
                                 <div className="flex items-center gap-1 text-amber-600">
                                   <Calendar className="w-3.5 h-3.5" />
@@ -451,15 +590,83 @@ export function ClassroomsPage() {
                             </div>
                           </div>
 
-                          {isTeacher && (
-                            <button
-                              onClick={() => handleViewSubmissions(a.id)}
-                              className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-[#1935CA] hover:bg-[#EEF2FF] bg-[#F8F9FC] rounded-xl border border-slate-200/80 transition"
-                            >
-                              <Award className="w-3.5 h-3.5" />
-                              <span>Gradebook</span>
-                            </button>
-                          )}
+                          <div className="flex items-center gap-2 flex-wrap self-start md:self-auto">
+                            {isTeacher ? (
+                              <>
+                                {/* Edit Questions in Studio (MCQ only) */}
+                                {a.quizType === 'mcq' && (
+                                  <Link
+                                    to={`/studio/${a.quizId}`}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[#1935CA] hover:bg-[#EEF2FF] bg-[#F8F9FC] rounded-xl border border-slate-200/80 transition"
+                                    title="Edit questions, choices and answers in Quiz Studio"
+                                  >
+                                    <SlidersHorizontal className="w-3.5 h-3.5" />
+                                    <span>Edit Quiz</span>
+                                  </Link>
+                                )}
+
+                                {/* Share Assignment Link */}
+                                <button
+                                  onClick={() =>
+                                    setShareModalData({
+                                      type: 'assignment',
+                                      title: a.title,
+                                      code: a.shareCode || undefined,
+                                      url: a.shareCode
+                                        ? `${window.location.origin}/quiz/shared/${a.shareCode}`
+                                        : `${window.location.origin}/classrooms?join=${classDetails.classroom.code}`,
+                                    })
+                                  }
+                                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[#1935CA] hover:bg-[#EEF2FF] bg-[#F8F9FC] rounded-xl border border-slate-200/80 transition"
+                                  title="Share quiz or direct access code"
+                                >
+                                  <Share2 className="w-3.5 h-3.5" />
+                                  <span>Share</span>
+                                </button>
+
+                                {/* Edit Assignment Settings */}
+                                <button
+                                  onClick={() => {
+                                    setEditingAssignment(a);
+                                    setEditAssignTitle(a.title);
+                                    setEditAssignDueDate(a.dueDate ? a.dueDate.split('T')[0] || '' : '');
+                                    setEditAssignMaxAttempts(a.maxAttempts);
+                                  }}
+                                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[#696F79] hover:text-[#1E293B] hover:bg-slate-100 bg-[#F8F9FC] rounded-xl border border-slate-200/80 transition"
+                                  title="Edit Assignment Settings (Due date, attempts, title)"
+                                >
+                                  <Settings className="w-3.5 h-3.5" />
+                                  <span>Settings</span>
+                                </button>
+
+                                {/* Gradebook */}
+                                <button
+                                  onClick={() => handleViewSubmissions(a.id)}
+                                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[#1935CA] hover:bg-[#EEF2FF] bg-[#F8F9FC] rounded-xl border border-slate-200/80 transition"
+                                >
+                                  <Award className="w-3.5 h-3.5" />
+                                  <span>Gradebook</span>
+                                </button>
+
+                                {/* Delete Assignment */}
+                                <button
+                                  onClick={() => handleDeleteAssignment(a.id)}
+                                  className="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition border border-transparent hover:border-rose-100"
+                                  title="Delete Assignment"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </>
+                            ) : (
+                              <Link
+                                to="/assignments"
+                                className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-[#1935CA] hover:bg-[#142BA3] rounded-xl transition shadow-sm"
+                              >
+                                <span>Start Task</span>
+                                <ArrowRight className="w-3.5 h-3.5" />
+                              </Link>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -632,7 +839,7 @@ export function ClassroomsPage() {
         {/* Assign Quiz Modal */}
         {showAssignModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-            <div className="bg-white rounded-[24px] p-6 sm:p-7 w-full max-w-lg shadow-2xl space-y-4 border border-slate-100">
+            <div className="bg-white rounded-[24px] p-6 sm:p-7 w-full max-w-xl shadow-2xl space-y-5 border border-slate-100 max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <h3 className="text-lg font-bold text-[#1E293B] flex items-center gap-2">
                   <Sparkles className="w-5 h-5 text-[#1935CA]" />
@@ -646,6 +853,62 @@ export function ClassroomsPage() {
                 </button>
               </div>
 
+              {/* Quick Quiz Creator Panel */}
+              <div className="p-4 rounded-2xl bg-[#F8F9FC] border border-slate-200/70 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-[#1E293B] flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-[#1935CA]" />
+                    <span>Create a Brand New Quiz with AI</span>
+                  </span>
+                  <span className="text-[10px] text-[#696F79] font-medium">No quiz-taking required</span>
+                </div>
+                <p className="text-[11px] text-[#696F79] leading-relaxed">
+                  Generate questions from any source below and immediately attach them to this classroom:
+                </p>
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setActiveCreationModal('topic')}
+                    className="p-2 rounded-xl bg-white border border-slate-200 hover:border-[#1935CA] hover:bg-[#EEF2FF] text-left transition flex flex-col items-center text-center group"
+                  >
+                    <FileQuestion className="w-4 h-4 text-[#1935CA] mb-1 group-hover:scale-110 transition" />
+                    <span className="text-[11px] font-bold text-[#1E293B]">Topic MCQ</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveCreationModal('pdf')}
+                    className="p-2 rounded-xl bg-white border border-slate-200 hover:border-[#1935CA] hover:bg-[#EEF2FF] text-left transition flex flex-col items-center text-center group"
+                  >
+                    <FileText className="w-4 h-4 text-[#1935CA] mb-1 group-hover:scale-110 transition" />
+                    <span className="text-[11px] font-bold text-[#1E293B]">PDF Doc</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveCreationModal('url')}
+                    className="p-2 rounded-xl bg-white border border-slate-200 hover:border-[#1935CA] hover:bg-[#EEF2FF] text-left transition flex flex-col items-center text-center group"
+                  >
+                    <Globe className="w-4 h-4 text-[#1935CA] mb-1 group-hover:scale-110 transition" />
+                    <span className="text-[11px] font-bold text-[#1E293B]">Web URL</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveCreationModal('image')}
+                    className="p-2 rounded-xl bg-white border border-slate-200 hover:border-[#1935CA] hover:bg-[#EEF2FF] text-left transition flex flex-col items-center text-center group"
+                  >
+                    <ImageIcon className="w-4 h-4 text-[#1935CA] mb-1 group-hover:scale-110 transition" />
+                    <span className="text-[11px] font-bold text-[#1E293B]">Diagram</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveCreationModal('code')}
+                    className="p-2 rounded-xl bg-white border border-slate-200 hover:border-[#1935CA] hover:bg-[#EEF2FF] text-left transition flex flex-col items-center text-center group"
+                  >
+                    <Code2 className="w-4 h-4 text-[#1935CA] mb-1 group-hover:scale-110 transition" />
+                    <span className="text-[11px] font-bold text-[#1E293B]">Code Review</span>
+                  </button>
+                </div>
+              </div>
+
               <form onSubmit={handleCreateAssignment} className="space-y-4">
                 <div>
                   <label className="block text-xs font-bold text-[#1E293B] mb-1.5">
@@ -656,18 +919,25 @@ export function ClassroomsPage() {
                     required
                     value={assignTitle}
                     onChange={(e) => setAssignTitle(e.target.value)}
+                    placeholder="e.g. Midterm Homework: Distributed Systems"
                     className="w-full px-4 py-2.5 rounded-xl bg-[#F8F9FC] border border-slate-200/80 text-[#1E293B] text-sm focus:ring-2 focus:ring-[#1935CA] focus:bg-white outline-none font-medium"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#1E293B] mb-1.5">
-                    Select Source Quiz *
-                  </label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-bold text-[#1E293B]">
+                      Select Source Quiz *
+                    </label>
+                    <span className="text-[10px] text-[#696F79]">
+                      {myQuizzes.length} available quizzes
+                    </span>
+                  </div>
+
                   {myQuizzes.length === 0 ? (
-                    <p className="text-xs text-amber-600 font-medium">
-                      No quizzes found in your history. Generate a quiz from the Dashboard first!
-                    </p>
+                    <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs">
+                      No quizzes created yet. Use the quick buttons above to generate one now!
+                    </div>
                   ) : (
                     <select
                       value={assignQuizId}
@@ -680,7 +950,7 @@ export function ClassroomsPage() {
                     >
                       {myQuizzes.map((q) => (
                         <option key={q.id} value={q.id}>
-                          {q.topic} ({q.difficulty})
+                          {q.topic} ({q.quizType === 'code_review' ? 'Code Review' : `${q.difficulty} • ${q.questionCount} Qs`})
                         </option>
                       ))}
                     </select>
@@ -701,6 +971,7 @@ export function ClassroomsPage() {
                       <option value={2}>2 Attempts</option>
                       <option value={3}>3 Attempts</option>
                       <option value={5}>5 Attempts</option>
+                      <option value={10}>10 Attempts</option>
                     </select>
                   </div>
 
@@ -717,7 +988,7 @@ export function ClassroomsPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-end gap-3 pt-3">
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
                   <button
                     type="button"
                     onClick={() => setShowAssignModal(false)}
@@ -728,12 +999,181 @@ export function ClassroomsPage() {
                   <button
                     type="submit"
                     disabled={isSubmitting || myQuizzes.length === 0}
-                    className="px-5 py-2.5 text-xs font-bold text-white bg-[#1935CA] hover:bg-[#142BA3] disabled:opacity-50 rounded-xl transition shadow-lg shadow-[#1935CA]/20"
+                    className="px-5 py-2.5 text-xs font-bold text-white bg-[#1935CA] hover:bg-[#142BA3] disabled:opacity-50 rounded-xl transition shadow-lg shadow-[#1935CA]/20 active:scale-98"
                   >
                     {isSubmitting ? 'Assigning...' : 'Assign Quiz'}
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Assignment Settings Modal */}
+        {editingAssignment && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+            <div className="bg-white rounded-[24px] p-6 sm:p-7 w-full max-w-md shadow-2xl space-y-4 border border-slate-100">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <h3 className="text-lg font-bold text-[#1E293B] flex items-center gap-2">
+                  <Settings className="w-5 h-5 text-[#1935CA]" />
+                  <span>Edit Assignment Settings</span>
+                </h3>
+                <button
+                  onClick={() => setEditingAssignment(null)}
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleUpdateAssignment} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-[#1E293B] mb-1.5">
+                    Assignment Title *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editAssignTitle}
+                    onChange={(e) => setEditAssignTitle(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#F8F9FC] border border-slate-200/80 text-[#1E293B] text-sm focus:ring-2 focus:ring-[#1935CA] focus:bg-white outline-none font-medium"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-[#1E293B] mb-1.5">
+                      Max Attempts
+                    </label>
+                    <select
+                      value={editAssignMaxAttempts}
+                      onChange={(e) => setEditAssignMaxAttempts(Number(e.target.value))}
+                      className="w-full px-4 py-2.5 rounded-xl bg-[#F8F9FC] border border-slate-200/80 text-[#1E293B] text-sm focus:ring-2 focus:ring-[#1935CA] focus:bg-white outline-none font-medium"
+                    >
+                      <option value={1}>1 (Strict Exam)</option>
+                      <option value={2}>2 Attempts</option>
+                      <option value={3}>3 Attempts</option>
+                      <option value={5}>5 Attempts</option>
+                      <option value={10}>10 Attempts</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-[#1E293B] mb-1.5">
+                      Due Date
+                    </label>
+                    <input
+                      type="date"
+                      value={editAssignDueDate}
+                      onChange={(e) => setEditAssignDueDate(e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-xl bg-[#F8F9FC] border border-slate-200/80 text-[#1E293B] text-sm focus:ring-2 focus:ring-[#1935CA] focus:bg-white outline-none font-medium"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setEditingAssignment(null)}
+                    className="px-4 py-2 text-xs font-bold text-[#696F79] hover:text-[#1E293B] transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="px-5 py-2.5 text-xs font-bold text-white bg-[#1935CA] hover:bg-[#142BA3] disabled:opacity-50 rounded-xl transition shadow-lg shadow-[#1935CA]/20 active:scale-98"
+                  >
+                    {isSubmitting ? 'Saving...' : 'Save Changes'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Share Modal */}
+        {shareModalData && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+            <div className="bg-white rounded-[24px] p-6 sm:p-7 w-full max-w-md shadow-2xl space-y-5 border border-slate-100">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <h3 className="text-lg font-bold text-[#1E293B] flex items-center gap-2">
+                  <Share2 className="w-5 h-5 text-[#1935CA]" />
+                  <span>Share {shareModalData.type === 'classroom' ? 'Classroom Invite' : 'Quiz Assignment'}</span>
+                </h3>
+                <button
+                  onClick={() => setShareModalData(null)}
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-[#1E293B] text-sm">{shareModalData.title}</h4>
+                <p className="text-xs text-[#696F79] mt-0.5">
+                  Send this code or direct link to your students to grant access.
+                </p>
+              </div>
+
+              {shareModalData.code && (
+                <div className="p-4 rounded-xl bg-[#F8F9FC] border border-slate-200/80">
+                  <span className="text-[10px] font-bold text-[#696F79] uppercase tracking-wider block mb-1">
+                    {shareModalData.type === 'classroom' ? 'Join Code' : 'Quiz Share Code'}
+                  </span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-2xl font-mono font-black text-[#1935CA] tracking-wider">
+                      {shareModalData.code}
+                    </span>
+                    <button
+                      onClick={() => copyToClipboard(shareModalData.code!)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[#1935CA] bg-white hover:bg-[#EEF2FF] rounded-lg border border-slate-200 shadow-sm transition"
+                    >
+                      {copiedCode === shareModalData.code ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 text-emerald-600" />
+                          <span className="text-emerald-700">Copied</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3.5 h-3.5" />
+                          <span>Copy Code</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-[#1E293B]">
+                  Direct Invite Link
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={shareModalData.url}
+                    className="w-full px-3 py-2 rounded-xl bg-[#F8F9FC] border border-slate-200 text-xs text-[#696F79] font-mono outline-none"
+                  />
+                  <button
+                    onClick={() => copyToClipboard(shareModalData.url)}
+                    className="px-3.5 py-2 text-xs font-bold text-white bg-[#1935CA] hover:bg-[#142BA3] rounded-xl transition shrink-0 active:scale-98"
+                  >
+                    {copiedCode === shareModalData.url ? 'Copied!' : 'Copy Link'}
+                  </button>
+                </div>
+              </div>
+
+              <div className="pt-2 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShareModalData(null)}
+                  className="px-4 py-2 text-xs font-bold text-[#696F79] hover:text-[#1E293B]"
+                >
+                  Done
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -811,6 +1251,33 @@ export function ClassroomsPage() {
             </div>
           </div>
         )}
+
+        {/* Embedded Generation Modals */}
+        <GenerateQuizModal
+          isOpen={activeCreationModal === 'topic'}
+          onClose={() => setActiveCreationModal(null)}
+          onQuizCreated={handleQuizCreatedForClassroom}
+        />
+        <PdfQuizModal
+          isOpen={activeCreationModal === 'pdf'}
+          onClose={() => setActiveCreationModal(null)}
+          onQuizCreated={handleQuizCreatedForClassroom}
+        />
+        <UrlQuizModal
+          isOpen={activeCreationModal === 'url'}
+          onClose={() => setActiveCreationModal(null)}
+          onQuizCreated={handleQuizCreatedForClassroom}
+        />
+        <ImageQuizModal
+          isOpen={activeCreationModal === 'image'}
+          onClose={() => setActiveCreationModal(null)}
+          onQuizCreated={handleQuizCreatedForClassroom}
+        />
+        <CodeQuizModal
+          isOpen={activeCreationModal === 'code'}
+          onClose={() => setActiveCreationModal(null)}
+          onQuizCreated={handleQuizCreatedForClassroom}
+        />
       </div>
     </AppLayout>
   );

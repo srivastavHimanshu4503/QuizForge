@@ -6,8 +6,8 @@ interface AuthContextType {
   user: UserProfile | null;
   isLoading: boolean;
   error: string | null;
-  login: (input: LoginInput) => Promise<void>;
-  register: (input: RegisterInput) => Promise<void>;
+  login: (input: LoginInput) => Promise<UserProfile>;
+  register: (input: RegisterInput) => Promise<UserProfile>;
   logout: () => Promise<void>;
   clearError: () => void;
 }
@@ -34,12 +34,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     fetchCurrentUser();
   }, []);
 
-  const login = async (input: LoginInput) => {
+  const login = async (input: LoginInput): Promise<UserProfile> => {
     setIsLoading(true);
     setError(null);
     try {
       const data = await apiClient.post<{ user: UserProfile }>('/api/auth/login', input);
       setUser(data.user);
+      return data.user;
     } catch (err) {
       const msg = err instanceof ApiError ? err.message : 'Login failed. Please try again.';
       setError(msg);
@@ -49,12 +50,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const register = async (input: RegisterInput) => {
+  const register = async (input: RegisterInput): Promise<UserProfile> => {
     setIsLoading(true);
     setError(null);
     try {
       const data = await apiClient.post<{ user: UserProfile }>('/api/auth/register', input);
       setUser(data.user);
+      return data.user;
     } catch (err) {
       const msg = err instanceof ApiError ? err.message : 'Registration failed. Please try again.';
       setError(msg);
@@ -73,6 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setUser(null);
       setIsLoading(false);
+      window.location.href = '/login';
     }
   };
 

@@ -3,6 +3,7 @@ import {
   createClassroomSchema,
   joinClassroomSchema,
   createAssignmentSchema,
+  updateAssignmentSchema,
 } from '@quiz-forge/shared';
 import { classroomService, ClassroomError } from '../services/classroom.service';
 
@@ -280,4 +281,104 @@ export const classroomRoutes: FastifyPluginAsync = async (app: FastifyInstance) 
       throw err;
     }
   });
+
+  // PUT /api/classrooms/assignments/:id (Teacher only: update assignment settings)
+  app.put<{ Params: { id: string } }>(
+    '/assignments/:id',
+    { preHandler: [app.requireRole(['teacher', 'admin'])] },
+    async (request, reply) => {
+      const parseResult = updateAssignmentSchema.safeParse(request.body);
+      if (!parseResult.success) {
+        return reply.status(400).send({
+          success: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'Invalid assignment update parameters.',
+            details: parseResult.error.format(),
+          },
+        });
+      }
+
+      try {
+        const updated = await classroomService.updateAssignment(
+          request.user!.id,
+          request.params.id,
+          parseResult.data
+        );
+        return reply.status(200).send({
+          success: true,
+          data: updated,
+        });
+      } catch (err: unknown) {
+        if (err instanceof ClassroomError) {
+          return reply.status(err.statusCode).send({
+            success: false,
+            error: {
+              code: err.code,
+              message: err.message,
+            },
+          });
+        }
+        throw err;
+      }
+    }
+  );
+
+  // DELETE /api/classrooms/assignments/:id (Teacher only: delete assignment)
+  app.delete<{ Params: { id: string } }>(
+    '/assignments/:id',
+    { preHandler: [app.requireRole(['teacher', 'admin'])] },
+    async (request, reply) => {
+      try {
+        const result = await classroomService.deleteAssignment(
+          request.user!.id,
+          request.params.id
+        );
+        return reply.status(200).send({
+          success: true,
+          data: result,
+        });
+      } catch (err: unknown) {
+        if (err instanceof ClassroomError) {
+          return reply.status(err.statusCode).send({
+            success: false,
+            error: {
+              code: err.code,
+              message: err.message,
+            },
+          });
+        }
+        throw err;
+      }
+    }
+  );
+
+  // DELETE /api/classrooms/:id (Teacher only: delete classroom)
+  app.delete<{ Params: { id: string } }>(
+    '/:id',
+    { preHandler: [app.requireRole(['teacher', 'admin'])] },
+    async (request, reply) => {
+      try {
+        const result = await classroomService.deleteClassroom(
+          request.user!.id,
+          request.params.id
+        );
+        return reply.status(200).send({
+          success: true,
+          data: result,
+        });
+      } catch (err: unknown) {
+        if (err instanceof ClassroomError) {
+          return reply.status(err.statusCode).send({
+            success: false,
+            error: {
+              code: err.code,
+              message: err.message,
+            },
+          });
+        }
+        throw err;
+      }
+    }
+  );
 };

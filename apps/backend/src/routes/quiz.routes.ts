@@ -43,6 +43,28 @@ export const quizRoutes: FastifyPluginAsync = async (app: FastifyInstance) => {
     }
   });
 
+  // GET /api/quizzes/mine (Quizzes created by the user)
+  app.get('/mine', async (request, reply) => {
+    try {
+      const quizzes = await quizService.getUserQuizzes(request.user!.id);
+      return reply.status(200).send({
+        success: true,
+        data: { quizzes },
+      });
+    } catch (err: unknown) {
+      if (err instanceof QuizError) {
+        return reply.status(err.statusCode).send({
+          success: false,
+          error: {
+            code: err.code,
+            message: err.message,
+          },
+        });
+      }
+      throw err;
+    }
+  });
+
   // GET /api/quizzes/:quizId
   app.get<{ Params: { quizId: string } }>('/:quizId', async (request, reply) => {
     try {
@@ -53,6 +75,31 @@ export const quizRoutes: FastifyPluginAsync = async (app: FastifyInstance) => {
       return reply.status(200).send({
         success: true,
         data: { quiz },
+      });
+    } catch (err: unknown) {
+      if (err instanceof QuizError) {
+        return reply.status(err.statusCode).send({
+          success: false,
+          error: {
+            code: err.code,
+            message: err.message,
+          },
+        });
+      }
+      throw err;
+    }
+  });
+
+  // DELETE /api/quizzes/:quizId
+  app.delete<{ Params: { quizId: string } }>('/:quizId', async (request, reply) => {
+    try {
+      const result = await quizService.deleteQuiz(
+        request.user!.id,
+        request.params.quizId
+      );
+      return reply.status(200).send({
+        success: true,
+        data: result,
       });
     } catch (err: unknown) {
       if (err instanceof QuizError) {

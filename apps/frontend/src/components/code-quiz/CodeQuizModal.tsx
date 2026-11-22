@@ -24,6 +24,7 @@ interface ProviderOption {
 interface CodeQuizModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onQuizCreated?: (quizId: string, topic?: string) => void;
 }
 
 const REPO_PRESETS = [
@@ -33,7 +34,7 @@ const REPO_PRESETS = [
   'https://github.com/facebook/react',
 ];
 
-export function CodeQuizModal({ isOpen, onClose }: CodeQuizModalProps) {
+export function CodeQuizModal({ isOpen, onClose, onQuizCreated }: CodeQuizModalProps) {
   const [repoUrl, setRepoUrl] = useState('');
   const [questionCount, setQuestionCount] = useState<number>(5);
   const [subfolder, setSubfolder] = useState('');
@@ -111,7 +112,11 @@ export function CodeQuizModal({ isOpen, onClose }: CodeQuizModalProps) {
       }
 
       onClose();
-      navigate(`/code-quiz/${data.attemptId}`);
+      if (onQuizCreated) {
+        onQuizCreated(data.codeQuizId, repoUrl.trim());
+      } else {
+        navigate(`/code-quiz/${data.attemptId}`);
+      }
     } catch (err: unknown) {
       const msg =
         err instanceof ApiError

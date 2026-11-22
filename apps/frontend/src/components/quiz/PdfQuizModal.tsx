@@ -24,6 +24,7 @@ interface ProviderOption {
 interface PdfQuizModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onQuizCreated?: (quizId: string, topic?: string) => void;
 }
 
 const COUNT_PRESETS = [3, 5, 10, 15];
@@ -35,7 +36,7 @@ const DIFFICULTIES: Array<{ id: QuizDifficulty; label: string; desc: string }> =
   { id: 'mixed', label: 'Mixed', desc: 'Balanced variety across tiers' },
 ];
 
-export function PdfQuizModal({ isOpen, onClose }: PdfQuizModalProps) {
+export function PdfQuizModal({ isOpen, onClose, onQuizCreated }: PdfQuizModalProps) {
   const [file, setFile] = useState<File | null>(null);
   const [topic, setTopic] = useState('');
   const [questionCount, setQuestionCount] = useState<number>(5);
@@ -105,7 +106,11 @@ export function PdfQuizModal({ isOpen, onClose }: PdfQuizModalProps) {
           if (job.attemptId) {
             setTimeout(() => {
               onClose();
-              navigate(`/quiz/${job.attemptId}`);
+              if (onQuizCreated && job.quizId) {
+                onQuizCreated(job.quizId, topic.trim() || file?.name || 'PDF Assessment');
+              } else {
+                navigate(`/quiz/${job.attemptId}`);
+              }
             }, 800);
           }
         } else if (job.status === 'failed') {

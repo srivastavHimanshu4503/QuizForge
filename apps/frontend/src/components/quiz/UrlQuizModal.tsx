@@ -25,6 +25,7 @@ interface ProviderOption {
 interface UrlQuizModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onQuizCreated?: (quizId: string, topic?: string) => void;
 }
 
 const COUNT_PRESETS = [3, 5, 10, 15];
@@ -43,7 +44,7 @@ const DIFFICULTIES: Array<{ id: QuizDifficulty; label: string; desc: string }> =
   { id: 'mixed', label: 'Mixed', desc: 'Balanced variety across tiers' },
 ];
 
-export function UrlQuizModal({ isOpen, onClose }: UrlQuizModalProps) {
+export function UrlQuizModal({ isOpen, onClose, onQuizCreated }: UrlQuizModalProps) {
   const [url, setUrl] = useState('');
   const [topic, setTopic] = useState('');
   const [questionCount, setQuestionCount] = useState<number>(5);
@@ -92,7 +93,11 @@ export function UrlQuizModal({ isOpen, onClose }: UrlQuizModalProps) {
           if (job.attemptId) {
             setTimeout(() => {
               onClose();
-              navigate(`/quiz/${job.attemptId}`);
+              if (onQuizCreated && job.quizId) {
+                onQuizCreated(job.quizId, topic.trim() || 'Web Article Assessment');
+              } else {
+                navigate(`/quiz/${job.attemptId}`);
+              }
             }, 800);
           }
         } else if (job.status === 'failed') {

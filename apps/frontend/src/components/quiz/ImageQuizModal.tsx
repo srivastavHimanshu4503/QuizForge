@@ -25,6 +25,7 @@ interface ProviderOption {
 interface ImageQuizModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onQuizCreated?: (quizId: string, topic?: string) => void;
 }
 
 const COUNT_PRESETS = [3, 5, 10, 15];
@@ -36,7 +37,7 @@ const DIFFICULTIES: Array<{ id: QuizDifficulty; label: string; desc: string }> =
   { id: 'mixed', label: 'Mixed', desc: 'Balanced variety across tiers' },
 ];
 
-export function ImageQuizModal({ isOpen, onClose }: ImageQuizModalProps) {
+export function ImageQuizModal({ isOpen, onClose, onQuizCreated }: ImageQuizModalProps) {
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [topic, setTopic] = useState('');
@@ -131,7 +132,11 @@ export function ImageQuizModal({ isOpen, onClose }: ImageQuizModalProps) {
           if (job.attemptId) {
             setTimeout(() => {
               onClose();
-              navigate(`/quiz/${job.attemptId}`);
+              if (onQuizCreated && job.quizId) {
+                onQuizCreated(job.quizId, topic.trim() || file?.name || 'Visual Diagram Assessment');
+              } else {
+                navigate(`/quiz/${job.attemptId}`);
+              }
             }, 800);
           }
         } else if (job.status === 'failed') {

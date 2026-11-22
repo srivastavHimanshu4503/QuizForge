@@ -60,9 +60,68 @@ export const createAssignmentSchema = z.object({
   showFeedbackImmediately: z.boolean().default(true),
 });
 
+export const updateAssignmentSchema = z.object({
+  title: z
+    .string()
+    .trim()
+    .min(2, 'Title must be at least 2 characters')
+    .max(150, 'Title cannot exceed 150 characters')
+    .optional(),
+  description: z
+    .string()
+    .trim()
+    .max(500, 'Description cannot exceed 500 characters')
+    .optional()
+    .nullable(),
+  dueDate: z
+    .string()
+    .datetime({ message: 'Due date must be a valid ISO datetime' })
+    .optional()
+    .nullable(),
+  maxAttempts: z
+    .number()
+    .int('Max attempts must be an integer')
+    .min(1, 'Max attempts must be at least 1')
+    .max(10, 'Max attempts cannot exceed 10')
+    .optional(),
+  timeLimitMinutes: z
+    .number()
+    .int('Time limit must be an integer')
+    .min(1, 'Time limit must be at least 1 minute')
+    .max(300, 'Time limit cannot exceed 300 minutes')
+    .optional()
+    .nullable(),
+  showFeedbackImmediately: z.boolean().optional(),
+});
+
 export type CreateClassroomInput = z.infer<typeof createClassroomSchema>;
 export type JoinClassroomInput = z.infer<typeof joinClassroomSchema>;
 export type CreateAssignmentInput = z.infer<typeof createAssignmentSchema>;
+export type UpdateAssignmentInput = z.infer<typeof updateAssignmentSchema>;
+
+export interface CreatedQuizSummaryDto {
+  id: string;
+  topic: string;
+  difficulty: string;
+  questionCount: number;
+  quizType: 'mcq' | 'code_review';
+  status?: string;
+  shareCode?: string | null;
+  createdAt: string;
+}
+
+export interface ClassroomAssignmentSummaryDto {
+  id: string;
+  quizId: string;
+  quizType: AssignmentQuizType;
+  title: string;
+  description?: string | null;
+  dueDate: string | null;
+  maxAttempts: number;
+  timeLimitMinutes?: number | null;
+  shareCode?: string | null;
+  createdAt: string;
+}
 
 export interface ClassroomDto {
   id: string;

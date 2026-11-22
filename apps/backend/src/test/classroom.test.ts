@@ -355,4 +355,82 @@ describe('RBAC & Classroom / Assignment Engine (Milestone 2)', () => {
 
     expect(res.statusCode).toBe(403);
   });
+
+  it('allows teacher to retrieve their created quizzes via GET /api/quizzes/mine', async () => {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/quizzes/mine',
+      headers: { cookie: teacherCookie },
+    });
+
+    expect(res.statusCode).toBe(200);
+    const body = JSON.parse(res.payload);
+    expect(body.success).toBe(true);
+    expect(Array.isArray(body.data.quizzes)).toBe(true);
+    expect(body.data.quizzes.some((q: any) => q.id === quizId)).toBe(true);
+  });
+
+  it('allows teacher to update assignment settings via PUT /api/classrooms/assignments/:id', async () => {
+    const res = await app.inject({
+      method: 'PUT',
+      url: `/api/classrooms/assignments/${assignmentId}`,
+      headers: { cookie: teacherCookie },
+      payload: {
+        title: 'Updated Homework: Raft Protocol v2',
+        maxAttempts: 3,
+      },
+    });
+
+    expect(res.statusCode).toBe(200);
+    const body = JSON.parse(res.payload);
+    expect(body.success).toBe(true);
+    expect(body.data.title).toBe('Updated Homework: Raft Protocol v2');
+    expect(body.data.maxAttempts).toBe(3);
+  });
+
+  it('allows teacher to delete an assignment via DELETE /api/classrooms/assignments/:id', async () => {
+    const res = await app.inject({
+      method: 'DELETE',
+      url: `/api/classrooms/assignments/${assignmentId}`,
+      headers: { cookie: teacherCookie },
+    });
+
+    expect(res.statusCode).toBe(200);
+    const body = JSON.parse(res.payload);
+    expect(body.success).toBe(true);
+    expect(body.data.id).toBe(assignmentId);
+
+    // Verify assignment is no longer listed in classroom details
+    const detailRes = await app.inject({
+      method: 'GET',
+      url: `/api/classrooms/${classroomId}`,
+      headers: { cookie: teacherCookie },
+    });
+    const detailBody = JSON.parse(detailRes.payload);
+    expect(detailBody.data.assignments.some((a: any) => a.id === assignmentId)).toBe(false);
+  });
+
+  it('allows teacher to delete a classroom via DELETE /api/classrooms/:id', async () => {
+    const res = await app.inject({
+      method: 'DELETE',
+      url: `/api/classrooms/${classroomId}`,
+      headers: { cookie: teacherCookie },
+    });
+
+    expect(res.statusCode).toBe(200);
+    const body = JSON.parse(res.payload);
+    expect(body.success).toBe(true);
+  });
+
+  it('allows user to delete a quiz via DELETE /api/quizzes/:quizId', async () => {
+    const res = await app.inject({
+      method: 'DELETE',
+      url: `/api/quizzes/${quizId}`,
+      headers: { cookie: teacherCookie },
+    });
+
+    expect(res.statusCode).toBe(200);
+    const body = JSON.parse(res.payload);
+    expect(body.success).toBe(true);
+  });
 });
