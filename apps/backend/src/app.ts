@@ -129,9 +129,12 @@ export async function buildApp(): Promise<FastifyInstance> {
   app.get('/api/health', { logLevel: 'silent' }, async () => {
     let dbStatus = 'healthy';
     let dbError: string | null = null;
+    let dbLatencyMs = 0;
 
+    const start = performance.now();
     try {
       const result = sqlite.prepare('SELECT 1 as test').get() as { test: number };
+      dbLatencyMs = Math.round((performance.now() - start) * 100) / 100;
       if (result.test !== 1) {
         dbStatus = 'degraded';
       }
@@ -140,17 +143,26 @@ export async function buildApp(): Promise<FastifyInstance> {
       dbError = err instanceof Error ? err.message : 'Database check failed';
     }
 
+    const mem = process.memoryUsage();
+
     return {
       success: true,
       data: {
         status: dbStatus === 'healthy' ? 'ok' : 'error',
+        version: '1.0.0',
         timestamp: new Date().toISOString(),
         uptime: process.uptime(),
         environment: env.NODE_ENV,
+        memory: {
+          heapUsedMb: Math.round((mem.heapUsed / 1024 / 1024) * 100) / 100,
+          heapTotalMb: Math.round((mem.heapTotal / 1024 / 1024) * 100) / 100,
+          rssMb: Math.round((mem.rss / 1024 / 1024) * 100) / 100,
+        },
         database: {
           status: dbStatus,
           driver: 'better-sqlite3',
           wal: true,
+          latencyMs: dbLatencyMs,
           ...(dbError ? { error: dbError } : {}),
         },
       },
