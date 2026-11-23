@@ -23,6 +23,8 @@ import { ArenaHostPage } from './pages/ArenaHostPage';
 import { FlashcardsPage } from './pages/FlashcardsPage';
 import { FlashcardStudyPage } from './pages/FlashcardStudyPage';
 import { HeatmapPage } from './pages/HeatmapPage';
+import { StudyLobbyPage } from './pages/StudyLobbyPage';
+import { StudyRoomPage } from './pages/StudyRoomPage';
 
 export function App() {
   return (
@@ -156,6 +158,22 @@ export function App() {
             element={
               <ProtectedRoute>
                 <HeatmapPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/study"
+            element={
+              <ProtectedRoute>
+                <StudyLobbyPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/study/:roomIdOrCode"
+            element={
+              <ProtectedRoute>
+                <StudyRoomPage />
               </ProtectedRoute>
             }
           />

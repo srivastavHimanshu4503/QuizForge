@@ -42,6 +42,18 @@ export function Navbar() {
                   </Link>
                 )}
                 <Link
+                  to="/study"
+                  className="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition"
+                >
+                  Study Rooms
+                </Link>
+                <Link
+                  to="/flashcards"
+                  className="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition"
+                >
+                  Flashcards
+                </Link>
+                <Link
                   to="/history"
                   className="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition"
                 >

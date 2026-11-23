@@ -25,6 +25,7 @@ import {
   Play,
   RotateCcw,
   Flame,
+  Users,
 } from 'lucide-react';
 
 interface ActiveDraft {
@@ -343,6 +344,37 @@ export function DashboardPage() {
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-300" />
               <span>Open Heatmap</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+
+          {/* Milestone 18: Collaborative Study Rooms & Real-Time Whiteboard */}
+          <div className="p-5 rounded-[20px] bg-gradient-to-r from-blue-900/10 via-indigo-600/10 to-transparent dark:from-blue-950/40 dark:via-indigo-950/30 dark:to-transparent border border-blue-200/60 dark:border-blue-800/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
+            <div className="flex items-center gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#1935CA] to-blue-600 text-white flex items-center justify-center shrink-0 shadow-md">
+                <Users className="w-5 h-5 text-blue-200" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#1935CA] dark:text-[#38BDF8]">
+                    Live Collaborative Study Rooms
+                  </span>
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                </div>
+                <h4 className="text-sm font-bold text-[#1E293B] dark:text-[#F8FAFC] mt-0.5">
+                  Interactive Multi-Peer Whiteboard & Synchronized Quizzes
+                </h4>
+                <p className="text-xs text-[#696F79] dark:text-slate-400">
+                  Sketch diagrams, solve problems together, and speak with peers in real-time.
+                </p>
+              </div>
+            </div>
+            <Link
+              to="/study"
+              className="px-4 py-2 rounded-xl text-xs font-bold bg-[#1935CA] hover:bg-[#142BA3] text-white shadow-md transition flex items-center gap-1.5 shrink-0 self-end sm:self-auto"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+              <span>Explore Study Rooms</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>

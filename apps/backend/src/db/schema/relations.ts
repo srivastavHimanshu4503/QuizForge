@@ -15,6 +15,7 @@ import { quizAssignments } from './quiz-assignments';
 import { certificates } from './certificates';
 import { arenaSessions, arenaParticipants, arenaAnswers } from './arena';
 import { flashcardDecks, flashcardCards, flashcardReviews } from './flashcards';
+import { studyRooms, studyRoomMembers } from './study-rooms';
 
 export const usersRelations = relations(users, ({ many }) => ({
   quizzes: many(quizzes),
@@ -237,6 +238,30 @@ export const flashcardReviewsRelations = relations(flashcardReviews, ({ one }) =
     references: [users.id],
   }),
 }));
+
+export const studyRoomsRelations = relations(studyRooms, ({ one, many }) => ({
+  host: one(users, {
+    fields: [studyRooms.hostUserId],
+    references: [users.id],
+  }),
+  quiz: one(quizzes, {
+    fields: [studyRooms.quizId],
+    references: [quizzes.id],
+  }),
+  members: many(studyRoomMembers),
+}));
+
+export const studyRoomMembersRelations = relations(studyRoomMembers, ({ one }) => ({
+  room: one(studyRooms, {
+    fields: [studyRoomMembers.roomId],
+    references: [studyRooms.id],
+  }),
+  user: one(users, {
+    fields: [studyRoomMembers.userId],
+    references: [users.id],
+  }),
+}));
+
 
 
 

@@ -15,4 +15,5 @@ export * from './certificates';
 export * from './arena';
 export * from './flashcards';
 export * from './lms';
+export * from './study-rooms';
 export * from './relations';
