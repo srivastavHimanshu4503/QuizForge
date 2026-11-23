@@ -22,6 +22,7 @@
     "@fastify/websocket": "^11.3.7",
     "@google/genai": "^3.6.1",
     "@quiz-forge/shared": "workspace:*",
+    "@simplewebauthn/server": "^14.1.0",
     "bcryptjs": "^3.0.3",
     "better-sqlite3": "^11.8.1",
     "cheerio": "^1.2.0",

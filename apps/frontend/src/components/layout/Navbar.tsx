@@ -1,9 +1,12 @@
+import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Sparkles, LogOut, User } from 'lucide-react';
+import { Sparkles, LogOut, User, Fingerprint } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { PasskeyManagementModal } from '../auth/PasskeyManagementModal';
 
 export function Navbar() {
   const { user, logout } = useAuth();
+  const [isPasskeyModalOpen, setIsPasskeyModalOpen] = useState(false);
 
   return (
     <nav className="border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-50">
@@ -93,6 +96,15 @@ export function Navbar() {
               </div>
 
               <button
+                onClick={() => setIsPasskeyModalOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:text-white bg-slate-800/60 hover:bg-slate-800 rounded-lg border border-slate-700/60 hover:border-slate-600 transition"
+                title="Manage Passkeys and Biometric Credentials"
+              >
+                <Fingerprint className="w-3.5 h-3.5 text-[#38BDF8]" />
+                <span className="hidden md:inline">Passkeys</span>
+              </button>
+
+              <button
                 onClick={logout}
                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-400 hover:text-rose-400 bg-slate-800/60 hover:bg-rose-500/10 rounded-lg border border-slate-700/60 hover:border-rose-500/20 transition"
                 title="Log out of QuizForge"
@@ -104,6 +116,11 @@ export function Navbar() {
           )}
         </div>
       </div>
+
+      <PasskeyManagementModal
+        isOpen={isPasskeyModalOpen}
+        onClose={() => setIsPasskeyModalOpen(false)}
+      />
     </nav>
   );
 }

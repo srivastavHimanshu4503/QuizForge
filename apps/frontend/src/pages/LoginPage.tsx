@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { apiClient } from '../api/client';
 import { CaptchaChallenge } from '@quiz-forge/shared';
 import { ThemeToggle } from '../components/common/ThemeToggle';
+import { PasskeyButton } from '../components/auth/PasskeyButton';
 import {
   Sparkles,
   AlertCircle,
@@ -215,6 +216,36 @@ export function LoginPage() {
             </div>
           </div>
 
+          {/* Passkey Sign-In (Biometric / FIDO2) */}
+          <div className="mb-6">
+            <PasskeyButton
+              onSuccess={(loggedInUser) => {
+                let targetPath = from;
+                if (loggedInUser?.role === 'teacher' || loggedInUser?.role === 'admin') {
+                  if (targetPath === '/assignments' || targetPath.startsWith('/quiz/') || targetPath.startsWith('/code-quiz/')) {
+                    targetPath = '/classrooms';
+                  }
+                } else if (loggedInUser?.role === 'student') {
+                  if (targetPath.startsWith('/studio/')) {
+                    targetPath = '/';
+                  }
+                }
+                navigate(targetPath, { replace: true });
+              }}
+              onError={(errMsg) => setFormError(errMsg)}
+            />
+          </div>
+
+          {/* Divider */}
+          <div className="relative my-4 text-center">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-slate-100 dark:border-slate-800" />
+            </div>
+            <span className="relative px-3 bg-white dark:bg-[#151C2C] text-[11px] text-[#94A3B8] dark:text-slate-400 uppercase font-bold tracking-wider">
+              or continue with email
+            </span>
+          </div>
+
           {displayError && (
             <div className="mb-6 p-3.5 rounded-xl bg-[#FEF2F2] dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/40 flex items-start gap-2.5 text-rose-700 dark:text-rose-400 text-xs font-medium">
               <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
@@ -236,6 +267,7 @@ export function LoginPage() {
                   id="email"
                   type="email"
                   required
+                  autoComplete="username webauthn"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter email address"

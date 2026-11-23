@@ -10,6 +10,8 @@ interface AuthContextType {
   register: (input: RegisterInput) => Promise<UserProfile>;
   logout: () => Promise<void>;
   clearError: () => void;
+  setUser: (user: UserProfile | null) => void;
+  fetchCurrentUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -91,6 +93,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         register,
         logout,
         clearError,
+        setUser,
+        fetchCurrentUser,
       }}
     >
       {children}

@@ -25,6 +25,7 @@ import { flashcardsRoutes } from './routes/flashcards.routes';
 import { analyticsRoutes } from './routes/analytics.routes';
 import { lmsRoutes } from './routes/lms.routes';
 import { studyRoomRoutes } from './routes/study-room.routes';
+import { passkeyRoutes } from './routes/passkey.routes';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({
@@ -105,6 +106,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(analyticsRoutes, { prefix: '/api/analytics' });
   await app.register(lmsRoutes, { prefix: '/api' });
   await app.register(studyRoomRoutes, { prefix: '/api/study-rooms' });
+  await app.register(passkeyRoutes, { prefix: '/api/auth/passkey' });
 
   // Global Error Handler
   app.setErrorHandler((error: FastifyError | Error, request, reply) => {

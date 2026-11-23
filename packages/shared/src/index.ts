@@ -12,4 +12,5 @@ export * from './schemas/audio-tutor.schema.js';
 export * from './schemas/cat.schema.js';
 export * from './schemas/lms.schema.js';
 export * from './schemas/study-room.schema.js';
+export * from './schemas/passkey.schema.js';
 export * from './types/index.js';

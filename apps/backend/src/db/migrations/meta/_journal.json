@@ -78,6 +78,13 @@
       "when": 1795414170525,
       "tag": "0010_curvy_harpoon",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1795415709325,
+      "tag": "0011_peaceful_chronomancer",
+      "breakpoints": true
     }
   ]
 }

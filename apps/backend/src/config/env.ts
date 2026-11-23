@@ -32,6 +32,8 @@ const envSchema = z.object({
   NVIDIA_API_KEY: z.string().optional(),
   NVIDIA_MODEL: z.string().default('meta/llama-3.3-70b-instruct'),
   GITHUB_TOKEN: z.string().optional(),
+  WEBAUTHN_RP_ID: z.string().default('localhost'),
+  WEBAUTHN_ORIGIN: z.string().default('http://localhost:5173'),
 });
 
 const parsed = envSchema.safeParse(process.env);

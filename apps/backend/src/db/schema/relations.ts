@@ -16,6 +16,7 @@ import { certificates } from './certificates';
 import { arenaSessions, arenaParticipants, arenaAnswers } from './arena';
 import { flashcardDecks, flashcardCards, flashcardReviews } from './flashcards';
 import { studyRooms, studyRoomMembers } from './study-rooms';
+import { userPasskeys } from './passkeys';
 
 export const usersRelations = relations(users, ({ many }) => ({
   quizzes: many(quizzes),
@@ -258,6 +259,13 @@ export const studyRoomMembersRelations = relations(studyRoomMembers, ({ one }) =
   }),
   user: one(users, {
     fields: [studyRoomMembers.userId],
+    references: [users.id],
+  }),
+}));
+
+export const userPasskeysRelations = relations(userPasskeys, ({ one }) => ({
+  user: one(users, {
+    fields: [userPasskeys.userId],
     references: [users.id],
   }),
 }));
