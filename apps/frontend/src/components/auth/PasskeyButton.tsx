@@ -66,7 +66,7 @@ export const PasskeyButton: React.FC<PasskeyButtonProps> = ({
       data-testid="passkey-login-button"
       onClick={handlePasskeyLogin}
       disabled={isAuthenticating}
-      className={`w-full py-3 px-4 rounded-xl font-bold text-sm bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white shadow-sm border border-slate-700/80 dark:border-slate-700 transition flex items-center justify-center gap-2.5 active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
+      className={`w-full py-3.5 px-4 rounded-xl font-bold text-sm bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white shadow-md border border-slate-700/80 dark:border-slate-700 transition flex items-center justify-center gap-3 active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed group ${className}`}
       title={
         supported
           ? 'Sign in securely using biometric recognition (Touch ID, Windows Hello) or physical security key'
@@ -75,19 +75,21 @@ export const PasskeyButton: React.FC<PasskeyButtonProps> = ({
     >
       {isAuthenticating ? (
         <>
-          <Loader2 className="w-4 h-4 animate-spin text-[#38BDF8]" />
-          <span>Verifying biometric passkey...</span>
+          <Loader2 className="w-5 h-5 animate-spin text-[#38BDF8]" />
+          <span className="font-semibold">Verifying biometric passkey...</span>
         </>
       ) : (
         <>
-          {hasPlatformAuthenticator ? (
-            <Fingerprint className="w-4 h-4 text-[#38BDF8]" />
-          ) : (
-            <KeyRound className="w-4 h-4 text-[#38BDF8]" />
-          )}
-          <span>Sign in with Passkey</span>
+          <div className="w-8 h-8 rounded-lg bg-indigo-500/20 text-[#38BDF8] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+            {hasPlatformAuthenticator ? (
+              <Fingerprint className="w-5 h-5 text-[#38BDF8]" />
+            ) : (
+              <KeyRound className="w-5 h-5 text-[#38BDF8]" />
+            )}
+          </div>
+          <span className="font-bold text-sm tracking-tight text-white">Sign in with Passkey</span>
           {!supported && (
-            <span className="text-[10px] bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded font-normal">
+            <span className="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full font-normal">
               (Requires HTTPS)
             </span>
           )}

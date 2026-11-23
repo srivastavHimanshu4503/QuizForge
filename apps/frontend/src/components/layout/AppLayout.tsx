@@ -7,6 +7,7 @@ import { ThemeToggle } from '../common/ThemeToggle';
 import { NetworkStatusBar } from '../common/NetworkStatusBar';
 import { AudioTutorModal } from '../audio/AudioTutorModal';
 import { useAudioTutor } from '../../context/AudioContext';
+import { PasskeyManagementModal } from '../auth/PasskeyManagementModal';
 import {
   LayoutDashboard,
   Code2,
@@ -25,6 +26,7 @@ import {
   Layers,
   Flame,
   Volume2,
+  Fingerprint,
 } from 'lucide-react';
 
 interface AppLayoutProps {
@@ -41,6 +43,7 @@ export function AppLayout({ children, activeNav }: AppLayoutProps) {
   const [isCodeModalOpen, setIsCodeModalOpen] = useState(false);
   const [isMcqModalOpen, setIsMcqModalOpen] = useState(false);
   const [isAudioModalOpen, setIsAudioModalOpen] = useState(false);
+  const [isPasskeyModalOpen, setIsPasskeyModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
   const { preferences: audioPrefs } = useAudioTutor();
@@ -200,6 +203,17 @@ export function AppLayout({ children, activeNav }: AppLayoutProps) {
                 <span>Assignments</span>
               </Link>
             )}
+
+            {/* Passkeys Vault Sidebar Nav Button */}
+            <button
+              type="button"
+              onClick={() => setIsPasskeyModalOpen(true)}
+              data-testid="sidebar-passkey-button"
+              className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-[#696F79] dark:text-slate-400 hover:text-[#1935CA] dark:hover:text-[#38BDF8] hover:bg-[#F8F9FC] dark:hover:bg-slate-800/60 transition-all text-left"
+            >
+              <Fingerprint className="w-4 h-4 text-[#1935CA] dark:text-[#38BDF8]" />
+              <span>Passkeys Vault</span>
+            </button>
           </nav>
         </div>
 
@@ -399,6 +413,18 @@ export function AppLayout({ children, activeNav }: AppLayoutProps) {
                     <span>Assignments</span>
                   </Link>
                 )}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    setIsPasskeyModalOpen(true);
+                  }}
+                  className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold text-[#696F79] dark:text-slate-400 hover:text-[#1935CA] dark:hover:text-[#38BDF8] hover:bg-[#F8F9FC] dark:hover:bg-slate-800/60 transition text-left"
+                >
+                  <Fingerprint className="w-4 h-4 text-[#1935CA] dark:text-[#38BDF8]" />
+                  <span>Passkeys Vault</span>
+                </button>
               </nav>
             </div>
 
@@ -471,6 +497,28 @@ export function AppLayout({ children, activeNav }: AppLayoutProps) {
             {/* Subtle Divider */}
             <div className="hidden sm:block h-6 w-px bg-slate-200 dark:bg-slate-800 shrink-0" />
 
+            {/* Passkey Security & Vault Button */}
+            <div className="flex items-center shrink-0">
+              <button
+                type="button"
+                onClick={() => setIsPasskeyModalOpen(true)}
+                data-testid="navbar-passkey-button"
+                className="flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#151C2C] text-[#1935CA] dark:text-[#38BDF8] hover:bg-indigo-50 dark:hover:bg-slate-800/80 transition-all shadow-sm active:scale-98"
+                title="Biometric Passkeys & FIDO2 Vault"
+                aria-label="Manage Biometric Passkeys"
+              >
+                <div className="w-5 h-5 rounded-md bg-indigo-500/10 dark:bg-indigo-500/20 flex items-center justify-center shrink-0">
+                  <Fingerprint className="w-3.5 h-3.5 text-[#1935CA] dark:text-[#38BDF8]" />
+                </div>
+                <span className="hidden md:inline text-xs font-bold text-slate-800 dark:text-slate-200">
+                  Passkeys
+                </span>
+              </button>
+            </div>
+
+            {/* Subtle Divider */}
+            <div className="hidden sm:block h-6 w-px bg-slate-200 dark:bg-slate-800 shrink-0" />
+
             {/* Animated Theme Slider Toggle */}
             <div className="flex items-center shrink-0">
               <ThemeToggle />
@@ -506,6 +554,7 @@ export function AppLayout({ children, activeNav }: AppLayoutProps) {
       <CodeQuizModal isOpen={isCodeModalOpen} onClose={() => setIsCodeModalOpen(false)} />
       <GenerateQuizModal isOpen={isMcqModalOpen} onClose={() => setIsMcqModalOpen(false)} />
       <AudioTutorModal isOpen={isAudioModalOpen} onClose={() => setIsAudioModalOpen(false)} />
+      <PasskeyManagementModal isOpen={isPasskeyModalOpen} onClose={() => setIsPasskeyModalOpen(false)} />
     </div>
   );
 }
