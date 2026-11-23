@@ -73,14 +73,14 @@ export const CreateStudyRoomModal: React.FC<CreateStudyRoomModalProps> = ({
         quizId: selectedQuizId || undefined,
       };
 
-      const res = await apiClient.post<{ success: boolean; data: StudyRoomDto }>(
+      const room = await apiClient.post<StudyRoomDto>(
         '/api/study-rooms',
         payload
       );
 
-      if (res.data && res.data.id) {
+      if (room && room.id) {
         onClose();
-        navigate(`/study/${res.data.id}`);
+        navigate(`/study/${room.id}`);
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to create study room';

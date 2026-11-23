@@ -30,11 +30,14 @@ export async function registerPasskey(nickname?: string): Promise<PasskeyDto> {
     throw new Error('WebAuthn / Passkeys are not supported in this browser.');
   }
 
-  // 1. Fetch registration options from server
-  const optRes = await apiClient.post<{ success: boolean; data: PasskeyRegistrationOptions }>(
+  // 1. Fetch registration options from server (apiClient unwraps response data)
+  const rawOptions = await apiClient.post<PasskeyRegistrationOptions>(
     '/api/auth/passkey/register-options'
   );
-  const options = optRes.data;
+  const options = { ...rawOptions };
+  if (options.excludeCredentials && options.excludeCredentials.length === 0) {
+    delete (options as any).excludeCredentials;
+  }
 
   // 2. Parse creation options
   let publicKey: PublicKeyCredentialCreationOptions;
@@ -112,14 +115,14 @@ export async function registerPasskey(nickname?: string): Promise<PasskeyDto> {
 
   // 5. Send to server for verification
   try {
-    const verifyRes = await apiClient.post<{ success: boolean; data: PasskeyDto }>(
+    const verified = await apiClient.post<PasskeyDto>(
       '/api/auth/passkey/register-verify',
       {
         ...encodedResponse,
         nickname: nickname || undefined,
       }
     );
-    return verifyRes.data;
+    return verified;
   } catch (serverErr) {
     // Modern Web Guidance: Signal unknown credential if server rejects
     if ((PublicKeyCredential as any).signalUnknownCredential) {
@@ -144,11 +147,14 @@ export async function loginWithPasskey(): Promise<{ user: any; token: string }> 
     throw new Error('WebAuthn / Passkeys are not supported in this browser.');
   }
 
-  // 1. Fetch authentication options from server
-  const optRes = await apiClient.post<{ success: boolean; data: PasskeyAuthenticationOptions }>(
+  // 1. Fetch authentication options from server (apiClient unwraps response data)
+  const rawOptions = await apiClient.post<PasskeyAuthenticationOptions>(
     '/api/auth/passkey/login-options'
   );
-  const options = optRes.data;
+  const options = { ...rawOptions };
+  if (options.allowCredentials && options.allowCredentials.length === 0) {
+    delete (options as any).allowCredentials;
+  }
 
   // 2. Parse request options
   let publicKey: PublicKeyCredentialRequestOptions;
@@ -222,11 +228,11 @@ export async function loginWithPasskey(): Promise<{ user: any; token: string }> 
 
   // 5. Send to server for verification
   try {
-    const verifyRes = await apiClient.post<{
-      success: boolean;
-      data: { user: any; token: string };
+    const verified = await apiClient.post<{
+      user: any;
+      token: string;
     }>('/api/auth/passkey/login-verify', encodedResponse);
-    return verifyRes.data;
+    return verified;
   } catch (err: any) {
     // Modern Web Guidance: Signal unknown credential if HTTP 404
     if (err?.status === 404 && (PublicKeyCredential as any).signalUnknownCredential) {
@@ -250,22 +256,20 @@ export async function getRegisteredPasskeys(): Promise<{
   rpId: string;
   credentials: PasskeyDto[];
 }> {
-  const res = await apiClient.get<{
-    success: boolean;
-    data: { rpId: string; credentials: PasskeyDto[] };
+  return await apiClient.get<{
+    rpId: string;
+    credentials: PasskeyDto[];
   }>('/api/auth/passkey/credentials');
-  return res.data;
 }
 
 /**
  * Rename a passkey nickname
  */
 export async function renamePasskey(id: string, name: string): Promise<PasskeyDto> {
-  const res = await apiClient.put<{ success: boolean; data: PasskeyDto }>(
+  return await apiClient.put<PasskeyDto>(
     `/api/auth/passkey/credentials/${id}`,
     { name }
   );
-  return res.data;
 }
 
 /**
