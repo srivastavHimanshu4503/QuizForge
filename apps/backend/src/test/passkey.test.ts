@@ -221,4 +221,32 @@ describe('Milestone 19: Biometric WebAuthn (Passkeys) Passwordless Authenticatio
     const afterDeleteBody = JSON.parse(afterDeleteRes.payload);
     expect(afterDeleteBody.data.credentials.length).toBe(0);
   });
+
+  it('supports Docker deployment origin (http://localhost) and header extraction', async () => {
+    // 1. Request options with Origin: http://localhost (as sent when using Docker frontend)
+    const optionsRes = await app.inject({
+      method: 'POST',
+      url: '/api/auth/passkey/register-options',
+      headers: {
+        cookie: aliceCookie,
+        origin: 'http://localhost',
+      },
+    });
+    expect(optionsRes.statusCode).toBe(200);
+    const body = JSON.parse(optionsRes.payload);
+    expect(body.success).toBe(true);
+    expect(body.data.rp.id).toBe('localhost');
+
+    // 2. Public login options with Origin: http://localhost
+    const loginOptRes = await app.inject({
+      method: 'POST',
+      url: '/api/auth/passkey/login-options',
+      headers: {
+        origin: 'http://localhost',
+      },
+    });
+    expect(loginOptRes.statusCode).toBe(200);
+    const loginBody = JSON.parse(loginOptRes.payload);
+    expect(loginBody.data.rpId).toBe('localhost');
+  });
 });

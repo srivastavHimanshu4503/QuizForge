@@ -12,6 +12,8 @@ services:
       - DATABASE_URL=/app/data/quizforge.db
       - JWT_SECRET=${JWT_SECRET:-quizforge-production-super-secret-jwt-key-min-32-chars}
       - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost}
+      - WEBAUTHN_RP_ID=${WEBAUTHN_RP_ID:-localhost}
+      - WEBAUTHN_ORIGIN=${WEBAUTHN_ORIGIN:-http://localhost}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
       - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.5-flash}
       - GROQ_API_KEY=${GROQ_API_KEY:-}

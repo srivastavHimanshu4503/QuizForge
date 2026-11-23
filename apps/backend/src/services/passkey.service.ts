@@ -29,20 +29,49 @@ export class PasskeyError extends Error {
 }
 
 export class PasskeyService {
-  private getExpectedOrigins(): string[] {
+  private getExpectedOrigins(customOrigin?: string): string[] {
     const list = [
       env.WEBAUTHN_ORIGIN,
+      env.CORS_ORIGIN,
+      'http://localhost',
+      'https://localhost',
       'http://localhost:5173',
-      'http://127.0.0.1:5173',
       'http://localhost:4000',
+      'http://127.0.0.1',
+      'https://127.0.0.1',
+      'http://127.0.0.1:5173',
       'http://127.0.0.1:4000',
     ];
-    // Remove duplicates
-    return Array.from(new Set(list));
+    if (customOrigin) {
+      list.push(customOrigin);
+    }
+    // Normalize each origin through new URL().origin to guarantee strict conformity (no default ports or trailing slashes)
+    const normalized: string[] = [];
+    for (const item of list) {
+      if (!item) continue;
+      try {
+        const url = new URL(item);
+        normalized.push(url.origin);
+      } catch {
+        normalized.push(item);
+      }
+    }
+    return Array.from(new Set(normalized));
+  }
+
+  private getExpectedRPIDs(customRpId?: string): string[] {
+    const list = [
+      customRpId,
+      env.WEBAUTHN_RP_ID,
+      'localhost',
+      '127.0.0.1',
+    ];
+    return Array.from(new Set(list.filter(Boolean) as string[]));
   }
 
   async generateRegistrationOptions(
     userId: string,
+    customRpId?: string,
     database = db
   ): Promise<PasskeyRegistrationOptions> {
     const user = database
@@ -69,9 +98,11 @@ export class PasskeyService {
       .where(eq(userPasskeys.userId, userId))
       .all();
 
+    const rpID = customRpId || env.WEBAUTHN_RP_ID;
+
     const options = await generateRegistrationOptions({
       rpName: 'QuizForge Assessment Platform',
-      rpID: env.WEBAUTHN_RP_ID,
+      rpID,
       userID: new Uint8Array(Buffer.from(user.id)),
       userName: user.email,
       userDisplayName: user.displayName,
@@ -106,6 +137,8 @@ export class PasskeyService {
   async verifyRegistration(
     userId: string,
     input: PasskeyRegistrationVerifyInput,
+    customOrigin?: string,
+    customRpId?: string,
     database = db
   ): Promise<PasskeyDto> {
     const now = Date.now();
@@ -134,8 +167,8 @@ export class PasskeyService {
       verification = await verifyRegistrationResponse({
         response: input as any,
         expectedChallenge: challengeRecord.challenge,
-        expectedOrigin: this.getExpectedOrigins(),
-        expectedRPID: env.WEBAUTHN_RP_ID,
+        expectedOrigin: this.getExpectedOrigins(customOrigin),
+        expectedRPID: this.getExpectedRPIDs(customRpId),
         requireUserVerification: false,
       });
     } catch (err: unknown) {
@@ -185,9 +218,13 @@ export class PasskeyService {
     };
   }
 
-  async generateAuthenticationOptions(database = db): Promise<PasskeyAuthenticationOptions> {
+  async generateAuthenticationOptions(
+    customRpId?: string,
+    database = db
+  ): Promise<PasskeyAuthenticationOptions> {
+    const rpID = customRpId || env.WEBAUTHN_RP_ID;
     const options = await generateAuthenticationOptions({
-      rpID: env.WEBAUTHN_RP_ID,
+      rpID,
       allowCredentials: [], // Discoverable credentials (autofill & userless)
       userVerification: 'preferred',
     });
@@ -210,6 +247,8 @@ export class PasskeyService {
 
   async verifyAuthentication(
     input: PasskeyAuthenticationVerifyInput,
+    customOrigin?: string,
+    customRpId?: string,
     database = db
   ): Promise<{ user: { id: string; email: string; displayName: string; role: 'student' | 'teacher' | 'admin' }; token: string }> {
     const passkey = database
@@ -244,8 +283,8 @@ export class PasskeyService {
       verification = await verifyAuthenticationResponse({
         response: input as any,
         expectedChallenge: challengeRecord.challenge,
-        expectedOrigin: this.getExpectedOrigins(),
-        expectedRPID: env.WEBAUTHN_RP_ID,
+        expectedOrigin: this.getExpectedOrigins(customOrigin),
+        expectedRPID: this.getExpectedRPIDs(customRpId),
         credential: {
           id: passkey.id,
           publicKey: new Uint8Array(Buffer.from(passkey.publicKey, 'base64url')),

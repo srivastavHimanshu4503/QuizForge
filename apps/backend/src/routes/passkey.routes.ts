@@ -8,6 +8,23 @@ import { passkeyService, PasskeyError } from '../services/passkey.service';
 import { AUTH_COOKIE_NAME, COOKIE_OPTIONS } from '../plugins/auth.plugin';
 import { env } from '../config/env';
 
+function extractClientWebAuthnContext(request: { headers: Record<string, string | string[] | undefined> }) {
+  const originHeader = typeof request.headers.origin === 'string'
+    ? request.headers.origin
+    : (typeof request.headers.referer === 'string' ? new URL(request.headers.referer).origin : undefined);
+
+  let rpId: string | undefined = undefined;
+  if (originHeader) {
+    try {
+      const parsed = new URL(originHeader);
+      rpId = parsed.hostname;
+    } catch {
+      // ignore
+    }
+  }
+  return { origin: originHeader, rpId };
+}
+
 export const passkeyRoutes: FastifyPluginAsync = async (app: FastifyInstance) => {
   // 1. Generate Registration Options (Authenticated)
   app.post(
@@ -15,7 +32,8 @@ export const passkeyRoutes: FastifyPluginAsync = async (app: FastifyInstance) =>
     { preHandler: [app.authenticate] },
     async (request, reply) => {
       try {
-        const options = await passkeyService.generateRegistrationOptions(request.user!.id);
+        const { rpId } = extractClientWebAuthnContext(request);
+        const options = await passkeyService.generateRegistrationOptions(request.user!.id, rpId);
         return reply.status(200).send({
           success: true,
           data: options,
@@ -50,9 +68,12 @@ export const passkeyRoutes: FastifyPluginAsync = async (app: FastifyInstance) =>
       }
 
       try {
+        const { origin, rpId } = extractClientWebAuthnContext(request);
         const passkey = await passkeyService.verifyRegistration(
           request.user!.id,
-          parseResult.data
+          parseResult.data,
+          origin,
+          rpId
         );
         return reply.status(201).send({
           success: true,
@@ -71,9 +92,10 @@ export const passkeyRoutes: FastifyPluginAsync = async (app: FastifyInstance) =>
   );
 
   // 3. Generate Authentication Assertion Options (Public)
-  app.post('/login-options', async (_request, reply) => {
+  app.post('/login-options', async (request, reply) => {
     try {
-      const options = await passkeyService.generateAuthenticationOptions();
+      const { rpId } = extractClientWebAuthnContext(request);
+      const options = await passkeyService.generateAuthenticationOptions(rpId);
       return reply.status(200).send({
         success: true,
         data: options,
@@ -104,7 +126,12 @@ export const passkeyRoutes: FastifyPluginAsync = async (app: FastifyInstance) =>
     }
 
     try {
-      const { user, token } = await passkeyService.verifyAuthentication(parseResult.data);
+      const { origin, rpId } = extractClientWebAuthnContext(request);
+      const { user, token } = await passkeyService.verifyAuthentication(
+        parseResult.data,
+        origin,
+        rpId
+      );
 
       // Set secure HTTP-only authentication cookie
       reply.setCookie(AUTH_COOKIE_NAME, token, COOKIE_OPTIONS);
