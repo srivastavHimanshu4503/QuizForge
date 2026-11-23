@@ -15,6 +15,7 @@
     "db:seed": "pnpm --filter @quiz-forge/backend exec tsx src/db/seed.ts"
   },
   "devDependencies": {
+    "playwright": "^1.65.1",
     "typescript": "^5.7.3"
   }
 }

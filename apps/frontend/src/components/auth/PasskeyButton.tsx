@@ -15,7 +15,7 @@ export const PasskeyButton: React.FC<PasskeyButtonProps> = ({
   onError,
   className = '',
 }) => {
-  const [supported, setSupported] = useState(false);
+  const [supported, setSupported] = useState<boolean>(() => isPasskeySupported());
   const [hasPlatformAuthenticator, setHasPlatformAuthenticator] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const { setUser } = useAuth();
@@ -32,11 +32,14 @@ export const PasskeyButton: React.FC<PasskeyButtonProps> = ({
     checkSupport();
   }, []);
 
-  if (!supported) {
-    return null; // Gracefully degrade on unsupported browsers
-  }
-
   const handlePasskeyLogin = async () => {
+    if (!supported) {
+      onError?.(
+        'WebAuthn / Passkeys require a secure context (HTTPS or localhost) in a supported browser (Chrome, Edge, Safari, Firefox).'
+      );
+      return;
+    }
+
     setIsAuthenticating(true);
     try {
       const result = await loginWithPasskey();
@@ -60,10 +63,15 @@ export const PasskeyButton: React.FC<PasskeyButtonProps> = ({
   return (
     <button
       type="button"
+      data-testid="passkey-login-button"
       onClick={handlePasskeyLogin}
       disabled={isAuthenticating}
       className={`w-full py-3 px-4 rounded-xl font-bold text-sm bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white shadow-sm border border-slate-700/80 dark:border-slate-700 transition flex items-center justify-center gap-2.5 active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
-      title="Sign in securely using biometric recognition (Touch ID, Windows Hello) or physical security key"
+      title={
+        supported
+          ? 'Sign in securely using biometric recognition (Touch ID, Windows Hello) or physical security key'
+          : 'Passkeys require a secure context (HTTPS or localhost)'
+      }
     >
       {isAuthenticating ? (
         <>
@@ -78,6 +86,11 @@ export const PasskeyButton: React.FC<PasskeyButtonProps> = ({
             <KeyRound className="w-4 h-4 text-[#38BDF8]" />
           )}
           <span>Sign in with Passkey</span>
+          {!supported && (
+            <span className="text-[10px] bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded font-normal">
+              (Requires HTTPS)
+            </span>
+          )}
         </>
       )}
     </button>
